@@ -226,10 +226,16 @@ export async function upsertLessonNote(studentId: string, lessonId: string, cont
 }
 
 export async function listNotebookCourseOptions(studentId: string) {
+  const now = new Date();
+
   return prisma.enrollment.findMany({
     where: {
       studentId,
       status: EnrollmentStatus.ACTIVE,
+      startsAt: {
+        lte: now,
+      },
+      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
       course: {
         status: CourseStatus.ACTIVE,
       },

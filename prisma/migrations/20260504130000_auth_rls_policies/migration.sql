@@ -165,13 +165,47 @@ USING ("student_id" = public.current_student_profile_id());
 CREATE POLICY "lesson_notes_insert_self"
 ON public."lesson_notes"
 FOR INSERT
-WITH CHECK ("student_id" = public.current_student_profile_id());
+WITH CHECK (
+  "student_id" = public.current_student_profile_id()
+  AND EXISTS (
+    SELECT 1
+    FROM public."lessons" l
+    INNER JOIN public."modules" m ON m."id" = l."module_id"
+    INNER JOIN public."courses" c ON c."id" = m."course_id"
+    INNER JOIN public."enrollments" e ON e."course_id" = c."id"
+    WHERE l."id" = public."lesson_notes"."lesson_id"
+      AND l."status" = 'ACTIVE'
+      AND m."status" = 'ACTIVE'
+      AND c."status" = 'ACTIVE'
+      AND e."student_id" = public.current_student_profile_id()
+      AND e."status" = 'ACTIVE'
+      AND e."starts_at" <= now()
+      AND (e."expires_at" IS NULL OR e."expires_at" > now())
+  )
+);
 
 CREATE POLICY "lesson_notes_update_self"
 ON public."lesson_notes"
 FOR UPDATE
 USING ("student_id" = public.current_student_profile_id())
-WITH CHECK ("student_id" = public.current_student_profile_id());
+WITH CHECK (
+  "student_id" = public.current_student_profile_id()
+  AND EXISTS (
+    SELECT 1
+    FROM public."lessons" l
+    INNER JOIN public."modules" m ON m."id" = l."module_id"
+    INNER JOIN public."courses" c ON c."id" = m."course_id"
+    INNER JOIN public."enrollments" e ON e."course_id" = c."id"
+    WHERE l."id" = public."lesson_notes"."lesson_id"
+      AND l."status" = 'ACTIVE'
+      AND m."status" = 'ACTIVE'
+      AND c."status" = 'ACTIVE'
+      AND e."student_id" = public.current_student_profile_id()
+      AND e."status" = 'ACTIVE'
+      AND e."starts_at" <= now()
+      AND (e."expires_at" IS NULL OR e."expires_at" > now())
+  )
+);
 
 CREATE POLICY "lesson_progress_admin_all"
 ON public."lesson_progress"
@@ -187,10 +221,44 @@ USING ("student_id" = public.current_student_profile_id());
 CREATE POLICY "lesson_progress_insert_self"
 ON public."lesson_progress"
 FOR INSERT
-WITH CHECK ("student_id" = public.current_student_profile_id());
+WITH CHECK (
+  "student_id" = public.current_student_profile_id()
+  AND EXISTS (
+    SELECT 1
+    FROM public."lessons" l
+    INNER JOIN public."modules" m ON m."id" = l."module_id"
+    INNER JOIN public."courses" c ON c."id" = m."course_id"
+    INNER JOIN public."enrollments" e ON e."course_id" = c."id"
+    WHERE l."id" = public."lesson_progress"."lesson_id"
+      AND l."status" = 'ACTIVE'
+      AND m."status" = 'ACTIVE'
+      AND c."status" = 'ACTIVE'
+      AND e."student_id" = public.current_student_profile_id()
+      AND e."status" = 'ACTIVE'
+      AND e."starts_at" <= now()
+      AND (e."expires_at" IS NULL OR e."expires_at" > now())
+  )
+);
 
 CREATE POLICY "lesson_progress_update_self"
 ON public."lesson_progress"
 FOR UPDATE
 USING ("student_id" = public.current_student_profile_id())
-WITH CHECK ("student_id" = public.current_student_profile_id());
+WITH CHECK (
+  "student_id" = public.current_student_profile_id()
+  AND EXISTS (
+    SELECT 1
+    FROM public."lessons" l
+    INNER JOIN public."modules" m ON m."id" = l."module_id"
+    INNER JOIN public."courses" c ON c."id" = m."course_id"
+    INNER JOIN public."enrollments" e ON e."course_id" = c."id"
+    WHERE l."id" = public."lesson_progress"."lesson_id"
+      AND l."status" = 'ACTIVE'
+      AND m."status" = 'ACTIVE'
+      AND c."status" = 'ACTIVE'
+      AND e."student_id" = public.current_student_profile_id()
+      AND e."status" = 'ACTIVE'
+      AND e."starts_at" <= now()
+      AND (e."expires_at" IS NULL OR e."expires_at" > now())
+  )
+);
