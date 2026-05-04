@@ -210,3 +210,18 @@
 - [x] Executar typecheck
 - [x] Executar testes relevantes
 - [x] Executar build
+
+## Ajustes de Deploy
+
+- [x] Corrigir build da Vercel com `prisma generate` no `postinstall`
+- [x] Manter `prisma generate` no script `build`
+- [x] Fixar runtime Node 20 no `package.json` e no lockfile
+- [x] Criar `vercel.json` com comandos explicitos
+- [x] Reduzir warning de `glob` deprecated via override controlado
+- [x] Silenciar warning conhecido do Supabase Realtime no build sem esconder outros warnings
+- [x] Remover warning CJS do Vitest usando config ESM
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
+- [x] Commitar e enviar ao GitHub

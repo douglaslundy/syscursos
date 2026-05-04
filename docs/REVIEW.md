@@ -846,3 +846,59 @@ Iniciar Fase 10 - Review Final, com foco em seguranca, performance, acessibilida
 ### Proxima etapa recomendada
 
 Testar o fluxo em `http://localhost:3000/app/notebooks` com o usuario aluno.
+
+---
+
+### 2026-05-04 - Correcao definitiva do build na Vercel
+
+### Arquivos criados ou alterados
+
+- `package.json`
+- `package-lock.json`
+- `next.config.mjs`
+- `vitest.config.ts` renomeado para `vitest.config.mts`
+- `vercel.json`
+- `docs/DECISIONS.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Adicionado `postinstall: prisma generate`, conforme recomendacao oficial do Prisma para builds na Vercel.
+- Mantido `build: prisma generate && next build` como segunda camada de seguranca antes do build do Next.js.
+- Criado `vercel.json` com `buildCommand`, `installCommand` e framework Next.js explicitos.
+- Sincronizado `package-lock.json` para registrar `engines.node: 20.x` e `hasInstallScript`.
+- Aplicado override do `glob` usado por `@next/eslint-plugin-next` para reduzir warning de pacote deprecated durante install.
+- Adicionado filtro webpack restrito para o warning conhecido de `@supabase/realtime-js`.
+- Renomeada a config do Vitest para `.mts`, removendo o warning da API CJS do Vite.
+
+### Analise do erro
+
+O log da Vercel mostrou que o deploy estava clonando o commit antigo `a510386`, cujo script de build ainda era apenas `next build`. Nesse cenario, a coleta de dados da rota `/login` inicializava o Prisma Client sem que ele tivesse sido gerado na instalacao/build, causando `PrismaClientInitializationError`.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 47 testes.
+- `npm run build`: aprovado, sem warnings.
+
+### Riscos encontrados
+
+- A Vercel deve disparar um novo deploy usando o commit mais recente do branch `main`; logs que ainda mostrem `a510386` indicam deploy antigo, nao o estado atual do repositorio.
+- As variaveis `DATABASE_URL`, `DIRECT_URL` e variaveis Supabase precisam existir no ambiente de Production/Preview da Vercel para `prisma generate` e as rotas server-side.
+
+### Pendencias
+
+- Confirmar novo deploy na Vercel usando commit posterior a `a510386`.
+
+### Proxima etapa recomendada
+
+Executar novo deploy na Vercel apos o push e confirmar que o log mostra commit posterior a `a510386`.

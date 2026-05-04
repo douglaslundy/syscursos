@@ -361,3 +361,31 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - Build Vercel resiliente para Prisma
+
+Decisao:
+
+Adicionar `postinstall: prisma generate`, manter `build: prisma generate && next build`, criar `vercel.json` com build e install commands explicitos, sincronizar `package-lock.json` com Node `20.x`, aplicar override do `glob` usado pelo plugin ESLint do Next e manter somente um ignore de webpack especifico para o warning conhecido de `@supabase/realtime-js`.
+
+Motivo:
+
+O deploy da Vercel estava executando um commit antigo que ainda usava `next build` puro e falhava ao coletar dados de `/login` porque o Prisma Client nao era gerado durante o build. A documentacao oficial do Prisma recomenda `postinstall: prisma generate` em Vercel para evitar Prisma Client desatualizado quando ha cache de dependencias. A documentacao da Vercel tambem permite fixar o runtime por `engines.node`; o lockfile precisava refletir `20.x` para remover a inconsistencia. O warning de `@supabase/realtime-js` e originado por dependencia interna do `supabase-js`, nao por codigo da aplicacao, entao foi filtrado de forma restrita no webpack.
+
+Alternativas consideradas:
+
+Confiar apenas no script `build`, rodar migrations automaticamente no build da Vercel, commitar Prisma Client gerado e ignorar warnings de instalacao.
+
+Impacto:
+
+O Prisma Client passa a ser gerado no install e novamente antes do build, reduzindo risco de falha por cache ou build command. Migrations continuam fora do build para evitar alterar banco em deploy sem controle. O deploy deve ocorrer em Node 20 e usar os comandos versionados no repositorio.
+
+Arquivos afetados:
+
+- `package.json`
+- `package-lock.json`
+- `vercel.json`
+- `next.config.mjs`
+- `vitest.config.mts`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
