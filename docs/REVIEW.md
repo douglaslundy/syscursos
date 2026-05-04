@@ -792,3 +792,57 @@ Iniciar Fase 10 - Review Final, com foco em seguranca, performance, acessibilida
 - Adicionar monitoramento, rate limiting e logs estruturados no deploy.
 - Planejar upgrade coordenado de Node, Next, Vitest e ESLint para resolver auditoria restante.
 - Avaliar agregacoes de progresso por curso para reduzir queries em dashboards com alto volume.
+
+---
+
+### 2026-05-04 - Ajuste pos-review: autosave nos cadernos
+
+### Arquivos criados ou alterados
+
+- `src/components/student/note-autosave-editor.tsx`
+- `src/components/student/lesson-note-editor.tsx`
+- `src/app/app/notebooks/page.tsx`
+- `src/tests/unit/student-components.test.tsx`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Criado componente reutilizavel de anotacao com autosave e debounce de 900ms.
+- A pagina da aula passou a usar o componente compartilhado.
+- A pagina `Meus Cadernos` agora permite editar cada nota diretamente com autosave.
+- Mantido salvamento manual como alternativa ao autosave.
+- Mantido o mesmo Server Action seguro para validacao, sanitizacao e autorizacao server-side.
+- Adicionado teste unitario cobrindo o debounce do autosave no caderno.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test:unit`
+- `npm run test:integration`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+- `npm run test:unit`: aprovado, 30 testes.
+- `npm run test:integration`: aprovado, 17 testes.
+- `npm run test`: aprovado, 47 testes.
+- `npm run build`: aprovado. Permanece warning conhecido do Supabase realtime sobre dependencia dinamica.
+
+### Riscos encontrados
+
+- O autosave aumenta escritas no banco quando o aluno edita muitas notas, mitigado por debounce de 900ms.
+- Teste E2E autenticado do caderno ainda depende de ambiente de teste com login real.
+
+### Pendencias
+
+- Validar manualmente edicao no caderno com usuario aluno no navegador.
+
+### Proxima etapa recomendada
+
+Testar o fluxo em `http://localhost:3000/app/notebooks` com o usuario aluno.

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 
 import { EmptyState } from "@/components/student/empty-state";
+import { NoteAutosaveEditor } from "@/components/student/note-autosave-editor";
 import { getStudentNotebook } from "@/server/services/student-service";
 import { notebookQuerySchema } from "@/server/validators/student";
 
@@ -15,6 +16,7 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
     query: first(searchParams?.query),
   });
   const notebook = await getStudentNotebook(parsed);
+  const selectedCourseId = notebook.selectedCourseId;
 
   return (
     <section>
@@ -65,7 +67,7 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
         </button>
       </form>
 
-      {notebook.groups.length === 0 ? (
+      {notebook.groups.length === 0 || !selectedCourseId ? (
         <EmptyState
           description="Crie anotacoes nas aulas deste curso para montar seu caderno automaticamente."
           title="Nenhuma anotacao encontrada"
@@ -84,7 +86,7 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <Link
                         className="font-medium hover:text-primary"
-                        href={`/app/courses/${notebook.selectedCourseId}/lessons/${note.lessonId}`}
+                        href={`/app/courses/${selectedCourseId}/lessons/${note.lessonId}`}
                       >
                         {note.lessonPosition}. {note.lessonTitle}
                       </Link>
@@ -92,9 +94,16 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
                         {new Intl.DateTimeFormat("pt-BR").format(note.updatedAt)}
                       </span>
                     </div>
-                    <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground">
-                      {note.content}
-                    </p>
+                    <NoteAutosaveEditor
+                      className="mt-4 rounded-md border bg-card/60 p-4"
+                      courseId={selectedCourseId}
+                      description="Autosave ativo no caderno."
+                      initialContent={note.content}
+                      lessonId={note.lessonId}
+                      placeholder="Edite sua anotacao..."
+                      textareaId={`notebook-note-${note.id}`}
+                      title={`Anotacao - ${note.lessonTitle}`}
+                    />
                   </article>
                 ))}
               </div>

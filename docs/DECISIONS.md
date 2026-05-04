@@ -333,3 +333,31 @@ Arquivos afetados:
 - `docs/UI_UX.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - Autosave editavel nos cadernos
+
+Decisao:
+
+Reutilizar um componente unico de autosave para as anotacoes da aula e para as notas exibidas em `Meus Cadernos`, mantendo debounce de 900ms e botao de salvamento manual.
+
+Motivo:
+
+O caderno deve permitir edicao direta com autosave, sem criar uma rota paralela ou duplicar logica de persistencia. A Server Action existente ja valida Zod, sanitiza texto, verifica perfil `STUDENT`, matricula ativa e aula ativa.
+
+Alternativas consideradas:
+
+Manter o caderno somente leitura; criar uma API Route client-side separada; duplicar o editor da aula dentro da pagina de cadernos.
+
+Impacto:
+
+As notas do caderno passam a ser editaveis e salvas automaticamente pelo mesmo fluxo seguro das anotacoes da aula. O componente evita sobrescrever alteracoes mais recentes quando uma resposta de salvamento anterior retorna atrasada.
+
+Arquivos afetados:
+
+- `src/components/student/note-autosave-editor.tsx`
+- `src/components/student/lesson-note-editor.tsx`
+- `src/app/app/notebooks/page.tsx`
+- `src/tests/unit/student-components.test.tsx`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

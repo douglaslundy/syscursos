@@ -200,3 +200,13 @@
 - [x] Review de qualidade dos testes
 - [x] Build final
 - [x] Relatorio final
+
+## Ajustes Pos-Review
+
+- [x] Tornar notas da pagina `Meus Cadernos` editaveis com autosave e debounce
+- [x] Reutilizar o mesmo fluxo server-side de validacao, sanitizacao e autorizacao das anotacoes
+- [x] Criar teste unitario para autosave com debounce no caderno
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes relevantes
+- [x] Executar build
