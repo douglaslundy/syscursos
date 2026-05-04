@@ -10,6 +10,25 @@ const config = {
   theme: {
     extend: {
       colors: {
+        brand: {
+          primary: "var(--color-primary)",
+          primaryHover: "var(--color-primary-hover)",
+        },
+        surface: {
+          main: "var(--bg-main)",
+          elevated: "var(--bg-elevated)",
+          DEFAULT: "var(--bg-surface)",
+          hover: "var(--bg-surface-hover)",
+        },
+        stroke: {
+          subtle: "var(--border-subtle)",
+          strong: "var(--border-strong)",
+        },
+        copy: {
+          primary: "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+          muted: "var(--text-muted)",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

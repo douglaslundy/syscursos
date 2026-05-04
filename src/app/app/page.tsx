@@ -18,7 +18,7 @@ export default async function StudentHomePage() {
           </p>
         </div>
         <Link
-          className="inline-flex min-h-10 items-center justify-center rounded-md border bg-card px-4 text-sm font-medium transition hover:bg-muted"
+          className="inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
           href="/app/notebooks"
         >
           Abrir cadernos

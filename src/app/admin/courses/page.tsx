@@ -43,13 +43,13 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
             />
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
-                className="rounded-md border px-3 py-2"
+                className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
                 href={`/admin/courses/${course.id}/modules`}
               >
                 Modulos ({course._count.modules})
               </Link>
               <Link
-                className="rounded-md border px-3 py-2"
+                className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
                 href={`/admin/courses/${course.id}/students`}
               >
                 Alunos ({course._count.enrollments})
@@ -92,19 +92,19 @@ function CourseForm({ course }: CourseFormProps) {
     <form action={saveCourseAction} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
       {course ? <input name="id" type="hidden" value={course.id} /> : null}
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={course?.title}
         name="title"
         placeholder="Titulo"
       />
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={course?.slug}
         name="slug"
         placeholder="slug-do-curso"
       />
       <select
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={course?.status ?? "ACTIVE"}
         name="status"
       >
@@ -112,7 +112,7 @@ function CourseForm({ course }: CourseFormProps) {
         <option value="INACTIVE">Inativo</option>
       </select>
       <textarea
-        className="rounded-md border px-3 py-2 text-sm md:col-span-2"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
         defaultValue={course?.description}
         name="description"
         placeholder="Descricao"

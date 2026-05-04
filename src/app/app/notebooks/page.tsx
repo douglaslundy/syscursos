@@ -32,7 +32,7 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
         <label className="grid gap-2 text-sm font-medium">
           Curso
           <select
-            className="min-h-11 rounded-md border bg-background px-3 text-sm"
+            className="min-h-11 rounded-md border px-3 text-sm outline-none"
             defaultValue={notebook.selectedCourseId ?? ""}
             name="courseId"
           >
@@ -52,7 +52,7 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             />
             <input
-              className="min-h-11 w-full rounded-md border bg-background pl-9 pr-3 text-sm"
+              className="min-h-11 w-full rounded-md border pl-9 pr-3 text-sm outline-none"
               defaultValue={notebook.query}
               name="query"
               placeholder="Buscar nas anotacoes"
@@ -60,7 +60,7 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
           </span>
         </label>
         <button
-          className="min-h-11 self-end rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+          className="min-h-11 self-end rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
           type="submit"
         >
           Buscar

@@ -90,20 +90,20 @@ function LessonForm({ moduleId, lesson }: LessonFormProps) {
       <input name="moduleId" type="hidden" value={moduleId} />
       {lesson ? <input name="id" type="hidden" value={lesson.id} /> : null}
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={lesson?.title}
         name="title"
         placeholder="Titulo"
       />
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={lesson?.position ?? 1}
         min={1}
         name="position"
         type="number"
       />
       <select
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={lesson?.status ?? "ACTIVE"}
         name="status"
       >
@@ -112,19 +112,19 @@ function LessonForm({ moduleId, lesson }: LessonFormProps) {
       </select>
       <SubmitButton>{lesson ? "Salvar" : "Criar"}</SubmitButton>
       <input
-        className="rounded-md border px-3 py-2 text-sm md:col-span-2"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
         defaultValue={lesson?.youtubeUrl}
         name="youtubeUrl"
         placeholder="https://www.youtube.com/watch?v=..."
       />
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={lesson?.youtubeVideoId}
         name="youtubeVideoId"
         placeholder="Video ID"
       />
       <textarea
-        className="rounded-md border px-3 py-2 text-sm md:col-span-3"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
         defaultValue={lesson?.description}
         name="description"
         placeholder="Descricao"

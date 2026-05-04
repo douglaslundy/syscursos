@@ -78,7 +78,7 @@ export default async function EnrollmentsPage({ searchParams }: EnrollmentsPageP
               <form action={renewEnrollmentAction} className="flex gap-2">
                 <input name="id" type="hidden" value={enrollment.id} />
                 <input
-                  className="rounded-md border px-3 py-2 text-sm"
+                  className="rounded-md border px-3 py-2 text-sm outline-none"
                   name="expiresAt"
                   required
                   type="date"
@@ -116,7 +116,7 @@ function EnrollmentForm({ students, courses }: EnrollmentFormProps) {
       action={saveEnrollmentAction}
       className="grid gap-3 md:grid-cols-[1fr_1fr_150px_150px_140px_auto]"
     >
-      <select className="rounded-md border px-3 py-2 text-sm" name="studentId" required>
+      <select className="rounded-md border px-3 py-2 text-sm outline-none" name="studentId" required>
         <option value="">Aluno</option>
         {students.map((student) => (
           <option key={student.id} value={student.id}>
@@ -124,7 +124,7 @@ function EnrollmentForm({ students, courses }: EnrollmentFormProps) {
           </option>
         ))}
       </select>
-      <select className="rounded-md border px-3 py-2 text-sm" name="courseId" required>
+      <select className="rounded-md border px-3 py-2 text-sm outline-none" name="courseId" required>
         <option value="">Curso</option>
         {courses.map((course) => (
           <option key={course.id} value={course.id}>
@@ -132,9 +132,9 @@ function EnrollmentForm({ students, courses }: EnrollmentFormProps) {
           </option>
         ))}
       </select>
-      <input className="rounded-md border px-3 py-2 text-sm" name="startsAt" required type="date" />
-      <input className="rounded-md border px-3 py-2 text-sm" name="expiresAt" type="date" />
-      <select className="rounded-md border px-3 py-2 text-sm" defaultValue="ACTIVE" name="status">
+      <input className="rounded-md border px-3 py-2 text-sm outline-none" name="startsAt" required type="date" />
+      <input className="rounded-md border px-3 py-2 text-sm outline-none" name="expiresAt" type="date" />
+      <select className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue="ACTIVE" name="status">
         <option value="ACTIVE">Ativa</option>
         <option value="EXPIRED">Expirada</option>
         <option value="CANCELED">Cancelada</option>

@@ -15,8 +15,8 @@ export function SubmitButton({ children, destructive = false, confirmMessage }: 
     <button
       className={
         destructive
-          ? "rounded-md border border-destructive px-3 py-2 text-sm text-destructive disabled:opacity-50"
-          : "rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
+          ? "rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-sm text-destructive transition hover:border-destructive hover:bg-surface-hover disabled:opacity-50"
+          : "rounded-md bg-brand-primary px-3 py-2 text-sm text-copy-primary transition hover:bg-brand-primaryHover disabled:opacity-50"
       }
       disabled={pending}
       onClick={(event) => {

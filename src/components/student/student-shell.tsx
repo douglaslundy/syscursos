@@ -18,13 +18,13 @@ export function StudentShell({ user, children }: StudentShellProps) {
   return (
     <div className="min-h-screen bg-background">
       <a
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-card focus:px-4 focus:py-2 focus:text-sm focus:shadow"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:text-copy-primary focus:shadow"
         href="#conteudo"
       >
         Pular para o conteudo
       </a>
 
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r bg-card px-5 py-6 md:flex md:flex-col">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-stroke-subtle bg-surface-elevated px-5 py-6 md:flex md:flex-col">
         <Link aria-label="Ir para meus cursos" className="inline-flex" href="/app">
           <Image
             alt="Sysdoc"
@@ -38,14 +38,14 @@ export function StudentShell({ user, children }: StudentShellProps) {
 
         <StudentDesktopNavigation />
 
-        <div className="mt-auto rounded-md bg-secondary p-4">
-          <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+        <div className="mt-auto rounded-md border border-stroke-subtle bg-surface p-4">
+          <p className="text-xs font-medium uppercase tracking-[0.12em] text-copy-muted">
             Conta conectada
           </p>
-          <p className="mt-2 truncate text-sm font-medium">{user.email}</p>
+          <p className="mt-2 truncate text-sm font-medium text-copy-primary">{user.email}</p>
           <form action={logoutAction} className="mt-4">
             <button
-              className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border bg-card px-3 text-sm font-medium transition hover:bg-muted"
+              className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-stroke-subtle bg-transparent px-3 text-sm font-medium text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
               type="submit"
             >
               <LogOut aria-hidden="true" className="h-4 w-4" />
@@ -55,7 +55,7 @@ export function StudentShell({ user, children }: StudentShellProps) {
         </div>
       </aside>
 
-      <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 border-b border-stroke-subtle bg-surface-elevated/95 backdrop-blur md:hidden">
         <div className="flex min-h-16 items-center justify-between px-4">
           <Link aria-label="Ir para meus cursos" className="inline-flex" href="/app">
             <Image
@@ -70,7 +70,7 @@ export function StudentShell({ user, children }: StudentShellProps) {
           <form action={logoutAction}>
             <button
               aria-label="Sair"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-md border bg-card text-muted-foreground transition hover:bg-muted"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-stroke-subtle bg-transparent text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
               type="submit"
             >
               <LogOut aria-hidden="true" className="h-4 w-4" />

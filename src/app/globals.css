@@ -4,25 +4,40 @@
 
 @layer base {
   :root {
-    --background: 42 33% 98%;
-    --foreground: 206 38% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 206 38% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 206 38% 10%;
-    --primary: 173 78% 26%;
+    --color-primary: #ff4d00;
+    --color-primary-hover: #ff6a2a;
+
+    --bg-main: #0f1115;
+    --bg-elevated: #15181d;
+    --bg-surface: #1a1d21;
+    --bg-surface-hover: #20242a;
+
+    --border-subtle: #2a2f36;
+    --border-strong: #3a4048;
+
+    --text-primary: #ffffff;
+    --text-secondary: #a0a6ad;
+    --text-muted: #6f7680;
+
+    --background: 220 17% 7%;
+    --foreground: 0 0% 100%;
+    --card: 214 12% 12%;
+    --card-foreground: 0 0% 100%;
+    --popover: 214 12% 12%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 18 100% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 36 68% 94%;
-    --secondary-foreground: 206 38% 10%;
-    --muted: 40 24% 92%;
-    --muted-foreground: 206 12% 39%;
-    --accent: 156 56% 91%;
-    --accent-foreground: 174 82% 18%;
+    --secondary: 218 16% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 216 14% 15%;
+    --muted-foreground: 213 7% 65%;
+    --accent: 216 14% 15%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 38 18% 84%;
-    --input: 38 18% 84%;
-    --ring: 173 78% 26%;
+    --border: 214 13% 19%;
+    --input: 214 13% 19%;
+    --ring: 18 100% 50%;
     --radius: 0.5rem;
   }
 
@@ -53,10 +68,38 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply min-h-screen bg-background text-foreground antialiased;
+  }
+
+  input:not([type="hidden"]),
+  select,
+  textarea {
+    @apply border-stroke-subtle bg-surface-elevated text-copy-primary placeholder:text-copy-muted transition-colors duration-200 focus:border-brand-primary focus-visible:border-brand-primary focus-visible:ring-brand-primary;
+  }
+
+  button,
+  a[href] {
+    @apply transition-colors duration-200;
+  }
+
+  button:not(:disabled),
+  a[href] {
+    @apply active:translate-y-px;
+  }
+
+  button:disabled {
+    @apply cursor-not-allowed;
+  }
+
+  button:not(:disabled):hover {
+    @apply border-stroke-strong;
+  }
+
+  a[href]:hover {
+    @apply decoration-brand-primary;
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    @apply outline-none ring-2 ring-brand-primary ring-offset-2 ring-offset-background;
   }
 }

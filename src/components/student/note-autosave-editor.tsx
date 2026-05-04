@@ -98,7 +98,7 @@ export function NoteAutosaveEditor({
         {title}
       </label>
       <textarea
-        className="min-h-56 w-full resize-y rounded-md border bg-background p-3 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="min-h-56 w-full resize-y rounded-md border p-3 text-sm leading-6 outline-none focus-visible:ring-2"
         id={textareaId}
         maxLength={12000}
         onChange={(event) => setContent(event.target.value)}
@@ -108,7 +108,7 @@ export function NoteAutosaveEditor({
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-muted-foreground">{content.length}/12000</span>
         <button
-          className="inline-flex min-h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isPending || content === lastSavedContent}
           onClick={() => save(content)}
           type="button"

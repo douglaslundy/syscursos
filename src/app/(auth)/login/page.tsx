@@ -27,7 +27,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
         <label className="block space-y-2">
           <span className="text-sm font-medium">E-mail</span>
           <input
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border px-3 text-sm outline-none ring-offset-background focus-visible:ring-2"
             name="email"
             type="email"
             autoComplete="email"
@@ -38,7 +38,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
         <label className="block space-y-2">
           <span className="text-sm font-medium">Senha</span>
           <input
-            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full rounded-md border px-3 text-sm outline-none ring-offset-background focus-visible:ring-2"
             name="password"
             type="password"
             autoComplete="current-password"
@@ -50,7 +50,7 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
         {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
         <button
-          className="h-10 w-full rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+          className="h-10 w-full rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
           type="submit"
         >
           Entrar

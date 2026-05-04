@@ -45,7 +45,7 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
             />
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
-                className="rounded-md border px-3 py-2"
+                className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
                 href={`/admin/students/${student.id}/courses`}
               >
                 Cursos ({student._count.enrollments})
@@ -95,19 +95,19 @@ function StudentForm({ student }: StudentFormProps) {
         </>
       ) : null}
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.name}
         name="name"
         placeholder="Nome"
       />
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.email}
         name="email"
         placeholder="email@exemplo.com"
       />
       <select
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.status ?? "ACTIVE"}
         name="status"
       >
@@ -116,13 +116,13 @@ function StudentForm({ student }: StudentFormProps) {
       </select>
       <SubmitButton>{student ? "Salvar" : "Criar"}</SubmitButton>
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.document}
         name="document"
         placeholder="Documento"
       />
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.phone}
         name="phone"
         placeholder="Telefone"

@@ -17,17 +17,17 @@ type AdminShellProps = Readonly<{
 
 export function AdminShell({ user, children }: AdminShellProps) {
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="border-b bg-background">
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-stroke-subtle bg-surface-elevated">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">Admin</p>
-            <h1 className="text-xl font-semibold tracking-normal">SysCursos</h1>
+            <p className="text-xs font-medium uppercase text-copy-muted">Admin</p>
+            <h1 className="text-xl font-semibold tracking-normal text-copy-primary">SysCursos</h1>
           </div>
           <nav className="flex flex-wrap gap-2">
             {navItems.map((item) => (
               <Link
-                className="rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="rounded-md border border-transparent px-3 py-2 text-sm text-copy-secondary transition duration-200 hover:border-stroke-subtle hover:bg-surface-hover hover:text-copy-primary"
                 href={item.href}
                 key={item.href}
               >
@@ -36,7 +36,10 @@ export function AdminShell({ user, children }: AdminShellProps) {
             ))}
           </nav>
           <form action={logoutAction}>
-            <button className="rounded-md border px-3 py-2 text-sm" type="submit">
+            <button
+              className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-sm text-copy-secondary transition duration-200 hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
+              type="submit"
+            >
               Sair
             </button>
           </form>

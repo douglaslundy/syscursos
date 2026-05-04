@@ -16,7 +16,7 @@ export default function StudentError({ error, reset }: StudentErrorProps) {
       </p>
       <p className="sr-only">{error.message}</p>
       <button
-        className="mt-5 inline-flex min-h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+        className="mt-5 inline-flex min-h-10 items-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
         onClick={reset}
         type="button"
       >

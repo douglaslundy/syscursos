@@ -48,7 +48,7 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
             />
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
-                className="rounded-md border px-3 py-2"
+                className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
                 href={`/admin/modules/${module.id}/lessons`}
               >
                 Aulas ({module._count.lessons})
@@ -91,20 +91,20 @@ function ModuleForm({ courseId, module }: ModuleFormProps) {
       <input name="courseId" type="hidden" value={courseId} />
       {module ? <input name="id" type="hidden" value={module.id} /> : null}
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={module?.title}
         name="title"
         placeholder="Titulo"
       />
       <input
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={module?.position ?? 1}
         min={1}
         name="position"
         type="number"
       />
       <select
-        className="rounded-md border px-3 py-2 text-sm"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={module?.status ?? "ACTIVE"}
         name="status"
       >
@@ -113,7 +113,7 @@ function ModuleForm({ courseId, module }: ModuleFormProps) {
       </select>
       <SubmitButton>{module ? "Salvar" : "Criar"}</SubmitButton>
       <textarea
-        className="rounded-md border px-3 py-2 text-sm md:col-span-3"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
         defaultValue={module?.description}
         name="description"
         placeholder="Descricao"
