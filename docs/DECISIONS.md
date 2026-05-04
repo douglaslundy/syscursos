@@ -421,3 +421,32 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - Falhas de sessao protegidas contra tela de erro generica
+
+Decisao:
+
+Tratar excecoes de Supabase e Prisma em `getCurrentUser`, `requireRole` e `middleware`, retornando estado de erro controlado e redirecionando rotas protegidas para `/login?error=server`.
+
+Motivo:
+
+Em producao, uma falha de infraestrutura durante a resolucao da sessao ou do usuario interno pode ocorrer fora do fluxo de login, por exemplo apos o redirect para `/admin` ou `/app`. Sem tratamento, o Next.js exibe `Application error` com digest, sem orientar o usuario.
+
+Alternativas consideradas:
+
+Deixar a excecao subir para o error boundary, redirecionar sempre para `/login` sem distinguir erro tecnico, ou permitir acesso sem confirmar usuario interno.
+
+Impacto:
+
+O acesso continua bloqueado quando a autorizacao server-side nao pode ser confirmada. O usuario recebe uma mensagem segura no login, enquanto o erro tecnico fica registrado nos logs da Vercel.
+
+Arquivos afetados:
+
+- `middleware.ts`
+- `src/server/auth/types.ts`
+- `src/server/auth/session.ts`
+- `src/server/auth/guards.ts`
+- `src/server/actions/auth-actions.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

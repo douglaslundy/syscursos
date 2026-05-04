@@ -6,32 +6,47 @@ import type { AuthenticatedUser, AuthResult } from "@/server/auth/types";
 
 export const getCurrentUser = cache(async (): Promise<AuthResult> => {
   const supabase = createSupabaseServerClient();
-  const {
-    data: { user: supabaseUser },
-  } = await supabase.auth.getUser();
+  let supabaseUser;
+
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    supabaseUser = user;
+  } catch (error) {
+    console.error("Failed to load Supabase user session.", error);
+    return { ok: false, reason: "SERVER_ERROR" };
+  }
 
   if (!supabaseUser) {
     return { ok: false, reason: "UNAUTHENTICATED" };
   }
 
-  const appUser = await prisma.user.findFirst({
-    where: {
-      OR: [{ authUserId: supabaseUser.id }, { email: supabaseUser.email ?? "" }],
-    },
-    select: {
-      id: true,
-      authUserId: true,
-      email: true,
-      name: true,
-      role: true,
-      status: true,
-      studentProfile: {
-        select: {
-          id: true,
+  let appUser;
+
+  try {
+    appUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ authUserId: supabaseUser.id }, { email: supabaseUser.email ?? "" }],
+      },
+      select: {
+        id: true,
+        authUserId: true,
+        email: true,
+        name: true,
+        role: true,
+        status: true,
+        studentProfile: {
+          select: {
+            id: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Failed to load application user session.", error);
+    return { ok: false, reason: "SERVER_ERROR" };
+  }
 
   if (!appUser) {
     return { ok: false, reason: "USER_NOT_FOUND" };

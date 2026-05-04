@@ -14,10 +14,19 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
     request,
   });
-  const supabase = createSupabaseMiddlewareClient(request, response);
-  const {
-    data: { user: supabaseUser },
-  } = await supabase.auth.getUser();
+  let supabase;
+  let supabaseUser;
+
+  try {
+    supabase = createSupabaseMiddlewareClient(request, response);
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    supabaseUser = user;
+  } catch (error) {
+    console.error("Failed to resolve Supabase middleware session.", error);
+    return handleMiddlewareFailure(request, response);
+  }
 
   const user = await resolveAccessContext(
     supabase,
@@ -38,6 +47,14 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+function handleMiddlewareFailure(request: NextRequest, response: NextResponse) {
+  if (request.nextUrl.pathname === "/login") {
+    return response;
+  }
+
+  return NextResponse.redirect(new URL("/login?error=server", request.url));
+}
+
 async function resolveAccessContext(
   supabase: SupabaseClient,
   authUserId: string | null,
@@ -53,7 +70,12 @@ async function resolveAccessContext(
         .from("users")
         .select("role,status")
         .eq("email", email ?? "");
-  const { data: user } = await query.limit(1).maybeSingle();
+  const { data: user, error } = await query.limit(1).maybeSingle();
+
+  if (error) {
+    console.error("Failed to resolve middleware access context.", error);
+    return null;
+  }
 
   return user;
 }

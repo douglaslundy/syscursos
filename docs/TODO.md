@@ -239,3 +239,15 @@
 - [x] Executar testes
 - [x] Executar build
 - [x] Commitar e enviar ao GitHub
+
+## Ajustes de Erros Server-Side em Producao
+
+- [x] Tratar falha de sessao Supabase no servidor
+- [x] Tratar falha de consulta Prisma ao carregar usuario atual
+- [x] Tratar falha de sessao no middleware
+- [x] Redirecionar rotas protegidas para `/login?error=server` em erro de infraestrutura
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
+- [x] Commitar e enviar ao GitHub

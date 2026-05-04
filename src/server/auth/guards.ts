@@ -8,6 +8,10 @@ export async function requireRole(role: UserRole) {
   const result = await getCurrentUser();
 
   if (!result.ok) {
+    if (result.reason === "SERVER_ERROR") {
+      redirect("/login?error=server");
+    }
+
     redirect("/login");
   }
 

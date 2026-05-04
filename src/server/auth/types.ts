@@ -17,5 +17,5 @@ export type AuthResult =
     }
   | {
       ok: false;
-      reason: "UNAUTHENTICATED" | "USER_NOT_FOUND" | "INACTIVE";
+      reason: "UNAUTHENTICATED" | "USER_NOT_FOUND" | "INACTIVE" | "SERVER_ERROR";
     };

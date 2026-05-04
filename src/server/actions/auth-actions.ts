@@ -19,7 +19,16 @@ export async function loginAction(formData: FormData) {
   }
 
   const supabase = createSupabaseServerClient();
-  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+  let authResult;
+
+  try {
+    authResult = await supabase.auth.signInWithPassword(parsed.data);
+  } catch (error) {
+    console.error("Failed to authenticate with Supabase.", error);
+    redirect("/login?error=server");
+  }
+
+  const { data, error } = authResult;
 
   if (error || !data.user?.email) {
     redirect("/login?error=invalid_credentials");

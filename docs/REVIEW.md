@@ -951,3 +951,43 @@ Se a Vercel estiver sem uma das chaves publicas aceitas, o erro fica mais claro 
 ### Pendencias
 
 - Confirmar no log da Vercel a excecao real associada ao digest, caso o erro persista.
+
+---
+
+### 2026-05-04 - Protecao contra erro generico de sessao em producao
+
+### Arquivos criados ou alterados
+
+- `middleware.ts`
+- `src/server/auth/types.ts`
+- `src/server/auth/session.ts`
+- `src/server/auth/guards.ts`
+- `src/server/actions/auth-actions.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- `getCurrentUser` agora captura falhas de Supabase Auth e Prisma.
+- `requireRole` redireciona erro tecnico para `/login?error=server`.
+- Middleware captura falhas de leitura de sessao e de contexto de acesso.
+- Rotas protegidas nao devem mais exibir `Application error` por falhas de infraestrutura de autenticacao/autorizacao.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 51 testes.
+- `npm run build`: aprovado.
+
+### Pendencias
+
+- Validar no deploy da Vercel.
