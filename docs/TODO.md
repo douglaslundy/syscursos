@@ -225,3 +225,17 @@
 - [x] Executar testes
 - [x] Executar build
 - [x] Commitar e enviar ao GitHub
+
+## Ajustes de Login em Producao
+
+- [x] Aceitar `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` como fallback da chave publica Supabase
+- [x] Manter compatibilidade com `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- [x] Tratar falha de consulta Prisma no login com erro controlado
+- [x] Adicionar mensagem segura para erro temporario de login
+- [x] Criar testes para variaveis Supabase
+- [x] Criar teste para falha de banco durante login
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
+- [x] Commitar e enviar ao GitHub

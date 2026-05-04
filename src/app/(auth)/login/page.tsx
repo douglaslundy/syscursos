@@ -11,6 +11,7 @@ const errorMessages: Record<string, string> = {
   invalid_credentials: "Credenciais invalidas.",
   forbidden: "Usuario sem permissao ativa.",
   inactive: "Usuario inativo.",
+  server: "Nao foi possivel concluir o login agora. Tente novamente em instantes.",
 };
 
 export default function LoginPage({ searchParams }: LoginPageProps) {

@@ -1,5 +1,6 @@
 "use server";
 
+import type { UserRole, UserStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/db/prisma";
@@ -24,16 +25,24 @@ export async function loginAction(formData: FormData) {
     redirect("/login?error=invalid_credentials");
   }
 
-  const appUser = await prisma.user.findFirst({
-    where: {
-      OR: [{ authUserId: data.user.id }, { email: data.user.email }],
-    },
-    select: {
-      id: true,
-      role: true,
-      status: true,
-    },
-  });
+  let appUser: { id: string; role: UserRole; status: UserStatus } | null;
+
+  try {
+    appUser = await prisma.user.findFirst({
+      where: {
+        OR: [{ authUserId: data.user.id }, { email: data.user.email }],
+      },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to load application user during login.", error);
+    await supabase.auth.signOut();
+    redirect("/login?error=server");
+  }
 
   if (!appUser || appUser.status !== "ACTIVE") {
     await supabase.auth.signOut();

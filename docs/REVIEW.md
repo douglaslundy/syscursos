@@ -902,3 +902,52 @@ O log da Vercel mostrou que o deploy estava clonando o commit antigo `a510386`, 
 ### Proxima etapa recomendada
 
 Executar novo deploy na Vercel apos o push e confirmar que o log mostra commit posterior a `a510386`.
+
+---
+
+### 2026-05-04 - Correcao de erro server-side no login em producao
+
+### Arquivos criados ou alterados
+
+- `.env.example`
+- `src/lib/supabase/env.ts`
+- `src/lib/supabase/server.ts`
+- `src/lib/supabase/middleware.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/app/(auth)/login/page.tsx`
+- `src/tests/unit/supabase-env.test.ts`
+- `src/tests/integration/auth-actions.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Helper central para ler URL e chave publica do Supabase.
+- Fallback de `NEXT_PUBLIC_SUPABASE_ANON_KEY` para `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- Tratamento controlado para erro de Prisma ao buscar o usuario interno durante login.
+- Mensagem segura para erro temporario de login.
+- Testes unitarios do helper de ambiente Supabase.
+- Teste de integracao para falha de banco no login.
+
+### Resultado esperado
+
+Se a Vercel estiver sem uma das chaves publicas aceitas, o erro fica mais claro no log. Se o Supabase Auth autenticar mas o banco estiver indisponivel ou com URL incorreta, o usuario volta para `/login?error=server` em vez de receber uma tela generica de `Application error`.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 51 testes.
+- `npm run build`: aprovado, sem warnings.
+
+### Pendencias
+
+- Confirmar no log da Vercel a excecao real associada ao digest, caso o erro persista.

@@ -389,3 +389,35 @@ Arquivos afetados:
 - `vitest.config.mts`
 - `docs/DECISIONS.md`
 - `docs/REVIEW.md`
+
+## 2026-05-04 - Login resiliente a configuracao Supabase e falha de banco
+
+Decisao:
+
+Criar helper central para variaveis Supabase, aceitando `NEXT_PUBLIC_SUPABASE_ANON_KEY` ou `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, e tratar falhas de leitura do usuario interno durante login com redirecionamento controlado para `/login?error=server`.
+
+Motivo:
+
+Em producao, o login pode falhar por diferenca entre nomenclaturas das chaves atuais do Supabase ou por indisponibilidade/configuracao incorreta do banco no momento em que o Prisma busca o usuario interno. Sem tratamento, o Next.js exibe apenas `Application error` com digest, dificultando recuperacao do usuario e diagnostico.
+
+Alternativas consideradas:
+
+Exigir somente `NEXT_PUBLIC_SUPABASE_ANON_KEY`, expor a mensagem tecnica na UI, ou ignorar o erro de banco e permitir login sem usuario interno.
+
+Impacto:
+
+O sistema continua exigindo usuario interno ativo e autorizacao server-side, mas passa a falhar de forma controlada no login. O erro tecnico segue registrado no log do servidor, sem expor detalhes sensiveis ao usuario.
+
+Arquivos afetados:
+
+- `.env.example`
+- `src/lib/supabase/env.ts`
+- `src/lib/supabase/server.ts`
+- `src/lib/supabase/middleware.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/app/(auth)/login/page.tsx`
+- `src/tests/unit/supabase-env.test.ts`
+- `src/tests/integration/auth-actions.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

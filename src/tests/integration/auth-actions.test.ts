@@ -90,6 +90,26 @@ describe("loginAction", () => {
     );
     expect(signOutMock).toHaveBeenCalledOnce();
   });
+
+  it("redirects to a controlled login error when the application database is unavailable", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const { loginAction } = await import("@/server/actions/auth-actions");
+    signInWithPasswordMock.mockResolvedValue({
+      data: { user: { id: "auth-admin", email: "admin@example.com" } },
+      error: null,
+    });
+    findFirstMock.mockRejectedValue(new Error("database unavailable"));
+
+    await expect(loginAction(loginForm("admin@example.com"))).rejects.toThrow(
+      "REDIRECT:/login?error=server",
+    );
+    expect(signOutMock).toHaveBeenCalledOnce();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Failed to load application user during login.",
+      expect.any(Error),
+    );
+    consoleErrorSpy.mockRestore();
+  });
 });
 
 function loginForm(email: string) {
