@@ -304,3 +304,32 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - UI da area do aluno com identidade proprietaria
+
+Decisao:
+
+Revisar a area do aluno com shell responsivo, sidebar desktop, bottom navigation mobile, cards de curso, skeletons, estados vazios e erro recuperavel, usando a logo proprietaria autorizada de `sysdoc.vercel.app`.
+
+Motivo:
+
+A etapa exige uma interface moderna de area de membros, original, responsiva e acessivel, sem copiar marca, textos ou assets de terceiros.
+
+Alternativas consideradas:
+
+Manter header simples, usar uma biblioteca de dashboard pronta, criar identidade visual inspirada em marketplace de cursos e carregar logo como `<img>` sem configuracao de imagem.
+
+Impacto:
+
+O aluno ganha navegacao persistente e clara em desktop e mobile. A logo remota foi configurada em `next.config.mjs` para uso com `next/image`. A paleta global foi ajustada para uma identidade propria com contraste adequado e sem dependencia de assets proibidos.
+
+Arquivos afetados:
+
+- `next.config.mjs`
+- `src/app/globals.css`
+- `src/app/app/**`
+- `src/components/student/**`
+- `docs/TODO.md`
+- `docs/UI_UX.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

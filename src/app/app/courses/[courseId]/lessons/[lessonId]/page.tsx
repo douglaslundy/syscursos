@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2 } from "lucide-react";
 
 import { CourseBlocked } from "@/components/student/course-blocked";
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
@@ -28,17 +29,22 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
 
   return (
     <section>
-      <Link className="text-sm text-muted-foreground" href={`/app/courses/${courseId}`}>
+      <Link
+        className="text-sm font-medium text-muted-foreground hover:text-primary"
+        href={`/app/courses/${courseId}`}
+      >
         Voltar para o curso
       </Link>
-      <div className="mt-2 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm font-medium text-primary">
             {data.lesson.module.course.title} / {data.lesson.module.title}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal">{data.lesson.title}</h1>
+          <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-4xl">
+            {data.lesson.title}
+          </h1>
         </div>
-        <div className="rounded-md border p-4">
+        <div className="rounded-md border bg-card p-5 shadow-sm">
           <ProgressBar
             label={`${data.progress.completedLessons}/${data.progress.totalLessons} aulas concluidas`}
             percentage={data.progress.percentage}
@@ -47,12 +53,13 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
       </div>
 
       {searchParams?.status === "completed" ? (
-        <div className="mt-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div className="mt-5 flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
           Aula marcada como concluida.
         </div>
       ) : null}
 
-      <div className="mt-6 overflow-hidden rounded-md border bg-black">
+      <div className="mt-6 overflow-hidden rounded-md border bg-black shadow-sm">
         {data.embedUrl ? (
           <iframe
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -63,7 +70,7 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
             title={data.lesson.title}
           />
         ) : (
-          <div className="flex aspect-video items-center justify-center bg-muted text-sm text-muted-foreground">
+          <div className="flex aspect-video items-center justify-center bg-muted px-4 text-center text-sm text-muted-foreground">
             Link do YouTube invalido.
           </div>
         )}
@@ -77,7 +84,7 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
         <input name="courseId" type="hidden" value={courseId} />
         <input name="lessonId" type="hidden" value={lessonId} />
         <button
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={data.isCompleted}
           type="submit"
         >

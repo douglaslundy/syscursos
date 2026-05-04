@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { CheckCircle2, Circle, PlayCircle } from "lucide-react";
 
 import { CourseBlocked } from "@/components/student/course-blocked";
+import { EmptyState } from "@/components/student/empty-state";
 import { ProgressBar } from "@/components/student/progress-bar";
 import { getStudentCourse } from "@/server/services/student-service";
 import { studentCourseParamsSchema } from "@/server/validators/student";
@@ -19,17 +21,20 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
 
   return (
     <section>
-      <Link className="text-sm text-muted-foreground" href="/app">
+      <Link className="text-sm font-medium text-muted-foreground hover:text-primary" href="/app">
         Voltar para cursos
       </Link>
-      <div className="mt-2 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div>
-          <h1 className="text-2xl font-semibold tracking-normal">{data.course.title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="text-sm font-medium text-primary">Curso</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-4xl">
+            {data.course.title}
+          </h1>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
             {data.course.description ?? "Conteudo liberado para seu estudo."}
           </p>
         </div>
-        <div className="rounded-md border p-4">
+        <div className="rounded-md border bg-card p-5 shadow-sm">
           <ProgressBar
             label={`${data.progress.completedLessons}/${data.progress.totalLessons} aulas concluidas`}
             percentage={data.progress.percentage}
@@ -39,15 +44,24 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
 
       <div className="mt-8 space-y-4">
         {data.modules.length === 0 ? (
-          <div className="rounded-md border p-6 text-sm text-muted-foreground">
-            Nenhum modulo ativo disponivel.
-          </div>
+          <EmptyState
+            description="Assim que novos modulos ativos forem liberados, eles aparecerao neste curso."
+            title="Nenhum modulo ativo"
+          />
         ) : (
           data.modules.map((module) => (
-            <section className="rounded-md border bg-background p-4" key={module.id}>
-              <h2 className="font-semibold tracking-normal">
-                {module.position}. {module.title}
-              </h2>
+            <section className="rounded-md border bg-card p-5 shadow-sm" key={module.id}>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                    Modulo {module.position}
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-normal">{module.title}</h2>
+                </div>
+                <span className="rounded-md bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                  {module.lessons.length} aulas
+                </span>
+              </div>
               <div className="mt-4 divide-y">
                 {module.lessons.length === 0 ? (
                   <div className="py-3 text-sm text-muted-foreground">
@@ -59,14 +73,27 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
 
                     return (
                       <Link
-                        className="flex items-center justify-between gap-4 py-3 text-sm hover:text-primary"
+                        className="flex min-h-14 items-center justify-between gap-4 rounded-md px-2 py-3 text-sm transition hover:bg-muted/70 hover:text-primary"
                         href={`/app/courses/${data.course.id}/lessons/${lesson.id}`}
                         key={lesson.id}
                       >
-                        <span>
-                          {lesson.position}. {lesson.title}
+                        <span className="flex items-center gap-3">
+                          {completed ? (
+                            <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-primary" />
+                          ) : (
+                            <PlayCircle
+                              aria-hidden="true"
+                              className="h-4 w-4 text-muted-foreground"
+                            />
+                          )}
+                          <span>
+                            {lesson.position}. {lesson.title}
+                          </span>
                         </span>
-                        <span className="rounded-md border px-2 py-1 text-xs">
+                        <span className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2 py-1 text-xs">
+                          {!completed ? (
+                            <Circle aria-hidden="true" className="h-2 w-2 fill-current" />
+                          ) : null}
                           {completed ? "Concluida" : "Pendente"}
                         </span>
                       </Link>

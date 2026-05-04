@@ -528,3 +528,73 @@ Iniciar Fase 7 - Cadernos, mantendo isolamento de aluno e validacao server-side.
 ### Proxima etapa recomendada
 
 Iniciar Fase 8 - UI/UX, revisando navegacao do aluno, responsividade e estados visuais.
+
+---
+
+### 2026-05-04 - Fase 8: UI/UX da area do aluno
+
+### Arquivos criados ou alterados
+
+- `next.config.mjs`
+- `src/app/globals.css`
+- `src/app/app/page.tsx`
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- `src/app/app/notebooks/page.tsx`
+- `src/app/app/loading.tsx`
+- `src/app/app/error.tsx`
+- `src/components/student/student-shell.tsx`
+- `src/components/student/student-navigation.tsx`
+- `src/components/student/course-card.tsx`
+- `src/components/student/empty-state.tsx`
+- `src/components/student/skeleton.tsx`
+- `src/components/student/course-blocked.tsx`
+- `src/components/student/lesson-note-editor.tsx`
+- `src/components/student/progress-bar.tsx`
+- `docs/TODO.md`
+- `docs/UI_UX.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Sidebar desktop para a area do aluno.
+- Bottom navigation mobile.
+- Header mobile com logo autorizada.
+- Cards de curso responsivos com status, progresso e expiracao.
+- Melhor hierarquia visual nas paginas de cursos, aulas e cadernos.
+- Skeleton loading.
+- Estado vazio reutilizavel.
+- Error boundary da area do aluno.
+- Melhorias de acessibilidade em navegacao, formularios, progresso e autosave.
+- Paleta visual proprietaria e contraste revisado.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado apos reexecucao isolada; a primeira tentativa correu em paralelo com o build enquanto `.next/types` era regenerado.
+- `npm run test`: aprovado, 26 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- A logo e carregada remotamente de `sysdoc.vercel.app`; indisponibilidade desse dominio afeta apenas exibicao visual da marca.
+- A revisao visual foi feita por codigo e build local, sem validacao manual em navegador com dados reais.
+- As telas continuam dependentes de banco Supabase real com migrations e RLS aplicadas.
+
+### Pendencias
+
+- Validar visualmente em navegador com dados reais em mobile e desktop.
+- Evoluir testes E2E e acessibilidade automatizada na fase de testes.
+- Aplicar migrations e RLS pendentes no Supabase real.
+
+### Proxima etapa recomendada
+
+Iniciar Fase 9 - Testes, priorizando fluxos E2E de aluno, cadernos, expiracao de matricula e autorizacao.

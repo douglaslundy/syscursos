@@ -10,7 +10,14 @@ export function ProgressBar({ percentage, label }: ProgressBarProps) {
         <span className="text-muted-foreground">{label ?? "Progresso"}</span>
         <span className="font-medium">{percentage}%</span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-muted">
+      <div
+        aria-label={label ?? "Progresso"}
+        aria-valuemax={100}
+        aria-valuemin={0}
+        aria-valuenow={percentage}
+        className="h-2 overflow-hidden rounded-full bg-muted"
+        role="progressbar"
+      >
         <div className="h-full bg-primary" style={{ width: `${percentage}%` }} />
       </div>
     </div>

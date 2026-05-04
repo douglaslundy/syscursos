@@ -143,16 +143,20 @@
 
 ## Fase 8 - UI/UX
 
-- [ ] Sidebar desktop
-- [ ] Bottom navigation mobile
-- [ ] Cards de curso
-- [ ] Skeleton loading
-- [ ] Estados vazios
-- [ ] Estados de erro
-- [ ] Responsividade
-- [ ] Acessibilidade
-- [ ] Revisao visual
-- [ ] Confirmar identidade visual original
+- [x] Sidebar desktop
+- [x] Bottom navigation mobile
+- [x] Cards de curso
+- [x] Skeleton loading
+- [x] Estados vazios
+- [x] Estados de erro
+- [x] Responsividade
+- [x] Acessibilidade
+- [x] Revisao visual
+- [x] Confirmar identidade visual original
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
 
 ## Fase 9 - Testes
 

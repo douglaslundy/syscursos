@@ -68,25 +68,33 @@ export function LessonNoteEditor({ courseId, lessonId, initialContent }: LessonN
   }, [content, lastSavedContent, save]);
 
   return (
-    <section className="mt-6 rounded-md border bg-background p-4">
+    <section className="mt-6 rounded-md border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-semibold tracking-normal">Anotacoes da aula</h2>
-          <p className="text-sm text-muted-foreground">Autosave ativo enquanto voce escreve.</p>
+          <h2 className="text-lg font-semibold tracking-normal">Anotacoes da aula</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Autosave ativo enquanto voce escreve.
+          </p>
         </div>
-        <span className="text-xs text-muted-foreground">{isPending ? "Salvando..." : message}</span>
+        <span aria-live="polite" className="text-xs text-muted-foreground">
+          {isPending ? "Salvando..." : message}
+        </span>
       </div>
+      <label className="sr-only" htmlFor="lesson-note-content">
+        Anotacoes da aula
+      </label>
       <textarea
-        className="min-h-48 w-full rounded-md border bg-background p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="min-h-56 w-full resize-y rounded-md border bg-background p-3 text-sm leading-6 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        id="lesson-note-content"
         maxLength={12000}
         onChange={(event) => setContent(event.target.value)}
         placeholder="Escreva seu resumo desta aula..."
         value={content}
       />
-      <div className="mt-3 flex items-center justify-between">
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-muted-foreground">{content.length}/12000</span>
         <button
-          className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+          className="inline-flex min-h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isPending || content === lastSavedContent}
           onClick={() => save(content)}
           type="button"

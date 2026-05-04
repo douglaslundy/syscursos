@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Search } from "lucide-react";
 
+import { EmptyState } from "@/components/student/empty-state";
 import { getStudentNotebook } from "@/server/services/student-service";
 import { notebookQuerySchema } from "@/server/validators/student";
 
@@ -16,34 +18,47 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
 
   return (
     <section>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-normal">Meus cadernos</h1>
-        <p className="text-sm text-muted-foreground">
-          Consulte suas anotacoes agrupadas por modulo e aula.
+      <div className="mb-8">
+        <p className="text-sm font-medium text-primary">Anotacoes</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-normal md:text-4xl">Meus cadernos</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+          Consulte suas anotacoes agrupadas por curso, modulo e aula.
         </p>
       </div>
 
-      <form className="mb-6 grid gap-3 rounded-md border bg-background p-4 md:grid-cols-[1fr_1fr_auto]">
-        <select
-          className="rounded-md border px-3 py-2 text-sm"
-          defaultValue={notebook.selectedCourseId ?? ""}
-          name="courseId"
-        >
-          {notebook.courseOptions.length === 0 ? <option value="">Nenhum curso</option> : null}
-          {notebook.courseOptions.map((course) => (
-            <option key={course.id} value={course.id}>
-              {course.title}
-            </option>
-          ))}
-        </select>
-        <input
-          className="rounded-md border px-3 py-2 text-sm"
-          defaultValue={notebook.query}
-          name="query"
-          placeholder="Buscar nas anotacoes"
-        />
+      <form className="mb-6 grid gap-3 rounded-md border bg-card p-4 shadow-sm md:grid-cols-[1fr_1fr_auto]">
+        <label className="grid gap-2 text-sm font-medium">
+          Curso
+          <select
+            className="min-h-11 rounded-md border bg-background px-3 text-sm"
+            defaultValue={notebook.selectedCourseId ?? ""}
+            name="courseId"
+          >
+            {notebook.courseOptions.length === 0 ? <option value="">Nenhum curso</option> : null}
+            {notebook.courseOptions.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm font-medium">
+          Buscar
+          <span className="relative">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              className="min-h-11 w-full rounded-md border bg-background pl-9 pr-3 text-sm"
+              defaultValue={notebook.query}
+              name="query"
+              placeholder="Buscar nas anotacoes"
+            />
+          </span>
+        </label>
         <button
-          className="rounded-md bg-primary px-4 text-sm text-primary-foreground"
+          className="min-h-11 self-end rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
           type="submit"
         >
           Buscar
@@ -51,19 +66,21 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
       </form>
 
       {notebook.groups.length === 0 ? (
-        <div className="rounded-md border p-6 text-sm text-muted-foreground">
-          Nenhuma anotacao encontrada para este curso.
-        </div>
+        <EmptyState
+          description="Crie anotacoes nas aulas deste curso para montar seu caderno automaticamente."
+          title="Nenhuma anotacao encontrada"
+        />
       ) : (
         <div className="space-y-5">
           {notebook.groups.map((group) => (
-            <section className="rounded-md border bg-background p-4" key={group.moduleId}>
-              <h2 className="font-semibold tracking-normal">
-                {group.modulePosition}. {group.moduleTitle}
-              </h2>
+            <section className="rounded-md border bg-card p-5 shadow-sm" key={group.moduleId}>
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                Modulo {group.modulePosition}
+              </p>
+              <h2 className="mt-1 text-lg font-semibold tracking-normal">{group.moduleTitle}</h2>
               <div className="mt-4 space-y-3">
                 {group.notes.map((note) => (
-                  <article className="rounded-md border p-3" key={note.id}>
+                  <article className="rounded-md border bg-background p-4" key={note.id}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <Link
                         className="font-medium hover:text-primary"
