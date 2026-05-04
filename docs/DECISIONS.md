@@ -164,3 +164,43 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - Autenticacao Supabase com RBAC server-side
+
+Decisao:
+
+Implementar autenticacao com Supabase Auth via `@supabase/ssr`, manter RBAC no servidor com perfis `ADMIN` e `STUDENT`, proteger `/admin` e `/app` no middleware e repetir autorizacao critica com guards server-side.
+
+Motivo:
+
+Middleware melhora a experiencia e bloqueia acesso cedo, mas nao deve ser a unica barreira de seguranca. Guards server-side mantem a regra critica proxima da renderizacao protegida e reduzem risco de bypass por chamada direta.
+
+Alternativas consideradas:
+
+Confiar apenas no middleware; confiar apenas no frontend; usar autenticacao customizada; usar service role key nos fluxos de usuario.
+
+Impacto:
+
+Login e logout passam por Server Actions, inputs sao validados com Zod, usuarios internos precisam existir e estar ativos, e cada perfil e redirecionado para sua area. RLS foi criada como migration SQL, mas ainda depende de aplicacao em Supabase real.
+
+Arquivos afetados:
+
+- `middleware.ts`
+- `src/lib/supabase/server.ts`
+- `src/lib/supabase/middleware.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/server/auth/session.ts`
+- `src/server/auth/guards.ts`
+- `src/server/auth/schemas.ts`
+- `src/server/auth/types.ts`
+- `src/server/permissions/rbac.ts`
+- `src/app/(auth)/login/page.tsx`
+- `src/app/admin/page.tsx`
+- `src/app/app/page.tsx`
+- `prisma/migrations/20260504130000_auth_rls_policies/migration.sql`
+- `src/tests/unit/rbac.test.ts`
+- `src/tests/unit/login-schema.test.ts`
+- `docs/SECURITY.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

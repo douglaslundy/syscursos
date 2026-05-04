@@ -228,3 +228,80 @@ Nao foram implementadas autenticacao, RLS, services, repositories, Server Action
 ### Proxima etapa recomendada
 
 Configurar Supabase real e aplicar a migration inicial antes de iniciar autenticacao e seguranca.
+
+---
+
+### 2026-05-04 - Fase 4: Autenticacao e seguranca base
+
+### Arquivos criados ou alterados
+
+- `package.json`
+- `package-lock.json`
+- `middleware.ts`
+- `src/lib/supabase/server.ts`
+- `src/lib/supabase/middleware.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/server/auth/session.ts`
+- `src/server/auth/guards.ts`
+- `src/server/auth/schemas.ts`
+- `src/server/auth/types.ts`
+- `src/server/permissions/rbac.ts`
+- `src/app/(auth)/login/page.tsx`
+- `src/app/admin/page.tsx`
+- `src/app/app/page.tsx`
+- `prisma/migrations/20260504130000_auth_rls_policies/migration.sql`
+- `src/tests/unit/rbac.test.ts`
+- `src/tests/unit/login-schema.test.ts`
+- `docs/SECURITY.md`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Supabase Auth com `@supabase/ssr`.
+- Login via Server Action.
+- Logout via Server Action.
+- Leitura server-side de sessao.
+- RBAC com `ADMIN` e `STUDENT`.
+- Middleware protegendo `/admin`, `/app` e redirecionando `/login`.
+- Guards server-side por perfil.
+- Validacao Zod para login.
+- Policies RLS em migration SQL.
+- Testes unitarios de autorizacao e validacao.
+
+Nao foram implementados CRUDs, dashboard funcional, cadastro de usuarios no Supabase Auth, recuperacao de senha, rate limiting externo ou telas finais.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+- `npm run prisma:migrate -- --name auth_rls_policies`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 10 testes.
+- `npm run build`: aprovado.
+- `npm run prisma:migrate -- --name auth_rls_policies`: bloqueado por ausencia de banco Postgres acessivel em `localhost:5432` ao usar placeholder local.
+
+### Riscos encontrados
+
+- RLS foi criada, mas ainda nao aplicada em Supabase real porque nao ha `.env` local com `DATABASE_URL` e `DIRECT_URL`.
+- O middleware consulta a tabela `users` via Supabase e depende das policies RLS aplicadas para operar em ambiente real.
+- Login depende de usuario existir tanto no Supabase Auth quanto na tabela interna `users`.
+- Ainda nao ha rate limiting dedicado para login.
+
+### Pendencias
+
+- Criar usuarios reais no Supabase Auth e vincular `users.auth_user_id`.
+- Aplicar migrations pendentes em Supabase.
+- Validar RLS com dados reais de admin e aluno.
+- Implementar rate limiting ou protecao equivalente no deploy.
+
+### Proxima etapa recomendada
+
+Aplicar as migrations em Supabase real e validar login com um usuario `ADMIN` e um usuario `STUDENT` antes de iniciar os CRUDs administrativos.

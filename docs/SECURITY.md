@@ -51,6 +51,78 @@ Pode acessar `/app` e:
 - `/login`: deve redirecionar usuarios autenticados para a area correta.
 - Rotas inexistentes ou nao autorizadas nao devem revelar existencia de recursos privados.
 
+## Implementacao atual
+
+### Supabase Auth
+
+A autenticacao usa Supabase Auth via `@supabase/ssr`.
+
+Arquivos principais:
+
+- `src/lib/supabase/server.ts`: cliente Supabase para Server Components e Server Actions.
+- `src/lib/supabase/middleware.ts`: cliente Supabase para middleware.
+- `src/server/actions/auth-actions.ts`: login e logout.
+- `src/server/auth/session.ts`: leitura server-side da sessao autenticada.
+- `src/server/auth/guards.ts`: guard server-side por perfil.
+- `middleware.ts`: protecao inicial de `/admin`, `/app` e redirecionamento de `/login`.
+
+Variaveis obrigatorias:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+`SUPABASE_SERVICE_ROLE_KEY` nao e usada no frontend nem nos helpers de sessao.
+
+### Login
+
+O login fica em `/login`.
+
+Fluxo:
+
+1. O formulario envia `email` e `password` para uma Server Action.
+2. A Server Action valida entrada com Zod.
+3. A Server Action autentica com Supabase Auth.
+4. A Server Action busca o usuario interno em `users` por `authUserId` ou `email`.
+5. Usuario inexistente ou inativo e deslogado e redirecionado para login.
+6. Usuario `ADMIN` vai para `/admin`.
+7. Usuario `STUDENT` vai para `/app`.
+
+### Logout
+
+O logout chama `supabase.auth.signOut()` em Server Action e redireciona para `/login`.
+
+### RBAC
+
+RBAC esta centralizado em `src/server/permissions/rbac.ts`.
+
+Regras implementadas:
+
+- `/admin` e subrotas exigem `ADMIN`.
+- `/app` e subrotas exigem `STUDENT`.
+- usuario nao autenticado vai para `/login`.
+- usuario inativo vai para `/login?error=inactive`.
+- usuario autenticado no perfil errado e redirecionado para sua area correta.
+
+### Guards server-side
+
+As paginas protegidas usam `requireRole`.
+
+Essa protecao e propositalmente redundante ao middleware. O middleware reduz acesso indevido cedo, mas a autorizacao critica permanece no servidor.
+
+### RLS
+
+A migration `prisma/migrations/20260504130000_auth_rls_policies/migration.sql` cria:
+
+- `public.current_user_role()`;
+- `public.current_student_profile_id()`;
+- `public.is_admin()`;
+- RLS em todas as tabelas principais;
+- policies para admin gerenciar dados;
+- policies para aluno acessar apenas proprio usuario, perfil, matriculas, anotacoes e progresso;
+- policies para aluno ler cursos, modulos e aulas ativos vinculados a matricula ativa e nao expirada.
+
+A migration ainda precisa ser aplicada contra um Supabase real, pois o workspace nao possui `.env` com `DATABASE_URL` e `DIRECT_URL`.
+
 ## Camadas de autorizacao
 
 ### Middleware
@@ -156,13 +228,14 @@ Deve reforcar isolamento em tabelas expostas ou sensiveis. Policies devem cobrir
 - Padronizar erros de dominio sem vazar causa interna.
 - Registrar eventos sensiveis futuros, como login, renovacao, cancelamento e alteracao de senha inicial.
 
-## Politicas RLS planejadas
+## Politicas RLS
 
-- `students`: aluno le apenas o proprio perfil; admin gerencia.
+- `users`: aluno le apenas o proprio usuario; admin gerencia.
+- `student_profiles`: aluno le apenas o proprio perfil; admin gerencia.
 - `enrollments`: aluno le apenas as proprias matriculas; admin gerencia.
-- `lesson_notes`: aluno le e altera apenas as proprias anotacoes; admin nao precisa ler conteudo privado na primeira versao.
-- `lesson_progress`: aluno le e altera apenas o proprio progresso; admin pode consultar dados agregados se implementado no futuro.
-- `courses`, `modules`, `lessons`: aluno le apenas conteudo ativo relacionado a matricula valida; admin gerencia.
+- `lesson_notes`: aluno le, cria e altera apenas as proprias anotacoes; admin gerencia.
+- `lesson_progress`: aluno le, cria e altera apenas o proprio progresso; admin gerencia.
+- `courses`, `modules`, `lessons`: aluno le apenas conteudo ativo relacionado a matricula ativa e nao expirada; admin gerencia.
 
 ## Checklist de revisao de seguranca por fase
 

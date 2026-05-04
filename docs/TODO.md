@@ -53,16 +53,21 @@
 
 ## Fase 4 - Autenticacao e Seguranca
 
-- [ ] Configurar Supabase Auth
-- [ ] Criar RBAC
-- [ ] Criar middleware
-- [ ] Proteger rotas admin
-- [ ] Proteger rotas aluno
-- [ ] Criar policies RLS
-- [ ] Validar inputs com Zod
-- [ ] Criar helpers de autenticacao server-side
-- [ ] Criar tratamento padronizado de erros
-- [ ] Criar testes de autorizacao
+- [x] Configurar Supabase Auth
+- [x] Criar RBAC
+- [x] Criar middleware
+- [x] Proteger rotas admin
+- [x] Proteger rotas aluno
+- [x] Criar policies RLS
+- [ ] Aplicar policies RLS em Supabase
+- [x] Validar inputs com Zod
+- [x] Criar helpers de autenticacao server-side
+- [x] Criar tratamento padronizado de erros
+- [x] Criar testes de autorizacao
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
 
 ## Fase 5 - Admin
 
