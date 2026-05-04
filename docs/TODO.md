@@ -123,16 +123,23 @@
 
 ## Fase 7 - Cadernos
 
-- [ ] Criar anotacao por aula
-- [ ] Editar anotacao
-- [ ] Salvar manualmente
-- [ ] Autosave com debounce quando adequado
-- [ ] Caderno por curso
-- [ ] Pagina Meus Cadernos
-- [ ] Selecao de curso
-- [ ] Agrupamento por modulo e aula
-- [ ] Busca nos cadernos
-- [ ] Testar isolamento entre alunos
+- [x] Criar anotacao por aula
+- [x] Editar anotacao
+- [x] Salvar manualmente
+- [x] Autosave com debounce quando adequado
+- [x] Caderno por curso
+- [x] Pagina Meus Cadernos
+- [x] Selecao de curso
+- [x] Agrupamento por modulo e aula
+- [x] Busca nos cadernos
+- [x] Testar isolamento entre alunos
+- [x] Validar conteudo com Zod
+- [x] Sanitizar texto
+- [x] Impedir acesso horizontal via service e filtros por aluno
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
 
 ## Fase 8 - UI/UX
 

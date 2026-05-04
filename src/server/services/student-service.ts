@@ -5,6 +5,7 @@ import * as repository from "@/server/repositories/student-repository";
 import { calculateCourseProgress } from "@/server/services/progress-service";
 import { getYouTubeEmbedUrl } from "@/server/services/youtube-service";
 import type { CompleteLessonInput } from "@/server/validators/student";
+import type { LessonNoteInput, NotebookQueryInput } from "@/server/validators/student";
 
 export type CourseAccessStatus = "AVAILABLE" | "EXPIRED" | "INACTIVE";
 
@@ -126,6 +127,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     repository.countCompletedLessonsByCourse(studentId, courseId),
     repository.findLessonProgress(studentId, lessonId),
   ]);
+  const note = await repository.findLessonNote(studentId, lessonId);
 
   return {
     status: "AVAILABLE" as const,
@@ -133,6 +135,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     lesson,
     embedUrl: getYouTubeEmbedUrl(lesson.youtubeUrl, lesson.youtubeVideoId),
     isCompleted: progress?.status === "COMPLETED",
+    note,
     progress: calculateCourseProgress(completedLessons, totalLessons),
   };
 }
@@ -152,6 +155,53 @@ export async function completeLesson(input: CompleteLessonInput) {
   }
 
   return repository.markLessonCompleted(studentId, input.lessonId);
+}
+
+export async function saveLessonNote(input: LessonNoteInput) {
+  const studentId = await requireStudentProfileId();
+  const enrollment = await repository.findEnrollmentForCourse(studentId, input.courseId);
+
+  if (!enrollment || getCourseAccessStatus(enrollment) !== "AVAILABLE") {
+    redirect("/app/forbidden");
+  }
+
+  const lesson = await repository.getActiveLessonForStudent(input.courseId, input.lessonId);
+
+  if (!lesson) {
+    notFound();
+  }
+
+  return repository.upsertLessonNote(studentId, input.lessonId, input.content);
+}
+
+export async function getStudentNotebook(input: NotebookQueryInput) {
+  const studentId = await requireStudentProfileId();
+  const courseOptions = await repository.listNotebookCourseOptions(studentId);
+  const selectedCourseId = input.courseId ?? courseOptions[0]?.course.id ?? null;
+
+  if (!selectedCourseId) {
+    return {
+      courseOptions: [],
+      selectedCourseId: null,
+      groups: [],
+      query: input.query,
+    };
+  }
+
+  const enrollment = await repository.findEnrollmentForCourse(studentId, selectedCourseId);
+
+  if (!enrollment || getCourseAccessStatus(enrollment) !== "AVAILABLE") {
+    redirect("/app/forbidden");
+  }
+
+  const notes = await repository.listNotebookNotes(studentId, selectedCourseId, input.query);
+
+  return {
+    courseOptions: courseOptions.map((option) => option.course),
+    selectedCourseId,
+    groups: groupNotesByModule(notes),
+    query: input.query,
+  };
 }
 
 async function requireStudentProfileId() {
@@ -185,4 +235,48 @@ function getCourseAccessStatus(enrollment: {
   }
 
   return "AVAILABLE";
+}
+
+type NotebookNoteRow = Awaited<ReturnType<typeof repository.listNotebookNotes>>[number];
+
+function groupNotesByModule(notes: NotebookNoteRow[]) {
+  const groups = new Map<
+    string,
+    {
+      moduleId: string;
+      moduleTitle: string;
+      modulePosition: number;
+      notes: Array<{
+        id: string;
+        lessonId: string;
+        lessonTitle: string;
+        lessonPosition: number;
+        content: string;
+        updatedAt: Date;
+      }>;
+    }
+  >();
+
+  for (const note of notes) {
+    const lessonModule = note.lesson.module;
+    const existing = groups.get(lessonModule.id);
+    const group = existing ?? {
+      moduleId: lessonModule.id,
+      moduleTitle: lessonModule.title,
+      modulePosition: lessonModule.position,
+      notes: [],
+    };
+
+    group.notes.push({
+      id: note.id,
+      lessonId: note.lesson.id,
+      lessonTitle: note.lesson.title,
+      lessonPosition: note.lesson.position,
+      content: note.content,
+      updatedAt: note.updatedAt,
+    });
+    groups.set(lessonModule.id, group);
+  }
+
+  return Array.from(groups.values()).sort((a, b) => a.modulePosition - b.modulePosition);
 }

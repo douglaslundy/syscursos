@@ -464,3 +464,67 @@ Aplicar as migrations pendentes no Supabase real e validar o modulo administrati
 ### Proxima etapa recomendada
 
 Iniciar Fase 7 - Cadernos, mantendo isolamento de aluno e validacao server-side.
+
+---
+
+### 2026-05-04 - Fase 7: Cadernos e anotacoes
+
+### Arquivos criados ou alterados
+
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- `src/app/app/notebooks/page.tsx`
+- `src/components/student/lesson-note-editor.tsx`
+- `src/components/student/student-shell.tsx`
+- `src/server/actions/student-actions.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/server/validators/student.ts`
+- `src/tests/unit/student-validators.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Campo de anotacao na pagina da aula.
+- Salvamento manual de anotacao.
+- Edicao de anotacao existente.
+- Autosave com debounce.
+- Caderno por curso.
+- Pagina `Meus Cadernos`.
+- Selecao de curso.
+- Listagem de notas agrupadas por modulo e aula.
+- Busca no conteudo dos cadernos.
+- Validacao Zod para conteudo e query.
+- Sanitizacao de texto removendo caracteres de controle e normalizando quebras de linha.
+- Regras server-side para impedir acesso horizontal e criacao de nota fora de curso ativo, matriculado e disponivel.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 26 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- O autosave pode gerar mais escritas em usuarios muito ativos, embora esteja limitado por debounce.
+- As consultas reais dependem de migrations e RLS aplicadas no Supabase; o workspace segue sem `.env` real versionado.
+- A anotacao e texto plano; recursos rich text exigiriam nova revisao de sanitizacao e politica de renderizacao.
+
+### Pendencias
+
+- Validar o fluxo completo com usuario `STUDENT` real e banco Supabase.
+- Aplicar migrations e RLS pendentes no Supabase real.
+- Avaliar E2E de cadernos quando o ambiente real estiver disponivel.
+
+### Proxima etapa recomendada
+
+Iniciar Fase 8 - UI/UX, revisando navegacao do aluno, responsividade e estados visuais.

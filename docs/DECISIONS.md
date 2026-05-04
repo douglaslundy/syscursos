@@ -271,3 +271,36 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - Cadernos com texto plano sanitizado
+
+Decisao:
+
+Implementar anotacoes de aula e cadernos por curso com Server Actions para escrita, services validando perfil `STUDENT`, matricula ativa e aula ativa, repositories filtrando por `studentId`, e conteudo salvo como texto plano sanitizado.
+
+Motivo:
+
+As anotacoes sao privadas e fazem parte do risco principal de acesso horizontal. Salvar texto plano reduz superficie de XSS, simplifica renderizacao segura e evita introduzir editor rich text antes de haver necessidade real.
+
+Alternativas consideradas:
+
+Editor rich text com HTML sanitizado, API Route client-side, filtragem apenas no frontend e autosave sem debounce.
+
+Impacto:
+
+Cada aluno continua limitado a uma nota por aula pela constraint unica do banco. O autosave usa debounce para reduzir escritas, mas toda gravacao passa por Zod, sanitizacao, verificacao de matricula ativa e verificacao de aula ativa no servidor.
+
+Arquivos afetados:
+
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- `src/app/app/notebooks/page.tsx`
+- `src/components/student/lesson-note-editor.tsx`
+- `src/components/student/student-shell.tsx`
+- `src/server/actions/student-actions.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/server/validators/student.ts`
+- `src/tests/unit/student-validators.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

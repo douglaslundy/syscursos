@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CourseBlocked } from "@/components/student/course-blocked";
+import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
 import { ProgressBar } from "@/components/student/progress-bar";
 import { completeLessonAction } from "@/server/actions/student-actions";
 import { getStudentLesson } from "@/server/services/student-service";
@@ -83,6 +84,12 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
           {data.isCompleted ? "Aula concluida" : "Marcar como concluida"}
         </button>
       </form>
+
+      <LessonNoteEditor
+        courseId={courseId}
+        initialContent={data.note?.content ?? ""}
+        lessonId={lessonId}
+      />
     </section>
   );
 }

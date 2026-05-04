@@ -184,3 +184,104 @@ export async function markLessonCompleted(studentId: string, lessonId: string) {
     },
   });
 }
+
+export async function findLessonNote(studentId: string, lessonId: string) {
+  return prisma.lessonNote.findUnique({
+    where: {
+      studentId_lessonId: {
+        studentId,
+        lessonId,
+      },
+    },
+    select: {
+      id: true,
+      content: true,
+      updatedAt: true,
+    },
+  });
+}
+
+export async function upsertLessonNote(studentId: string, lessonId: string, content: string) {
+  return prisma.lessonNote.upsert({
+    where: {
+      studentId_lessonId: {
+        studentId,
+        lessonId,
+      },
+    },
+    update: {
+      content,
+    },
+    create: {
+      studentId,
+      lessonId,
+      content,
+    },
+    select: {
+      id: true,
+      content: true,
+      updatedAt: true,
+    },
+  });
+}
+
+export async function listNotebookCourseOptions(studentId: string) {
+  return prisma.enrollment.findMany({
+    where: {
+      studentId,
+      status: EnrollmentStatus.ACTIVE,
+      course: {
+        status: CourseStatus.ACTIVE,
+      },
+    },
+    orderBy: {
+      course: {
+        title: "asc",
+      },
+    },
+    select: {
+      course: {
+        select: {
+          id: true,
+          title: true,
+        },
+      },
+    },
+  });
+}
+
+export async function listNotebookNotes(studentId: string, courseId: string, query: string) {
+  return prisma.lessonNote.findMany({
+    where: {
+      studentId,
+      ...(query ? { content: { contains: query, mode: "insensitive" } } : {}),
+      lesson: {
+        status: LessonStatus.ACTIVE,
+        module: {
+          status: ModuleStatus.ACTIVE,
+          courseId,
+          course: {
+            status: CourseStatus.ACTIVE,
+          },
+        },
+      },
+    },
+    orderBy: [{ lesson: { module: { position: "asc" } } }, { lesson: { position: "asc" } }],
+    include: {
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+          position: true,
+          module: {
+            select: {
+              id: true,
+              title: true,
+              position: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
