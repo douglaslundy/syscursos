@@ -20,6 +20,7 @@
     "prisma:validate": "prisma validate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
+    "auth:provision": "tsx prisma/provision-auth-users.ts",
     "prepare": "husky"
   },
   "prisma": {
