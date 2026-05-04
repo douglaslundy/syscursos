@@ -3,12 +3,14 @@ import {
   EnrollmentStatus,
   LessonStatus,
   ModuleStatus,
+  Prisma,
   UserRole,
   UserStatus,
-  type Prisma,
 } from "@prisma/client";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import { prisma } from "@/lib/db/prisma";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type {
   CourseInput,
   EnrollmentInput,
@@ -248,9 +250,22 @@ export async function listStudentOptions() {
 
 export async function upsertStudent(input: StudentInput) {
   if (input.id && input.studentProfileId) {
+    const currentUser = await prisma.user.findUniqueOrThrow({
+      where: { id: input.id },
+      select: { authUserId: true },
+    });
+
+    const authUserId = await upsertStudentAuthUser({
+      authUserId: currentUser.authUserId,
+      email: input.email,
+      password: input.password,
+      name: input.name,
+    });
+
     return prisma.user.update({
       where: { id: input.id },
       data: {
+        authUserId,
         email: input.email,
         name: input.name,
         status: input.status,
@@ -264,8 +279,16 @@ export async function upsertStudent(input: StudentInput) {
     });
   }
 
+  const authUserId = await upsertStudentAuthUser({
+    authUserId: null,
+    email: input.email,
+    password: input.password,
+    name: input.name,
+  });
+
   return prisma.user.create({
     data: {
+      authUserId,
       email: input.email,
       name: input.name,
       role: UserRole.STUDENT,
@@ -281,7 +304,19 @@ export async function upsertStudent(input: StudentInput) {
 }
 
 export async function deleteStudent(userId: string) {
-  return prisma.user.delete({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { authUserId: true } });
+  const deletedUser = await prisma.user.delete({ where: { id: userId } });
+
+  if (user?.authUserId) {
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase.auth.admin.deleteUser(user.authUserId);
+
+    if (error) {
+      console.error("Failed to delete Supabase Auth student user.", error);
+    }
+  }
+
+  return deletedUser;
 }
 
 export async function listEnrollments(args: PageArgs) {
@@ -399,4 +434,93 @@ function pageResult<T>(items: T[], total: number, args: PageArgs): PageResult<T>
     pageSize: args.pageSize,
     pageCount: Math.max(1, Math.ceil(total / args.pageSize)),
   };
+}
+
+async function upsertStudentAuthUser(input: {
+  authUserId: string | null;
+  email: string;
+  password: string | null;
+  name: string;
+}) {
+  const supabase = createSupabaseAdminClient();
+
+  if (input.authUserId) {
+    const { data, error } = await supabase.auth.admin.updateUserById(input.authUserId, {
+      email: input.email,
+      ...(input.password ? { password: input.password } : {}),
+      email_confirm: true,
+      user_metadata: {
+        name: input.name,
+        role: UserRole.STUDENT,
+      },
+    });
+
+    if (error) {
+      throw new Error(`Erro ao atualizar acesso do aluno: ${error.message}`);
+    }
+
+    return data.user.id;
+  }
+
+  const existing = await findAuthUserByEmail(supabase, input.email);
+
+  if (existing) {
+    const { data, error } = await supabase.auth.admin.updateUserById(existing.id, {
+      ...(input.password ? { password: input.password } : {}),
+      email_confirm: true,
+      user_metadata: {
+        name: input.name,
+        role: UserRole.STUDENT,
+      },
+    });
+
+    if (error) {
+      throw new Error(`Erro ao atualizar acesso existente do aluno: ${error.message}`);
+    }
+
+    return data.user.id;
+  }
+
+  const { data, error } = await supabase.auth.admin.createUser({
+    email: input.email,
+    password: input.password ?? undefined,
+    email_confirm: true,
+    user_metadata: {
+      name: input.name,
+      role: UserRole.STUDENT,
+    },
+  });
+
+  if (error) {
+    throw new Error(`Erro ao criar acesso do aluno: ${error.message}`);
+  }
+
+  return data.user.id;
+}
+
+async function findAuthUserByEmail(supabase: SupabaseClient, email: string): Promise<User | null> {
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({
+      page,
+      perPage: 100,
+    });
+
+    if (error) {
+      throw new Error(`Erro ao listar usuarios Auth: ${error.message}`);
+    }
+
+    const user = data.users.find((candidate) => candidate.email === email);
+
+    if (user) {
+      return user;
+    }
+
+    if (data.users.length < 100) {
+      return null;
+    }
+
+    page += 1;
+  }
 }

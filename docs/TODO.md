@@ -251,3 +251,20 @@
 - [x] Executar testes
 - [x] Executar build
 - [x] Commitar e enviar ao GitHub
+
+## Ajustes de CRUD Administrativo e Acesso de Alunos
+
+- [x] Revisar Server Actions de cursos, modulos, aulas, alunos e matriculas
+- [x] Evitar `Application error` em falhas de CRUD administrativo
+- [x] Redirecionar falhas administrativas com feedback controlado
+- [x] Exibir feedback para erro de validacao, conflito, auth e erro generico
+- [x] Adicionar senha inicial no cadastro de aluno
+- [x] Permitir troca opcional de senha na edicao de aluno
+- [x] Criar/atualizar usuario do aluno no Supabase Auth via service role
+- [x] Vincular `auth_user_id` ao usuario interno no cadastro de aluno
+- [x] Reutilizar usuario existente no Supabase Auth quando houver mesmo e-mail
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
+- [x] Commitar e enviar ao GitHub

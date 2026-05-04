@@ -991,3 +991,55 @@ Se a Vercel estiver sem uma das chaves publicas aceitas, o erro fica mais claro 
 ### Pendencias
 
 - Validar no deploy da Vercel.
+
+---
+
+### 2026-05-04 - CRUD administrativo e senha inicial de aluno
+
+### Arquivos criados ou alterados
+
+- `src/lib/supabase/admin.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/validators/admin.ts`
+- `src/components/admin/feedback.tsx`
+- `src/app/admin/students/page.tsx`
+- `src/tests/integration/admin-service.test.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Tratamento controlado de erro em todas as Server Actions administrativas.
+- Feedback para validacao invalida, conflito de dados, erro de Auth e erro generico.
+- Cadastro de aluno com senha inicial obrigatoria.
+- Edicao de aluno com troca de senha opcional.
+- Provisionamento do aluno no Supabase Auth com service role.
+- Vinculo do `auth_user_id` no usuario interno.
+- Reutilizacao de usuario Supabase Auth existente por e-mail.
+- Remocao do usuario Auth ao remover aluno, com log seguro em caso de falha.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 52 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- O provisionamento de aluno depende de `SUPABASE_SERVICE_ROLE_KEY` configurada na Vercel.
+- Se o usuario Auth for criado e o banco falhar na sequencia, pode sobrar usuario Auth sem vinculo interno; o fluxo agora evita duplicar por e-mail em tentativas futuras.
+
+### Pendencias
+
+- Validar cadastro de curso e cadastro de aluno no deploy de producao apos o push.

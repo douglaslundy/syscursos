@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { courseSchema, enrollmentSchema, lessonSchema } from "@/server/validators/admin";
+import { courseSchema, enrollmentSchema, lessonSchema, studentSchema } from "@/server/validators/admin";
 import { getPagination } from "@/server/validators/pagination";
 
 describe("admin validators", () => {
@@ -59,6 +59,26 @@ describe("admin validators", () => {
 
     expect(result.success).toBe(true);
     expect(result.success ? result.data.expiresAt : "invalid").toBeNull();
+  });
+
+  it("requires an initial password when creating a student", () => {
+    expect(
+      studentSchema.safeParse({
+        email: "student@example.com",
+        name: "Student",
+        password: "",
+        status: "ACTIVE",
+      }).success,
+    ).toBe(false);
+
+    expect(
+      studentSchema.safeParse({
+        email: "student@example.com",
+        name: "Student",
+        password: "password123",
+        status: "ACTIVE",
+      }).success,
+    ).toBe(true);
   });
 
   it("normalizes pagination and search filters", () => {

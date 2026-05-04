@@ -450,3 +450,35 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - CRUD administrativo com falhas controladas e provisionamento de aluno
+
+Decisao:
+
+Padronizar as Server Actions administrativas para capturar falhas de validacao, constraints e infraestrutura, redirecionando com status controlado. O cadastro de aluno passa a exigir senha inicial e provisionar o usuario no Supabase Auth com `SUPABASE_SERVICE_ROLE_KEY`; edicoes permitem troca opcional de senha.
+
+Motivo:
+
+Falhas em Server Actions, como constraint unica de curso ou indisponibilidade de banco/Auth, estavam subindo como excecao server-side e exibindo `Application error` com digest. Alem disso, alunos criados apenas na tabela interna nao conseguiam autenticar porque nao existia usuario correspondente no Supabase Auth.
+
+Alternativas consideradas:
+
+Manter CRUD apenas no Prisma e provisionar Auth por script separado; expor detalhes tecnicos na UI; capturar erros individualmente em cada pagina; permitir aluno sem usuario Auth ate etapa futura.
+
+Impacto:
+
+Todos os CRUDs administrativos passam a retornar feedback seguro em vez de erro generico. Alunos novos ja ficam aptos a acessar o sistema desde que o ambiente tenha `SUPABASE_SERVICE_ROLE_KEY` configurada. A autorizacao critica permanece no servidor e o frontend nao recebe secrets.
+
+Arquivos afetados:
+
+- `src/server/actions/admin-actions.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/validators/admin.ts`
+- `src/lib/supabase/admin.ts`
+- `src/components/admin/feedback.tsx`
+- `src/app/admin/students/page.tsx`
+- `src/tests/integration/admin-service.test.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

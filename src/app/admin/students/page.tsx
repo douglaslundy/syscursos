@@ -87,7 +87,7 @@ type StudentFormProps = {
 
 function StudentForm({ student }: StudentFormProps) {
   return (
-    <form action={saveStudentAction} className="grid gap-3 md:grid-cols-[1fr_1fr_140px_auto]">
+    <form action={saveStudentAction} className="grid gap-3 md:grid-cols-[1fr_1fr_160px_140px_auto]">
       {student ? (
         <>
           <input name="id" type="hidden" value={student.id} />
@@ -105,6 +105,14 @@ function StudentForm({ student }: StudentFormProps) {
         defaultValue={student?.email}
         name="email"
         placeholder="email@exemplo.com"
+      />
+      <input
+        className="rounded-md border px-3 py-2 text-sm outline-none"
+        minLength={8}
+        name="password"
+        placeholder={student ? "Nova senha opcional" : "Senha inicial"}
+        required={!student}
+        type="password"
       />
       <select
         className="rounded-md border px-3 py-2 text-sm outline-none"
@@ -127,6 +135,10 @@ function StudentForm({ student }: StudentFormProps) {
         name="phone"
         placeholder="Telefone"
       />
+      <p className="text-xs text-muted-foreground md:col-span-5">
+        A senha inicial cria o acesso do aluno no Supabase Auth. Em edicoes, preencha somente para
+        trocar a senha.
+      </p>
     </form>
   );
 }

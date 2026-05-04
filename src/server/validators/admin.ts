@@ -57,9 +57,23 @@ export const studentSchema = z.object({
   studentProfileId: uuidSchema.optional(),
   email: z.string().trim().email().max(255),
   name: z.string().trim().min(2).max(160),
+  password: z
+    .string()
+    .trim()
+    .optional()
+    .transform(emptyToNull)
+    .refine((value) => value === null || value.length >= 8, "A senha deve ter pelo menos 8 caracteres."),
   document: z.string().trim().max(32).optional().transform(emptyToNull),
   phone: z.string().trim().max(32).optional().transform(emptyToNull),
   status: z.nativeEnum(UserStatus).default(UserStatus.ACTIVE),
+}).superRefine((value, context) => {
+  if (!value.id && !value.password) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Informe uma senha inicial para o aluno.",
+      path: ["password"],
+    });
+  }
 });
 
 export const enrollmentSchema = z.object({

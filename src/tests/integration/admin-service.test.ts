@@ -80,6 +80,7 @@ describe("admin service", () => {
     const input = {
       email: "student@example.com",
       name: "Student",
+      password: "password123",
       document: null,
       phone: null,
       status: "ACTIVE" as const,
