@@ -102,16 +102,24 @@
 
 ## Fase 6 - Aluno
 
-- [ ] Dashboard de cursos
-- [ ] Pagina do curso
-- [ ] Pagina do modulo
-- [ ] Pagina da aula
-- [ ] Player YouTube
-- [ ] Bloqueio de curso expirado
-- [ ] Bloqueio de curso, modulo e aula inativos
-- [ ] Marcar aula como concluida
-- [ ] Progresso do curso
-- [ ] Estados vazios e erros
+- [x] Dashboard de cursos
+- [x] Pagina do curso
+- [x] Pagina do modulo
+- [x] Pagina da aula
+- [x] Player YouTube
+- [x] Bloqueio de curso expirado
+- [x] Bloqueio de curso, modulo e aula inativos
+- [x] Bloqueio 403 para curso sem matricula
+- [x] Marcar aula como concluida
+- [x] Progresso do curso
+- [x] Estados vazios e erros
+- [x] Testes de progresso
+- [x] Testes de YouTube
+- [x] Testes de validators do aluno
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
 
 ## Fase 7 - Cadernos
 

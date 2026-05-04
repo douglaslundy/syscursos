@@ -236,3 +236,38 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - Area do aluno com autorizacao por matricula
+
+Decisao:
+
+Implementar a area do aluno com Server Components para leitura, Server Action para concluir aula, services protegidos por `requireRole("STUDENT")`, repositories filtrando matricula e conteudo ativo, e Route Handler `/app/forbidden` retornando HTTP 403 para acesso sem matricula.
+
+Motivo:
+
+O aluno so pode acessar conteudo vinculado a matricula ativa e nao expirada. Essa regra precisa ficar no servidor e nao pode depender de filtros visuais no frontend.
+
+Alternativas consideradas:
+
+Filtrar cursos apenas na UI; redirecionar acesso negado para dashboard sem status 403; calcular progresso no cliente; listar aulas inativas com bloqueio visual.
+
+Impacto:
+
+Dashboard e paginas do aluno exibem apenas dados autorizados. Cursos expirados ou inativos sao bloqueados com aviso. Curso sem matricula redireciona para endpoint 403. Progresso e calculado por aulas ativas concluidas.
+
+Arquivos afetados:
+
+- `src/app/app/**`
+- `src/components/student/**`
+- `src/server/actions/student-actions.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/server/services/progress-service.ts`
+- `src/server/services/youtube-service.ts`
+- `src/server/validators/student.ts`
+- `src/tests/unit/student-progress.test.ts`
+- `src/tests/unit/youtube-service.test.ts`
+- `src/tests/unit/student-validators.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

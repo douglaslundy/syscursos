@@ -389,3 +389,78 @@ Aplicar as migrations em Supabase real e validar login com um usuario `ADMIN` e 
 ### Proxima etapa recomendada
 
 Aplicar as migrations pendentes no Supabase real e validar o modulo administrativo ponta a ponta com um usuario `ADMIN`.
+
+---
+
+### 2026-05-04 - Fase 6: Area do aluno
+
+### Arquivos criados ou alterados
+
+- `src/app/app/layout.tsx`
+- `src/app/app/page.tsx`
+- `src/app/app/loading.tsx`
+- `src/app/app/forbidden/route.ts`
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- `src/components/student/student-shell.tsx`
+- `src/components/student/progress-bar.tsx`
+- `src/components/student/course-blocked.tsx`
+- `src/server/actions/student-actions.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/server/services/progress-service.ts`
+- `src/server/services/youtube-service.ts`
+- `src/server/validators/student.ts`
+- `src/tests/unit/student-progress.test.ts`
+- `src/tests/unit/youtube-service.test.ts`
+- `src/tests/unit/student-validators.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Layout do aluno.
+- Dashboard de cursos vinculados.
+- Pagina do curso.
+- Listagem de modulos ativos.
+- Listagem de aulas ativas.
+- Pagina da aula.
+- Player YouTube via iframe.
+- Controle de aula concluida.
+- Calculo de progresso por curso.
+- Bloqueio de curso expirado.
+- Bloqueio de curso, modulo e aula inativos.
+- Retorno HTTP 403 para curso sem matricula via `/app/forbidden`.
+- Testes unitarios de progresso, YouTube e validators do aluno.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 23 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- As paginas do aluno dependem de banco Supabase com migrations aplicadas; o workspace ainda nao possui `.env` real.
+- `/app/forbidden` retorna HTTP 403 como Route Handler, fora do layout visual do aluno, porque Next.js 14 nao fornece `forbidden()` para Server Components.
+- Progresso considera apenas aulas ativas de modulos ativos em cursos ativos.
+- A conclusao de aula depende de `LessonProgress` e da constraint unica por aluno/aula criada na camada de banco.
+
+### Pendencias
+
+- Validar fluxo ponta a ponta com usuario `STUDENT` real.
+- Aplicar migrations e RLS em Supabase real antes de uso integrado.
+- Implementar cadernos/anotacoes na Fase 7.
+
+### Proxima etapa recomendada
+
+Iniciar Fase 7 - Cadernos, mantendo isolamento de aluno e validacao server-side.
