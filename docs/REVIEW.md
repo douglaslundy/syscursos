@@ -159,3 +159,72 @@ Setup inicial da aplicacao, sem autenticacao, banco ou telas funcionais:
 ### Proxima etapa recomendada
 
 Iniciar Fase 3 - Banco, configurando Supabase e Prisma sem expor credenciais.
+
+---
+
+### 2026-05-04 - Fase 3: Banco de dados
+
+### Arquivos criados ou alterados
+
+- `package.json`
+- `package-lock.json`
+- `prisma/schema.prisma`
+- `prisma/migrations/20260504120000_initial_schema/migration.sql`
+- `prisma/seed.ts`
+- `src/lib/db/prisma.ts`
+- `docs/DATABASE.md`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+Camada inicial de banco de dados com Supabase Postgres e Prisma ORM:
+
+- schema Prisma;
+- entidades principais;
+- relacionamentos;
+- enums;
+- indices;
+- constraints;
+- migration inicial versionada;
+- seed inicial idempotente;
+- helper singleton de Prisma Client.
+
+Nao foram implementadas autenticacao, RLS, services, repositories, Server Actions ou telas funcionais.
+
+### Testes executados
+
+- `npm run prisma:validate`
+- `npx prisma generate`
+- `npm run prisma:migrate -- --name initial_schema`
+- `npm run prisma:seed`
+- `npm run lint`
+- `npm run typecheck`
+
+### Resultado dos testes
+
+- `npx prisma generate`: aprovado.
+- `npm run prisma:validate`: falhou sem `.env` por ausencia de `DIRECT_URL`; aprovado ao repetir com URLs temporarias nao secretas.
+- `npm run prisma:migrate -- --name initial_schema`: bloqueado por ausencia de banco Postgres acessivel em `localhost:5432` ao usar placeholder local.
+- `npm run prisma:seed`: bloqueado por ausencia de banco Postgres acessivel em `localhost:5432` ao usar placeholder local.
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+
+### Riscos encontrados
+
+- Migration e seed nao foram aplicados em Supabase porque nao ha `.env` local com `DATABASE_URL` e `DIRECT_URL`.
+- O schema usa `DIRECT_URL`; portanto validacoes Prisma sem `.env` exigem variaveis temporarias ou arquivo local ignorado pelo Git.
+- RLS ainda nao existe e deve ser implementado na Fase 4 antes de expor dados sensiveis.
+- A constraint `studentId + courseId` em `Enrollment` simplifica renovacao na primeira versao, mas nao preserva historico de multiplas matriculas no mesmo curso.
+
+### Pendencias
+
+- Criar `.env` local com URLs reais do Supabase Postgres.
+- Executar `npm run prisma:migrate -- --name initial_schema` contra Supabase.
+- Executar `npm run prisma:seed` contra Supabase.
+- Implementar RLS e RBAC na Fase 4.
+
+### Proxima etapa recomendada
+
+Configurar Supabase real e aplicar a migration inicial antes de iniciar autenticacao e seguranca.

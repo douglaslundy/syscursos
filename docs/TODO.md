@@ -37,14 +37,19 @@
 ## Fase 3 - Banco
 
 - [ ] Configurar Supabase
-- [ ] Configurar Prisma
-- [ ] Criar schema
-- [ ] Criar migrations
-- [ ] Criar seed
-- [ ] Criar indices
-- [ ] Criar constraints
-- [ ] Validar relacionamentos
-- [ ] Documentar modelo em `docs/DATABASE.md`
+- [x] Configurar Prisma
+- [x] Criar schema
+- [x] Criar migrations
+- [x] Criar seed
+- [x] Criar indices
+- [x] Criar constraints
+- [x] Validar relacionamentos
+- [x] Documentar modelo em `docs/DATABASE.md`
+- [x] Executar `prisma validate`
+- [ ] Executar migration em Supabase
+- [ ] Executar seed em Supabase
+- [x] Executar lint
+- [x] Executar typecheck
 
 ## Fase 4 - Autenticacao e Seguranca
 

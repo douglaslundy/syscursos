@@ -135,3 +135,32 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - Modelo relacional inicial com Prisma
+
+Decisao:
+
+Criar o schema inicial com as entidades `User`, `StudentProfile`, `Course`, `Module`, `Lesson`, `Enrollment`, `LessonNote` e `LessonProgress`, usando UUIDs, enums de status, timestamps, relacionamentos explicitos, indices e constraints de unicidade.
+
+Motivo:
+
+O dominio exige controle forte de aluno, curso, matricula, ordenacao de conteudo, anotacoes privadas e progresso individual. O modelo relacional normalizado facilita autorizacao server-side, RLS futura, integridade de dados e consultas administrativas.
+
+Alternativas consideradas:
+
+Modelo com uma tabela unica de usuarios sem `StudentProfile`; historico ilimitado de matriculas duplicadas por aluno e curso; progresso calculado apenas por eventos; anotacoes sem constraint unica.
+
+Impacto:
+
+Cada aluno possui no maximo uma matricula por curso na primeira versao, renovacoes devem atualizar a matricula existente, e cada aluno possui no maximo uma anotacao e um registro de progresso por aula. A Fase 4 devera adicionar policies RLS alinhadas a essas chaves.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260504120000_initial_schema/migration.sql`
+- `prisma/seed.ts`
+- `src/lib/db/prisma.ts`
+- `docs/DATABASE.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

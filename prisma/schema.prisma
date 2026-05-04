@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum CourseStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ModuleStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum LessonStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum LessonProgressStatus {
+  NOT_STARTED
+  COMPLETED
+}
+
+model User {
+  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId     String?         @unique @map("auth_user_id") @db.Uuid
+  email          String          @unique @db.VarChar(255)
+  name           String          @db.VarChar(160)
+  role           UserRole
+  status         UserStatus      @default(ACTIVE)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  studentProfile StudentProfile?
+
+  @@index([role, status])
+  @@map("users")
+}
+
+model StudentProfile {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String           @unique @map("user_id") @db.Uuid
+  document    String?          @unique @db.VarChar(32)
+  phone       String?          @db.VarChar(32)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments Enrollment[]
+  notes       LessonNote[]
+  progress    LessonProgress[]
+
+  @@map("student_profiles")
+}
+
+model Course {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String       @db.VarChar(180)
+  slug        String       @unique @db.VarChar(200)
+  description String?
+  status      CourseStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  modules     Module[]
+  enrollments Enrollment[]
+
+  @@index([status])
+  @@index([title])
+  @@map("courses")
+}
+
+model Module {
+  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId    String       @map("course_id") @db.Uuid
+  title       String       @db.VarChar(180)
+  description String?
+  position    Int
+  status      ModuleStatus @default(ACTIVE)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+
+  @@unique([courseId, position])
+  @@index([courseId, status])
+  @@map("modules")
+}
+
+model Lesson {
+  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId       String           @map("module_id") @db.Uuid
+  title          String           @db.VarChar(180)
+  description    String?
+  youtubeUrl     String           @map("youtube_url") @db.VarChar(500)
+  youtubeVideoId String?          @map("youtube_video_id") @db.VarChar(32)
+  position       Int
+  status         LessonStatus     @default(ACTIVE)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  module         Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  notes          LessonNote[]
+  progress       LessonProgress[]
+
+  @@unique([moduleId, position])
+  @@index([moduleId, status])
+  @@index([youtubeVideoId])
+  @@map("lessons")
+}
+
+model Enrollment {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String           @map("student_id") @db.Uuid
+  courseId  String           @map("course_id") @db.Uuid
+  startsAt  DateTime         @map("starts_at") @db.Timestamptz(6)
+  expiresAt DateTime?        @map("expires_at") @db.Timestamptz(6)
+  status    EnrollmentStatus @default(ACTIVE)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student   StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@index([courseId, status])
+  @@index([studentId, status])
+  @@index([expiresAt])
+  @@map("enrollments")
+}
+
+model LessonNote {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String         @map("student_id") @db.Uuid
+  lessonId  String         @map("lesson_id") @db.Uuid
+  content   String
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, lessonId])
+  @@index([lessonId])
+  @@map("lesson_notes")
+}
+
+model LessonProgress {
+  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId   String               @map("student_id") @db.Uuid
+  lessonId    String               @map("lesson_id") @db.Uuid
+  status      LessonProgressStatus @default(NOT_STARTED)
+  completedAt DateTime?            @map("completed_at") @db.Timestamptz(6)
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student     StudentProfile       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson      Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, lessonId])
+  @@index([lessonId])
+  @@index([studentId, status])
+  @@map("lesson_progress")
+}
