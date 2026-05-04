@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { courseSchema, enrollmentSchema, lessonSchema } from "@/server/validators/admin";
+import { getPagination } from "@/server/validators/pagination";
 
 describe("admin validators", () => {
   it("validates course input", () => {
@@ -58,5 +59,19 @@ describe("admin validators", () => {
 
     expect(result.success).toBe(true);
     expect(result.success ? result.data.expiresAt : "invalid").toBeNull();
+  });
+
+  it("normalizes pagination and search filters", () => {
+    expect(
+      getPagination({
+        page: "2",
+        pageSize: "25",
+        query: "  curso  ",
+      }),
+    ).toEqual({
+      page: 2,
+      pageSize: 25,
+      query: "curso",
+    });
   });
 });

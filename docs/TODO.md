@@ -160,14 +160,27 @@
 
 ## Fase 9 - Testes
 
-- [ ] Testes unitarios
-- [ ] Testes de integracao
-- [ ] Testes E2E
-- [ ] Testes de autorizacao
-- [ ] Testes de matricula expirada
-- [ ] Testes de anotacoes
-- [ ] Testes de progresso
-- [ ] Testes de filtros e paginacao
+- [x] Testes unitarios
+- [x] Testes de integracao
+- [x] Testes E2E
+- [x] Testes de autorizacao
+- [x] Testes de login admin
+- [x] Testes de login aluno
+- [x] Testes de CRUD administrativo
+- [x] Testes de matricula
+- [x] Testes de matricula expirada
+- [x] Testes de acesso a curso ativo
+- [x] Testes de bloqueio de curso expirado
+- [x] Testes de anotacoes
+- [x] Testes de caderno por curso
+- [x] Testes de progresso
+- [x] Testes de filtros e paginacao
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes unitarios
+- [x] Executar testes de integracao
+- [x] Executar testes E2E
+- [x] Executar build
 
 ## Fase 10 - Review Final
 

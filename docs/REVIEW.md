@@ -598,3 +598,69 @@ Iniciar Fase 8 - UI/UX, revisando navegacao do aluno, responsividade e estados v
 ### Proxima etapa recomendada
 
 Iniciar Fase 9 - Testes, priorizando fluxos E2E de aluno, cadernos, expiracao de matricula e autorizacao.
+
+---
+
+### 2026-05-04 - Fase 9: Suite de testes
+
+### Arquivos criados ou alterados
+
+- `package.json`
+- `playwright.config.ts`
+- `vitest.config.ts`
+- `src/tests/e2e/public.spec.ts`
+- `src/tests/integration/admin-service.test.ts`
+- `src/tests/integration/auth-actions.test.ts`
+- `src/tests/integration/student-service.test.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Scripts separados para testes unitarios, integracao e E2E.
+- Configuracao do Vitest para nao coletar specs do Playwright.
+- Configuracao do Playwright com web server local em porta isolada.
+- Testes de login admin e login aluno via Server Action mockando Supabase e Prisma.
+- Testes de bloqueio de aluno/admin via RBAC ja existente.
+- Testes de CRUD administrativo para curso, modulo, aula e aluno via service.
+- Testes de matricula, renovacao e regras de autorizacao administrativa.
+- Testes de matricula expirada, curso ativo, curso expirado, anotacoes, caderno por curso e progresso via service do aluno.
+- Testes de filtros e paginacao.
+- Testes E2E publicos para home em desktop e mobile.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test:unit`
+- `npm run test:integration`
+- `npm run test`
+- `npm run test:e2e`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+- `npm run test:unit`: aprovado, 27 testes.
+- `npm run test:integration`: aprovado, 16 testes.
+- `npm run test`: aprovado, 43 testes.
+- `npm run test:e2e`: aprovado, 2 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- E2E autenticado completo ainda depende de Supabase real, usuarios reais e migrations/RLS aplicadas.
+- Os testes de integracao usam mocks para Prisma, Supabase e guards; eles validam fluxo de regra de negocio, mas nao substituem validacao ponta a ponta com banco real.
+- Playwright exigiu instalacao local do Chromium com `npx playwright install chromium`.
+
+### Pendencias
+
+- Criar ambiente de teste integrado com Supabase ou banco Postgres isolado para E2E autenticado.
+- Adicionar testes E2E completos de admin e aluno quando houver credenciais e seed de teste.
+- Aplicar migrations e RLS pendentes no Supabase real.
+
+### Proxima etapa recomendada
+
+Iniciar Fase 10 - Review Final, com foco em seguranca, performance, acessibilidade, dependencias e relatorio final.
