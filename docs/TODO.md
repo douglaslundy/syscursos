@@ -71,25 +71,34 @@
 
 ## Fase 5 - Admin
 
-- [ ] Dashboard administrativo
-- [ ] CRUD cursos
-- [ ] Ativar/inativar cursos
-- [ ] CRUD modulos
-- [ ] Ordenar modulos
-- [ ] Ativar/inativar modulos
-- [ ] CRUD aulas
-- [ ] Ordenar aulas
-- [ ] Ativar/inativar aulas
-- [ ] Validar links do YouTube
-- [ ] CRUD alunos
-- [ ] Ativar/inativar alunos
+- [x] Dashboard administrativo
+- [x] CRUD cursos
+- [x] Ativar/inativar cursos
+- [x] CRUD modulos
+- [x] Ordenar modulos
+- [x] Ativar/inativar modulos
+- [x] CRUD aulas
+- [x] Ordenar aulas
+- [x] Ativar/inativar aulas
+- [x] Validar links do YouTube
+- [x] CRUD alunos
+- [x] Ativar/inativar alunos
 - [ ] Definir e alterar senha inicial de alunos
-- [ ] Matriculas
-- [ ] Renovacao de acesso
-- [ ] Cancelamento de acesso
-- [ ] Listagem de alunos por curso
-- [ ] Listagem de cursos por aluno
-- [ ] Busca e filtros administrativos
+- [x] Matriculas
+- [x] Renovacao de acesso
+- [x] Cancelamento de acesso
+- [x] Listagem de alunos por curso
+- [x] Listagem de cursos por aluno
+- [x] Busca e filtros administrativos
+- [x] Paginacao administrativa
+- [x] Estados de loading
+- [x] Feedback de sucesso
+- [x] Confirmacao de acoes destrutivas
+- [x] Testes de validators administrativos
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
 
 ## Fase 6 - Aluno
 

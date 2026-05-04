@@ -204,3 +204,35 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-04 - Modulo administrativo com Server Actions
+
+Decisao:
+
+Implementar o modulo administrativo com Server Components para leitura, Server Actions para mutacoes, validators Zod por entidade, services protegidos por `requireRole("ADMIN")` e repositories isolando o Prisma.
+
+Motivo:
+
+O modulo administrativo executa operacoes sensiveis e nao pode confiar no frontend. Separar UI, actions, services, repositories e validators mantem autorizacao critica no servidor, reduz duplicacao e deixa o dominio testavel.
+
+Alternativas consideradas:
+
+CRUD client-side com API Routes, queries Prisma diretamente nas paginas, componentes monoliticos por dominio e forms sem camada de service.
+
+Impacto:
+
+Todas as mutacoes administrativas passam por Server Actions e validacao Zod. Listagens usam paginacao simples por `page`, `pageSize` e `query`. A criacao de usuarios no Supabase Auth e definicao de senha inicial permanecem pendentes para uma etapa especifica de gerenciamento de identidade.
+
+Arquivos afetados:
+
+- `src/app/admin/**`
+- `src/components/admin/**`
+- `src/server/actions/admin-actions.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/validators/admin.ts`
+- `src/server/validators/pagination.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`

@@ -305,3 +305,87 @@ Nao foram implementados CRUDs, dashboard funcional, cadastro de usuarios no Supa
 ### Proxima etapa recomendada
 
 Aplicar as migrations em Supabase real e validar login com um usuario `ADMIN` e um usuario `STUDENT` antes de iniciar os CRUDs administrativos.
+
+---
+
+### 2026-05-04 - Fase 5: Modulo administrativo
+
+### Arquivos criados ou alterados
+
+- `src/app/admin/layout.tsx`
+- `src/app/admin/page.tsx`
+- `src/app/admin/loading.tsx`
+- `src/app/admin/courses/page.tsx`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/admin/students/page.tsx`
+- `src/app/admin/enrollments/page.tsx`
+- `src/app/admin/students/[studentId]/courses/page.tsx`
+- `src/app/admin/courses/[courseId]/students/page.tsx`
+- `src/components/admin/admin-shell.tsx`
+- `src/components/admin/feedback.tsx`
+- `src/components/admin/pagination.tsx`
+- `src/components/admin/search-form.tsx`
+- `src/components/admin/submit-button.tsx`
+- `src/server/actions/admin-actions.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/validators/admin.ts`
+- `src/server/validators/pagination.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Layout administrativo.
+- Dashboard administrativo.
+- CRUD de cursos.
+- CRUD de modulos.
+- CRUD de aulas.
+- CRUD de alunos internos.
+- Matricula de aluno em curso.
+- Renovacao de matricula.
+- Cancelamento de matricula.
+- Listagem de cursos por aluno.
+- Listagem de alunos por curso.
+- Paginacao e busca em listagens principais.
+- Estados de loading.
+- Feedback por query string apos mutacoes.
+- Confirmacao no navegador para acoes destrutivas.
+- Separacao entre UI, Server Actions, services, repositories e validators.
+- Validacao Zod para inputs administrativos.
+- Testes unitarios de validators administrativos.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 14 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- As telas administrativas dependem de banco Supabase com migrations aplicadas; o workspace ainda nao possui `.env` real.
+- CRUD de alunos cria usuarios internos e perfis, mas nao cria usuarios no Supabase Auth nem define senha inicial.
+- A constraint atual permite apenas uma matricula por aluno e curso; renovacao atualiza a matricula existente.
+- Feedback de erro de actions ainda e generico via erro do servidor; fluxos finais podem exigir mensagens por campo.
+
+### Pendencias
+
+- Aplicar migrations em Supabase real.
+- Criar fluxo seguro para criar usuarios no Supabase Auth e definir senha inicial.
+- Validar manualmente os CRUDs com banco real e usuario `ADMIN`.
+- Evoluir feedback de erro por campo se necessario.
+
+### Proxima etapa recomendada
+
+Aplicar as migrations pendentes no Supabase real e validar o modulo administrativo ponta a ponta com um usuario `ADMIN`.
