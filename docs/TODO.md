@@ -296,3 +296,15 @@
 - [x] Atualizar `docs/REVIEW.md`
 - [x] Commitar etapa de requisitos e prompts
 - [x] Commitar cada correcao funcional em etapas pequenas
+
+## Ajustes Finais de Trilha da Aula
+
+- [x] Analisar problema visual em telas largas e reduzir gap lateral direito
+- [x] Manter expansao/colapso vertical apenas nos modulos da trilha
+- [x] Implementar abrir/fechar horizontal da trilha por botao lateral
+- [x] Substituir textos dos botoes de abrir/fechar por icones
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
+- [ ] Commitar e enviar ao GitHub

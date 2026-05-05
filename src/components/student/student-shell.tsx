@@ -1,4 +1,4 @@
-import { LogOut } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -27,19 +27,21 @@ export function StudentShell({ user, children }: StudentShellProps) {
       </a>
 
       <label
-        className="fixed left-4 top-4 z-40 hidden cursor-pointer rounded-md border border-stroke-subtle bg-surface-elevated px-3 py-2 text-xs font-medium text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary peer-checked/sidebar:md:hidden md:block"
+        aria-label="Abrir menu lateral"
+        className="fixed left-4 top-4 z-40 hidden cursor-pointer rounded-md border border-stroke-subtle bg-surface-elevated p-2 text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary peer-checked/sidebar:md:hidden md:block"
         htmlFor="student-sidebar-toggle"
       >
-        Abrir menu
+        <ChevronRight aria-hidden="true" className="h-4 w-4" />
       </label>
 
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 -translate-x-full border-r border-stroke-subtle bg-surface-elevated px-5 py-6 transition-transform duration-200 peer-checked/sidebar:translate-x-0 md:flex md:flex-col">
         <div className="mb-4 flex justify-end">
           <label
-            className="cursor-pointer rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-xs font-medium text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
+            aria-label="Fechar menu lateral"
+            className="cursor-pointer rounded-md border border-stroke-subtle bg-transparent p-2 text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
             htmlFor="student-sidebar-toggle"
           >
-            Fechar menu
+            <ChevronLeft aria-hidden="true" className="h-4 w-4" />
           </label>
         </div>
         <Link aria-label="Ir para meus cursos" className="inline-flex" href="/app">
@@ -98,7 +100,7 @@ export function StudentShell({ user, children }: StudentShellProps) {
 
       <div className="transition-[padding] duration-200 peer-checked/sidebar:md:pl-72 md:pl-0">
         <main
-          className="mx-auto min-h-screen max-w-7xl px-4 pb-24 pt-6 sm:px-6 md:pb-10 md:pt-8"
+          className="mx-auto min-h-screen max-w-[1600px] px-4 pb-24 pt-6 sm:px-6 md:pb-10 md:pt-8"
           id="conteudo"
         >
           {children}
