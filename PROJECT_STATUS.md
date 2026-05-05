@@ -19,15 +19,15 @@ Manter um status persistente do projeto SysCursos para continuidade de trabalho 
 - Caderno em modo somente leitura.
 - Normalizacao de embed YouTube e testes associados.
 - E2E publico ajustado para redirect real de `/` para `/login`.
+- Correcao de validacao no update de curso para normalizar `slug` em entrada humana.
+- Modulos e aulas do admin padronizados para fluxo de listagem em modo leitura + editar por formulario principal.
+- Area do aluno com toggle para abrir/fechar menu lateral esquerdo.
+- Tela de aula com retorno explicito para pagina inicial de cursos.
+- Trilha da aula mantida na lateral direita com controle de abrir/fechar.
 
 ## Tarefas pendentes (foco atual)
 
-- Investigar erro de validacao no update de curso ao editar `slug` e `description`.
-- Ajustar listagem de modulos para seguir padrao de cursos (somente lista + botao editar).
-- Ajustar listagem de aulas para seguir padrao de cursos (somente lista + botao editar).
-- Refinar layout: menu lateral esquerdo expansivel/recolhivel na area do aluno.
-- Na tela de aula, garantir retorno claro para pagina inicial de cursos.
-- Na tela de aula, manter trilha de aulas ao lado direito com toggle abrir/fechar.
+- Validacao manual em navegador dos fluxos administrativos e da experiencia da aula com dados reais.
 
 ## Arquivos alterados recentemente
 
@@ -60,11 +60,11 @@ Manter um status persistente do projeto SysCursos para continuidade de trabalho 
 
 ## Ultimo commit
 
-- `e101f2b Fix student lesson and notebook flows`
+- `438df57 feat(student-layout): adicionar toggles e navegacao da aula`
 
 ## Proximos passos
 
 1. Reproduzir e corrigir o erro de update de curso (`slug` e `description`).
 2. Aplicar padrao de listagem + edicao para modulos e aulas.
 3. Ajustar toggles de menus esquerdo/direito na experiencia do aluno.
-4. Executar validacoes completas e commitar por tarefa.
+4. Executar validacao manual ponta a ponta no browser e coletar feedback visual/ergonomico.
