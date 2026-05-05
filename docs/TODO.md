@@ -268,3 +268,31 @@
 - [x] Executar testes
 - [x] Executar build
 - [x] Commitar e enviar ao GitHub
+
+## Ajustes de Usabilidade CRUD, Aula e Caderno
+
+- [x] Registrar requisitos recebidos em 2026-05-05
+- [x] Criar memoria de continuidade fora do repositorio
+- [x] Criar prompts de implantacao com politicas de economia de tokens
+- [x] Registrar decisao tecnica para fluxo de edicao por formulario unico
+- [ ] Revisar CRUD de cursos para listar registros em modo leitura e popular formulario somente ao clicar em editar
+- [ ] Corrigir update de cursos
+- [ ] Revisar CRUD de alunos para listar registros em modo leitura e popular formulario somente ao clicar em editar
+- [ ] Corrigir update de alunos
+- [ ] Revisar CRUD de matriculas para listar registros em modo leitura e popular formulario somente ao clicar em editar
+- [ ] Corrigir update de matriculas
+- [ ] Garantir que curso cancelado continue aparecendo para o aluno com status cancelado
+- [ ] Alterar pagina do curso/aulas para exibir modulos em dropdown
+- [ ] Exibir menu/listagem de aulas a direita na tela de aula
+- [ ] Adicionar botoes de aula anterior e proxima aula antes do botao de aula concluida
+- [ ] Ajustar caderno para abrir somente leitura, exibindo anotacoes com cabecalho do titulo da aula
+- [ ] Investigar erro de reproducao do video YouTube na tela de aula
+- [ ] Corrigir normalizacao/validacao de links ou embed do YouTube conforme causa raiz
+- [ ] Adicionar ou ajustar testes unitarios e de integracao relevantes
+- [ ] Executar lint
+- [ ] Executar typecheck
+- [ ] Executar testes relevantes
+- [ ] Executar build quando aplicavel
+- [ ] Atualizar `docs/REVIEW.md`
+- [ ] Commitar etapa de requisitos e prompts
+- [ ] Commitar cada correcao funcional em etapas pequenas

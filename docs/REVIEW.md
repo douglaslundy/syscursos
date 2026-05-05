@@ -1043,3 +1043,49 @@ Se a Vercel estiver sem uma das chaves publicas aceitas, o erro fica mais claro 
 ### Pendencias
 
 - Validar cadastro de curso e cadastro de aluno no deploy de producao apos o push.
+
+---
+
+### 2026-05-05 - Planejamento de ajustes de CRUD, aula, caderno e video
+
+### Arquivos criados ou alterados
+
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `docs/DEVELOPMENT_MEMORY.md`
+- `prompts/11_CRUD_ADMIN_UX_FIXES.md`
+- `prompts/12_STUDENT_LESSON_NOTEBOOK_VIDEO_FIXES.md`
+- `C:\Users\User\.codex\memories\syscursos_continuidade_2026-05-05.md`
+
+### O que foi implementado
+
+- Registrados os requisitos recebidos em 2026-05-05 no TODO.
+- Criada estrategia de execucao incremental com commits por tarefa.
+- Criados prompts para implantar as correcoes administrativas e da area do aluno.
+- Criada memoria externa para retomada apos reinicio ou limite de contexto.
+- Reforcada politica de economia de tokens para retomadas.
+
+### Testes executados
+
+Nao aplicavel para runtime, pois a etapa alterou apenas documentacao e memoria de continuidade.
+
+### Resultado dos testes
+
+Nao aplicavel.
+
+### Riscos encontrados
+
+- Ja existiam alteracoes nao commitadas em `AGENTS.md`, `AGENTS.OLD.md` e `docs/DEVELOPMENT_MEMORY.md`; elas foram preservadas e nao revertidas.
+- Os problemas funcionais ainda precisam de analise em codigo antes de qualquer correcao.
+
+### Pendencias
+
+- Corrigir CRUDs administrativos.
+- Corrigir visibilidade de matriculas/cursos cancelados para aluno.
+- Ajustar navegacao da aula e caderno.
+- Investigar erro real de player YouTube.
+
+### Proxima etapa recomendada
+
+Executar o prompt `prompts/11_CRUD_ADMIN_UX_FIXES.md` e commitar ao concluir a etapa com testes.

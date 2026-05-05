@@ -482,3 +482,30 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
+
+## 2026-05-05 - Ajustes incrementais com economia de contexto
+
+Decisao:
+
+Tratar os novos ajustes de CRUD, aula, caderno e video como etapas pequenas, cada uma com analise de causa raiz, testes proporcionais e commit proprio. Para economizar tokens, cada retomada deve ler primeiro `docs/TODO.md`, `docs/DEVELOPMENT_MEMORY.md`, esta decisao e apenas os arquivos diretamente envolvidos na etapa em andamento.
+
+Motivo:
+
+Os problemas relatados cruzam UI administrativa, regras de matricula, navegacao da aula, caderno e normalizacao de video. Separar por fluxo reduz risco de regressao e facilita retomada apos reinicio ou limite de contexto.
+
+Alternativas consideradas:
+
+Resolver tudo em uma unica alteracao ampla; refatorar a area administrativa inteira antes de corrigir bugs; executar somente correcao visual sem revisar services e testes.
+
+Impacto:
+
+Cada etapa deve manter separacao entre UI, Server Actions, services, repositories e validators. CRUDs administrativos devem listar registros em modo leitura, usando formulario unico para criacao/edicao apos acao explicita de editar. Matriculas canceladas devem permanecer visiveis ao aluno com status de cancelamento, sem liberar conteudo protegido indevidamente.
+
+Arquivos afetados:
+
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`
+- `docs/DEVELOPMENT_MEMORY.md`
+- `prompts/11_CRUD_ADMIN_UX_FIXES.md`
+- `prompts/12_STUDENT_LESSON_NOTEBOOK_VIDEO_FIXES.md`
