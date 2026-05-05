@@ -16,6 +16,8 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const pagination = getPagination(searchParams);
   const courses = await getCourses(pagination);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
+  const editId = getStringParam(searchParams, "editId");
+  const editingCourse = courses.items.find((course) => course.id === editId);
 
   return (
     <section>
@@ -25,23 +27,56 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       </div>
       <Feedback status={status} />
       <div className="mb-6 rounded-md border bg-background p-4">
-        <h3 className="mb-4 font-medium">Novo curso</h3>
-        <CourseForm />
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-medium">{editingCourse ? "Editar curso" : "Novo curso"}</h3>
+          {editingCourse ? (
+            <Link className="text-sm text-muted-foreground hover:text-foreground" href="/admin/courses">
+              Cancelar edicao
+            </Link>
+          ) : null}
+        </div>
+        <CourseForm
+          course={
+            editingCourse
+              ? {
+                  id: editingCourse.id,
+                  title: editingCourse.title,
+                  slug: editingCourse.slug,
+                  description: editingCourse.description ?? "",
+                  status: editingCourse.status,
+                }
+              : undefined
+          }
+        />
       </div>
       <SearchForm query={pagination.query} />
       <div className="space-y-3">
         {courses.items.map((course) => (
           <article className="rounded-md border bg-background p-4" key={course.id}>
-            <CourseForm
-              course={{
-                id: course.id,
-                title: course.title,
-                slug: course.slug,
-                description: course.description ?? "",
-                status: course.status,
-              }}
-            />
+            <div className="grid gap-2 md:grid-cols-[1.4fr_1fr_120px]">
+              <div>
+                <div className="text-xs text-muted-foreground">Titulo</div>
+                <div className="font-medium">{course.title}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Slug</div>
+                <div className="text-sm text-muted-foreground">{course.slug}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Status</div>
+                <div className="text-sm">{course.status}</div>
+              </div>
+            </div>
+            {course.description ? (
+              <p className="mt-3 text-sm text-muted-foreground">{course.description}</p>
+            ) : null}
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <Link
+                className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+                href={adminEditHref("/admin/courses", searchParams, course.id)}
+              >
+                Editar
+              </Link>
               <Link
                 className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
                 href={`/admin/courses/${course.id}/modules`}
@@ -75,6 +110,32 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       />
     </section>
   );
+}
+
+function getStringParam(
+  searchParams: CoursesPageProps["searchParams"],
+  key: string,
+): string | undefined {
+  const value = searchParams?.[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+function adminEditHref(
+  basePath: string,
+  searchParams: CoursesPageProps["searchParams"],
+  editId: string,
+) {
+  const params = new URLSearchParams();
+  const page = getStringParam(searchParams, "page");
+  const pageSize = getStringParam(searchParams, "pageSize");
+  const query = getStringParam(searchParams, "query");
+
+  if (page) params.set("page", page);
+  if (pageSize) params.set("pageSize", pageSize);
+  if (query) params.set("query", query);
+  params.set("editId", editId);
+
+  return `${basePath}?${params.toString()}`;
 }
 
 type CourseFormProps = {

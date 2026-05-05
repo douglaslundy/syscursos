@@ -275,12 +275,12 @@
 - [x] Criar memoria de continuidade fora do repositorio
 - [x] Criar prompts de implantacao com politicas de economia de tokens
 - [x] Registrar decisao tecnica para fluxo de edicao por formulario unico
-- [ ] Revisar CRUD de cursos para listar registros em modo leitura e popular formulario somente ao clicar em editar
-- [ ] Corrigir update de cursos
-- [ ] Revisar CRUD de alunos para listar registros em modo leitura e popular formulario somente ao clicar em editar
-- [ ] Corrigir update de alunos
-- [ ] Revisar CRUD de matriculas para listar registros em modo leitura e popular formulario somente ao clicar em editar
-- [ ] Corrigir update de matriculas
+- [x] Revisar CRUD de cursos para listar registros em modo leitura e popular formulario somente ao clicar em editar
+- [x] Corrigir update de cursos
+- [x] Revisar CRUD de alunos para listar registros em modo leitura e popular formulario somente ao clicar em editar
+- [x] Corrigir update de alunos
+- [x] Revisar CRUD de matriculas para listar registros em modo leitura e popular formulario somente ao clicar em editar
+- [x] Corrigir update de matriculas
 - [ ] Garantir que curso cancelado continue aparecendo para o aluno com status cancelado
 - [ ] Alterar pagina do curso/aulas para exibir modulos em dropdown
 - [ ] Exibir menu/listagem de aulas a direita na tela de aula
@@ -288,11 +288,11 @@
 - [ ] Ajustar caderno para abrir somente leitura, exibindo anotacoes com cabecalho do titulo da aula
 - [ ] Investigar erro de reproducao do video YouTube na tela de aula
 - [ ] Corrigir normalizacao/validacao de links ou embed do YouTube conforme causa raiz
-- [ ] Adicionar ou ajustar testes unitarios e de integracao relevantes
-- [ ] Executar lint
-- [ ] Executar typecheck
-- [ ] Executar testes relevantes
-- [ ] Executar build quando aplicavel
-- [ ] Atualizar `docs/REVIEW.md`
-- [ ] Commitar etapa de requisitos e prompts
+- [x] Adicionar ou ajustar testes unitarios e de integracao relevantes
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes relevantes
+- [x] Executar build quando aplicavel
+- [x] Atualizar `docs/REVIEW.md`
+- [x] Commitar etapa de requisitos e prompts
 - [ ] Commitar cada correcao funcional em etapas pequenas

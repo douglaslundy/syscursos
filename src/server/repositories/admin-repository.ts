@@ -348,6 +348,19 @@ export async function listEnrollments(args: PageArgs) {
 }
 
 export async function upsertEnrollment(input: EnrollmentInput) {
+  if (input.id) {
+    return prisma.enrollment.update({
+      where: { id: input.id },
+      data: {
+        studentId: input.studentId,
+        courseId: input.courseId,
+        startsAt: input.startsAt,
+        expiresAt: input.expiresAt,
+        status: input.status,
+      },
+    });
+  }
+
   return prisma.enrollment.upsert({
     where: {
       studentId_courseId: {

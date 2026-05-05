@@ -178,3 +178,11 @@ Ao retomar:
 7. Fazer commit proprio da tarefa concluida.
 8. Se for continuar UI, seguir as regras atuais de `AGENTS.md`.
 9. Se for continuar produto/funcionalidade, conferir tambem `docs/PROJECT_CONTEXT.md`, `docs/DECISIONS.md` e `docs/REVIEW.md` quando necessario.
+
+## Atualizacao 2026-05-05 - CRUD administrativo
+
+- Cursos, alunos e matriculas agora usam listagem em modo leitura e formulario principal para editar via `editId`.
+- Update de matricula foi corrigido para atualizar por `id` quando o registro existente esta em edicao.
+- Teste novo: `src/tests/integration/admin-repository.test.ts`.
+- Validacoes executadas e aprovadas: `npm run lint`, `npm run typecheck`, `npm run test` com 53 testes e `npm run build`.
+- Proxima etapa: `prompts/12_STUDENT_LESSON_NOTEBOOK_VIDEO_FIXES.md`.

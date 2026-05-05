@@ -1089,3 +1089,58 @@ Nao aplicavel.
 ### Proxima etapa recomendada
 
 Executar o prompt `prompts/11_CRUD_ADMIN_UX_FIXES.md` e commitar ao concluir a etapa com testes.
+
+---
+
+### 2026-05-05 - Ajustes de CRUD administrativo
+
+### Arquivos criados ou alterados
+
+- `src/app/admin/courses/page.tsx`
+- `src/app/admin/students/page.tsx`
+- `src/app/admin/enrollments/page.tsx`
+- `src/server/repositories/admin-repository.ts`
+- `src/tests/integration/admin-repository.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DEVELOPMENT_MEMORY.md`
+
+### O que foi implementado
+
+- Cursos, alunos e matriculas passaram a listar registros em modo leitura.
+- Cada item recebeu acao `Editar`, que usa `editId` na URL para popular o formulario principal.
+- O formulario principal alterna entre criacao e edicao.
+- Removidos formularios de edicao embutidos em cards de cursos e alunos.
+- Removido input de renovacao embutido em cada matricula; a alteracao de validade agora ocorre pelo formulario principal de edicao.
+- Corrigido update de matricula para atualizar por `id` quando houver registro existente.
+- Adicionado teste de integracao garantindo update de matricula por `id`.
+
+### Testes executados
+
+- `npm run test -- --run src/tests/integration/admin-repository.test.ts src/tests/integration/admin-service.test.ts src/tests/unit/admin-validators.test.ts`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- Testes focados: aprovados, 12 testes.
+- `npm run lint`: aprovado.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 53 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- O formulario de edicao usa o item presente na pagina atual. Se o usuario manipular manualmente um `editId` que nao esteja na pagina filtrada/paginada atual, o formulario volta ao modo criacao.
+- Alterar aluno em producao ainda depende de `SUPABASE_SERVICE_ROLE_KEY` configurada corretamente.
+
+### Pendencias
+
+- Validar manualmente no navegador com dados reais.
+- Continuar ajustes da area do aluno, caderno e video.
+
+### Proxima etapa recomendada
+
+Executar `prompts/12_STUDENT_LESSON_NOTEBOOK_VIDEO_FIXES.md`.
