@@ -52,6 +52,32 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
             {data.lesson.title}
           </h1>
         </div>
+      </div>
+
+      {searchParams?.status === "completed" ? (
+        <div className="mt-5 flex items-center gap-2 rounded-md border border-stroke-subtle bg-surface px-4 py-3 text-sm text-copy-primary">
+          <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
+          Aula marcada como concluida.
+        </div>
+      ) : null}
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
+          {data.embedUrl ? (
+            <iframe
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="aspect-video w-full"
+              referrerPolicy="strict-origin-when-cross-origin"
+              src={data.embedUrl}
+              title={data.lesson.title}
+            />
+          ) : (
+            <div className="flex aspect-video items-center justify-center bg-surface px-4 text-center text-sm text-copy-muted">
+              Link do YouTube invalido.
+            </div>
+          )}
+        </div>
         <details className="rounded-md border border-stroke-subtle bg-surface p-5 shadow-sm" open>
           <summary className="mb-4 flex cursor-pointer list-none items-center justify-between text-xs font-medium uppercase tracking-[0.12em] text-copy-muted">
             Trilha de aulas
@@ -109,30 +135,6 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
             percentage={data.progress.percentage}
           />
         </details>
-      </div>
-
-      {searchParams?.status === "completed" ? (
-        <div className="mt-5 flex items-center gap-2 rounded-md border border-stroke-subtle bg-surface px-4 py-3 text-sm text-copy-primary">
-          <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
-          Aula marcada como concluida.
-        </div>
-      ) : null}
-
-      <div className="mt-6 overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
-        {data.embedUrl ? (
-          <iframe
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            className="aspect-video w-full"
-            referrerPolicy="strict-origin-when-cross-origin"
-            src={data.embedUrl}
-            title={data.lesson.title}
-          />
-        ) : (
-          <div className="flex aspect-video items-center justify-center bg-surface px-4 text-center text-sm text-copy-muted">
-            Link do YouTube invalido.
-          </div>
-        )}
       </div>
 
       {data.lesson.description ? (
