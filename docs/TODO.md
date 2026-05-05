@@ -281,13 +281,13 @@
 - [x] Corrigir update de alunos
 - [x] Revisar CRUD de matriculas para listar registros em modo leitura e popular formulario somente ao clicar em editar
 - [x] Corrigir update de matriculas
-- [ ] Garantir que curso cancelado continue aparecendo para o aluno com status cancelado
-- [ ] Alterar pagina do curso/aulas para exibir modulos em dropdown
-- [ ] Exibir menu/listagem de aulas a direita na tela de aula
-- [ ] Adicionar botoes de aula anterior e proxima aula antes do botao de aula concluida
-- [ ] Ajustar caderno para abrir somente leitura, exibindo anotacoes com cabecalho do titulo da aula
-- [ ] Investigar erro de reproducao do video YouTube na tela de aula
-- [ ] Corrigir normalizacao/validacao de links ou embed do YouTube conforme causa raiz
+- [x] Garantir que curso cancelado continue aparecendo para o aluno com status cancelado
+- [x] Alterar pagina do curso/aulas para exibir modulos em dropdown
+- [x] Exibir menu/listagem de aulas a direita na tela de aula
+- [x] Adicionar botoes de aula anterior e proxima aula antes do botao de aula concluida
+- [x] Ajustar caderno para abrir somente leitura, exibindo anotacoes com cabecalho do titulo da aula
+- [x] Investigar erro de reproducao do video YouTube na tela de aula
+- [x] Corrigir normalizacao/validacao de links ou embed do YouTube conforme causa raiz
 - [x] Adicionar ou ajustar testes unitarios e de integracao relevantes
 - [x] Executar lint
 - [x] Executar typecheck
@@ -295,4 +295,4 @@
 - [x] Executar build quando aplicavel
 - [x] Atualizar `docs/REVIEW.md`
 - [x] Commitar etapa de requisitos e prompts
-- [ ] Commitar cada correcao funcional em etapas pequenas
+- [x] Commitar cada correcao funcional em etapas pequenas

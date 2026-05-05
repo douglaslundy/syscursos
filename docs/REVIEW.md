@@ -1144,3 +1144,68 @@ Executar o prompt `prompts/11_CRUD_ADMIN_UX_FIXES.md` e commitar ao concluir a e
 ### Proxima etapa recomendada
 
 Executar `prompts/12_STUDENT_LESSON_NOTEBOOK_VIDEO_FIXES.md`.
+
+---
+
+### 2026-05-05 - Ajustes da area do aluno, caderno e YouTube
+
+### Arquivos criados ou alterados
+
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- `src/app/app/notebooks/page.tsx`
+- `src/components/student/course-blocked.tsx`
+- `src/components/student/course-card.tsx`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/server/services/youtube-service.ts`
+- `src/server/validators/admin.ts`
+- `src/tests/integration/student-service.test.ts`
+- `src/tests/unit/youtube-service.test.ts`
+- `src/tests/e2e/public.spec.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DEVELOPMENT_MEMORY.md`
+
+### O que foi implementado
+
+- Matriculas canceladas deixaram de ser filtradas no dashboard do aluno.
+- Curso cancelado aparece como `Cancelado` e bloqueia acesso ao conteudo.
+- Modulos da pagina do curso passaram a usar dropdown nativo.
+- Tela de aula passou a exibir menu de aulas a direita, agrupado por modulo.
+- Adicionados botoes de aula anterior e proxima aula antes de marcar aula como concluida.
+- Caderno passou a abrir em modo somente leitura, com cabecalho por aula e conteudo da anotacao.
+- Player YouTube passou a validar `youtubeVideoId` salvo antes de usar, aceitar `watch`, `embed`, `shorts`, `live` e `youtu.be`, e gerar embed via `youtube-nocookie.com`.
+- Teste E2E publico foi atualizado para o comportamento real de `/` redirecionar para `/login`.
+
+### Testes executados
+
+- `npm run typecheck`
+- `npm run test -- --run src/tests/unit/youtube-service.test.ts src/tests/integration/student-service.test.ts src/tests/integration/student-repository.test.ts src/tests/unit/student-components.test.tsx`
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+- `npm run test:e2e`
+
+### Resultado dos testes
+
+- Typecheck: aprovado.
+- Testes focados: aprovados, 19 testes.
+- `npm run lint`: aprovado.
+- `npm run test`: aprovado, 56 testes.
+- `npm run build`: aprovado.
+- `npm run test:e2e`: falhou inicialmente porque o teste esperava heading antigo `SysCursos`; corrigido para validar redirect para `/login` e heading `Entrar`; reexecucao aprovada, 2 testes.
+
+### Riscos encontrados
+
+- Se o video do YouTube estiver privado, removido, com embed desativado pelo proprietario ou bloqueado por politica da plataforma, o player ainda exibira erro do proprio YouTube; a aplicacao agora evita IDs invalidos e embeds malformados, mas nao pode liberar videos bloqueados na origem.
+- A navegacao lateral da aula depende de conteudo ativo; modulos/aulas inativos continuam ocultos por regra server-side.
+
+### Pendencias
+
+- Validar manualmente com o video real que gerou o ID de reproducao informado.
+- Validar visualmente em desktop/mobile com aluno real.
+
+### Proxima etapa recomendada
+
+Fazer deploy/push conforme fluxo do projeto e testar os fluxos administrativos e do aluno em ambiente real.

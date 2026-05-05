@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 
 import { EmptyState } from "@/components/student/empty-state";
-import { NoteAutosaveEditor } from "@/components/student/note-autosave-editor";
 import { getStudentNotebook } from "@/server/services/student-service";
 import { notebookQuerySchema } from "@/server/validators/student";
 
@@ -94,16 +93,14 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
                         {new Intl.DateTimeFormat("pt-BR").format(note.updatedAt)}
                       </span>
                     </div>
-                    <NoteAutosaveEditor
-                      className="mt-4 rounded-md border bg-card/60 p-4"
-                      courseId={selectedCourseId}
-                      description="Autosave ativo no caderno."
-                      initialContent={note.content}
-                      lessonId={note.lessonId}
-                      placeholder="Edite sua anotacao..."
-                      textareaId={`notebook-note-${note.id}`}
-                      title={`Anotacao - ${note.lessonTitle}`}
-                    />
+                    <div className="mt-4 rounded-md border bg-card/60 p-4">
+                      <h3 className="text-sm font-semibold tracking-normal">
+                        Anotacao - {note.lessonTitle}
+                      </h3>
+                      <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                        {note.content}
+                      </p>
+                    </div>
                   </article>
                 ))}
               </div>

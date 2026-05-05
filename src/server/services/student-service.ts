@@ -7,7 +7,7 @@ import { getYouTubeEmbedUrl } from "@/server/services/youtube-service";
 import type { CompleteLessonInput } from "@/server/validators/student";
 import type { LessonNoteInput, NotebookQueryInput } from "@/server/validators/student";
 
-export type CourseAccessStatus = "AVAILABLE" | "EXPIRED" | "INACTIVE";
+export type CourseAccessStatus = "AVAILABLE" | "EXPIRED" | "INACTIVE" | "CANCELED";
 
 export type StudentCourseCard = {
   id: string;
@@ -112,6 +112,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
       lesson: null,
       embedUrl: null,
       isCompleted: false,
+      navigation: null,
       progress: calculateCourseProgress(0, 0),
     };
   }
@@ -122,12 +123,19 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     notFound();
   }
 
-  const [totalLessons, completedLessons, progress] = await Promise.all([
+  const [totalLessons, completedLessons, progress, note, courseContent, completedLessonIds] =
+    await Promise.all([
     repository.countActiveLessonsByCourse(courseId),
     repository.countCompletedLessonsByCourse(studentId, courseId),
     repository.findLessonProgress(studentId, lessonId),
+    repository.findLessonNote(studentId, lessonId),
+    repository.getCourseWithActiveContent(courseId),
+    repository.getCompletedLessonIds(studentId, courseId),
   ]);
-  const note = await repository.findLessonNote(studentId, lessonId);
+
+  if (!courseContent) {
+    notFound();
+  }
 
   return {
     status: "AVAILABLE" as const,
@@ -136,6 +144,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     embedUrl: getYouTubeEmbedUrl(lesson.youtubeUrl, lesson.youtubeVideoId),
     isCompleted: progress?.status === "COMPLETED",
     note,
+    navigation: buildLessonNavigation(courseContent.modules, lessonId, completedLessonIds),
     progress: calculateCourseProgress(completedLessons, totalLessons),
   };
 }
@@ -222,11 +231,11 @@ function getCourseAccessStatus(enrollment: {
 }): CourseAccessStatus {
   const now = new Date();
 
-  if (
-    enrollment.course.status !== "ACTIVE" ||
-    enrollment.status !== "ACTIVE" ||
-    enrollment.startsAt > now
-  ) {
+  if (enrollment.status === "CANCELED") {
+    return "CANCELED";
+  }
+
+  if (enrollment.course.status !== "ACTIVE" || enrollment.status !== "ACTIVE" || enrollment.startsAt > now) {
     return "INACTIVE";
   }
 
@@ -235,6 +244,33 @@ function getCourseAccessStatus(enrollment: {
   }
 
   return "AVAILABLE";
+}
+
+type CourseModuleRow = NonNullable<
+  Awaited<ReturnType<typeof repository.getCourseWithActiveContent>>
+>["modules"];
+
+function buildLessonNavigation(
+  modules: CourseModuleRow,
+  lessonId: string,
+  completedLessonIds: Set<string>,
+) {
+  const lessons = modules.flatMap((module) =>
+    module.lessons.map((lesson) => ({
+      ...lesson,
+      moduleId: module.id,
+      moduleTitle: module.title,
+      completed: completedLessonIds.has(lesson.id),
+    })),
+  );
+  const currentIndex = lessons.findIndex((lesson) => lesson.id === lessonId);
+
+  return {
+    modules,
+    completedLessonIds,
+    previousLesson: currentIndex > 0 ? lessons[currentIndex - 1] : null,
+    nextLesson: currentIndex >= 0 && currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null,
+  };
 }
 
 type NotebookNoteRow = Awaited<ReturnType<typeof repository.listNotebookNotes>>[number];

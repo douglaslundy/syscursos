@@ -37,8 +37,10 @@ export function CourseCard({
               "rounded-md px-2.5 py-1 text-xs font-medium",
               enrollmentStatus === "AVAILABLE" && "bg-brand-primary text-copy-primary",
               enrollmentStatus === "EXPIRED" && "bg-surface-elevated text-copy-secondary",
+              enrollmentStatus === "CANCELED" && "bg-danger/15 text-danger",
               enrollmentStatus !== "AVAILABLE" &&
                 enrollmentStatus !== "EXPIRED" &&
+                enrollmentStatus !== "CANCELED" &&
                 "bg-surface-elevated text-copy-muted",
             )}
           >
@@ -78,6 +80,10 @@ function labelForStatus(status: string) {
 
   if (status === "EXPIRED") {
     return "Expirado";
+  }
+
+  if (status === "CANCELED") {
+    return "Cancelado";
   }
 
   return "Bloqueado";

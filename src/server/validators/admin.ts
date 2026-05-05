@@ -115,7 +115,10 @@ function isYouTubeUrl(value: string) {
     const host = url.hostname.replace(/^www\./, "");
     return (
       (host === "youtube.com" &&
-        (url.pathname === "/watch" || url.pathname.startsWith("/embed/"))) ||
+        (url.pathname === "/watch" ||
+          url.pathname.startsWith("/embed/") ||
+          url.pathname.startsWith("/shorts/") ||
+          url.pathname.startsWith("/live/"))) ||
       host === "youtu.be"
     );
   } catch {

@@ -1,13 +1,15 @@
 import Link from "next/link";
 
 type CourseBlockedProps = {
-  status: "EXPIRED" | "INACTIVE";
+  status: "EXPIRED" | "INACTIVE" | "CANCELED";
 };
 
 export function CourseBlocked({ status }: CourseBlockedProps) {
   const message =
     status === "EXPIRED"
       ? "Seu acesso a este curso expirou."
+      : status === "CANCELED"
+        ? "Sua matricula neste curso foi cancelada."
       : "Este curso nao esta disponivel no momento.";
 
   return (

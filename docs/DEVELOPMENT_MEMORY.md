@@ -186,3 +186,15 @@ Ao retomar:
 - Teste novo: `src/tests/integration/admin-repository.test.ts`.
 - Validacoes executadas e aprovadas: `npm run lint`, `npm run typecheck`, `npm run test` com 53 testes e `npm run build`.
 - Proxima etapa: `prompts/12_STUDENT_LESSON_NOTEBOOK_VIDEO_FIXES.md`.
+
+## Atualizacao 2026-05-05 - Area do aluno, caderno e video
+
+- Matriculas canceladas agora continuam visiveis no dashboard do aluno como `Cancelado`.
+- Acesso a curso cancelado continua bloqueado.
+- Pagina do curso usa dropdown por modulo.
+- Tela de aula exibe listagem de aulas a direita e botoes de aula anterior/proxima antes de concluir aula.
+- Pagina `Meus Cadernos` agora e somente leitura por padrao.
+- YouTube passou a normalizar IDs, ignorar `youtubeVideoId` invalido, aceitar `shorts`/`live` e gerar embed por `youtube-nocookie.com`.
+- E2E publico foi corrigido para validar o redirect real de `/` para `/login`.
+- Validacoes aprovadas: `npm run lint`, `npm run typecheck`, `npm run test` com 56 testes, `npm run build` e `npm run test:e2e` com 2 testes.
+- Risco residual: videos privados, removidos ou com incorporacao bloqueada pelo proprietario ainda exibem erro do YouTube e precisam ser corrigidos na origem do video.

@@ -50,8 +50,12 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
           />
         ) : (
           data.modules.map((module) => (
-            <section className="rounded-md border border-stroke-subtle bg-surface p-5 shadow-sm" key={module.id}>
-              <div className="flex items-center justify-between gap-4">
+            <details
+              className="rounded-md border border-stroke-subtle bg-surface p-5 shadow-sm"
+              key={module.id}
+              open={module.position === 1}
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-[0.12em] text-copy-muted">
                     Modulo {module.position}
@@ -63,7 +67,7 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
                 <span className="rounded-md border border-stroke-subtle bg-surface-elevated px-2.5 py-1 text-xs font-medium text-copy-secondary">
                   {module.lessons.length} aulas
                 </span>
-              </div>
+              </summary>
               <div className="mt-4 divide-y divide-stroke-subtle">
                 {module.lessons.length === 0 ? (
                   <div className="py-3 text-sm text-copy-muted">
@@ -103,7 +107,7 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
                   })
                 )}
               </div>
-            </section>
+            </details>
           ))
         )}
       </div>

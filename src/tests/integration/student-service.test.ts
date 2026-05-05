@@ -78,6 +78,25 @@ describe("student service", () => {
     });
   });
 
+  it("keeps canceled courses visible without marking them available", async () => {
+    const { getStudentDashboard } = await import("@/server/services/student-service");
+    repositoryMock.listStudentCourseEnrollments.mockResolvedValue([
+      {
+        ...activeEnrollment("course-id", "Curso cancelado"),
+        status: "CANCELED",
+      },
+    ]);
+    repositoryMock.countActiveLessonsByCourse.mockResolvedValue(4);
+    repositoryMock.countCompletedLessonsByCourse.mockResolvedValue(2);
+
+    const dashboard = await getStudentDashboard();
+
+    expect(dashboard.courses[0]).toMatchObject({
+      id: "course-id",
+      enrollmentStatus: "CANCELED",
+    });
+  });
+
   it("blocks an expired course without exposing modules", async () => {
     const { getStudentCourse } = await import("@/server/services/student-service");
     repositoryMock.findEnrollmentForCourse.mockResolvedValue(
@@ -113,6 +132,8 @@ describe("student service", () => {
       content: "Resumo",
       updatedAt: new Date("2026-05-04T12:00:00.000Z"),
     });
+    repositoryMock.getCourseWithActiveContent.mockResolvedValue(activeCourseContent());
+    repositoryMock.getCompletedLessonIds.mockResolvedValue(new Set(["lesson-id"]));
 
     const lesson = await getStudentLesson("course-id", "lesson-id");
 
@@ -120,6 +141,10 @@ describe("student service", () => {
       status: "AVAILABLE",
       isCompleted: true,
       note: { content: "Resumo" },
+      navigation: {
+        previousLesson: null,
+        nextLesson: { id: "lesson-2" },
+      },
       progress: { completedLessons: 1, totalLessons: 3, percentage: 33 },
     });
   });
@@ -233,11 +258,39 @@ function activeLesson() {
     youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     youtubeVideoId: null,
     module: {
+      id: "module-id",
       title: "Modulo",
       course: {
         title: "Curso",
       },
     },
+  };
+}
+
+function activeCourseContent() {
+  return {
+    id: "course-id",
+    modules: [
+      {
+        id: "module-id",
+        title: "Modulo",
+        position: 1,
+        lessons: [
+          {
+            id: "lesson-id",
+            title: "Aula",
+            position: 1,
+            status: "ACTIVE",
+          },
+          {
+            id: "lesson-2",
+            title: "Aula 2",
+            position: 2,
+            status: "ACTIVE",
+          },
+        ],
+      },
+    ],
   };
 }
 

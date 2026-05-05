@@ -24,7 +24,6 @@ export async function listStudentCourseEnrollments(studentId: string) {
   return prisma.enrollment.findMany({
     where: {
       studentId,
-      status: { not: EnrollmentStatus.CANCELED },
     },
     orderBy: { createdAt: "desc" },
     include: courseAccessInclude,

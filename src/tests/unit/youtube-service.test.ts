@@ -15,7 +15,22 @@ describe("youtube service", () => {
 
   it("returns embed URL from stored video id first", () => {
     expect(getYouTubeEmbedUrl("https://example.com/video", "abc123")).toBe(
-      "https://www.youtube.com/embed/abc123",
+      null,
+    );
+    expect(getYouTubeEmbedUrl("https://example.com/video", "dQw4w9WgXcQ")).toBe(
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1",
+    );
+  });
+
+  it("falls back to the URL when a stored video id is invalid", () => {
+    expect(getYouTubeEmbedUrl("https://youtu.be/dQw4w9WgXcQ", "invalid-id")).toBe(
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1",
+    );
+  });
+
+  it("extracts video id from shorts URLs", () => {
+    expect(extractYouTubeVideoId("https://www.youtube.com/shorts/dQw4w9WgXcQ")).toBe(
+      "dQw4w9WgXcQ",
     );
   });
 
