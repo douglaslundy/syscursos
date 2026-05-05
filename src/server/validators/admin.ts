@@ -19,10 +19,8 @@ export const courseSchema = z.object({
   title: z.string().trim().min(2).max(180),
   slug: z
     .string()
-    .trim()
-    .min(2)
-    .max(200)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    .transform(normalizeSlug)
+    .pipe(z.string().min(2).max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
   description: optionalTextSchema,
   status: z.nativeEnum(CourseStatus).default(CourseStatus.ACTIVE),
 });
@@ -107,6 +105,18 @@ export type RenewEnrollmentInput = z.infer<typeof renewEnrollmentSchema>;
 
 function emptyToNull(value: string | undefined) {
   return value && value.length > 0 ? value : null;
+}
+
+function normalizeSlug(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s]+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function isYouTubeUrl(value: string) {

@@ -19,11 +19,22 @@ describe("admin validators", () => {
   it("rejects invalid course slug", () => {
     const result = courseSchema.safeParse({
       title: "Curso Admin",
-      slug: "Curso Admin",
+      slug: "!",
       status: "ACTIVE",
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("normalizes a human-entered course slug", () => {
+    const result = courseSchema.safeParse({
+      title: "Curso Admin",
+      slug: "  Curso Administração_2026  ",
+      status: "ACTIVE",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.success ? result.data.slug : "invalid").toBe("curso-administracao-2026");
   });
 
   it("accepts only YouTube lesson URLs", () => {
