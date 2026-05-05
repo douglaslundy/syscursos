@@ -29,12 +29,20 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
 
   return (
     <section>
-      <Link
-        className="text-sm font-medium text-copy-secondary hover:text-brand-primary"
-        href={`/app/courses/${courseId}`}
-      >
-        Voltar para o curso
-      </Link>
+      <div className="flex flex-wrap items-center gap-3">
+        <Link
+          className="text-sm font-medium text-copy-secondary hover:text-brand-primary"
+          href="/app"
+        >
+          Voltar para cursos
+        </Link>
+        <Link
+          className="text-sm font-medium text-copy-secondary hover:text-brand-primary"
+          href={`/app/courses/${courseId}`}
+        >
+          Voltar para o curso
+        </Link>
+      </div>
       <div className="mt-3 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div>
           <p className="text-sm font-medium text-brand-primary">
@@ -44,14 +52,21 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
             {data.lesson.title}
           </h1>
         </div>
-        <aside className="rounded-md border border-stroke-subtle bg-surface p-5 shadow-sm">
+        <details className="rounded-md border border-stroke-subtle bg-surface p-5 shadow-sm" open>
+          <summary className="mb-4 flex cursor-pointer list-none items-center justify-between text-xs font-medium uppercase tracking-[0.12em] text-copy-muted">
+            Trilha de aulas
+            <span className="rounded-md border border-stroke-subtle bg-surface-elevated px-2 py-1 text-[11px] normal-case tracking-normal text-copy-secondary">
+              Abrir/fechar
+            </span>
+          </summary>
           <div className="mb-5">
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-copy-muted">
-              Aulas do curso
-            </p>
             <div className="max-h-[460px] space-y-3 overflow-y-auto pr-1">
               {data.navigation?.modules.map((module) => (
-                <details className="rounded-md border border-stroke-subtle bg-background p-3" key={module.id} open={module.id === data.lesson.module.id}>
+                <details
+                  className="rounded-md border border-stroke-subtle bg-background p-3"
+                  key={module.id}
+                  open={module.id === data.lesson.module.id}
+                >
                   <summary className="cursor-pointer list-none text-sm font-medium text-copy-primary">
                     Modulo {module.position}: {module.title}
                   </summary>
@@ -93,7 +108,7 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
             label={`${data.progress.completedLessons}/${data.progress.totalLessons} aulas concluidas`}
             percentage={data.progress.percentage}
           />
-        </aside>
+        </details>
       </div>
 
       {searchParams?.status === "completed" ? (

@@ -17,6 +17,8 @@ type StudentShellProps = Readonly<{
 export function StudentShell({ user, children }: StudentShellProps) {
   return (
     <div className="min-h-screen bg-background">
+      <input className="peer/sidebar sr-only" defaultChecked id="student-sidebar-toggle" type="checkbox" />
+
       <a
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:text-sm focus:text-copy-primary focus:shadow"
         href="#conteudo"
@@ -24,7 +26,22 @@ export function StudentShell({ user, children }: StudentShellProps) {
         Pular para o conteudo
       </a>
 
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-stroke-subtle bg-surface-elevated px-5 py-6 md:flex md:flex-col">
+      <label
+        className="fixed left-4 top-4 z-40 hidden cursor-pointer rounded-md border border-stroke-subtle bg-surface-elevated px-3 py-2 text-xs font-medium text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary peer-checked/sidebar:md:hidden md:block"
+        htmlFor="student-sidebar-toggle"
+      >
+        Abrir menu
+      </label>
+
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 -translate-x-full border-r border-stroke-subtle bg-surface-elevated px-5 py-6 transition-transform duration-200 peer-checked/sidebar:translate-x-0 md:flex md:flex-col">
+        <div className="mb-4 flex justify-end">
+          <label
+            className="cursor-pointer rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-xs font-medium text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
+            htmlFor="student-sidebar-toggle"
+          >
+            Fechar menu
+          </label>
+        </div>
         <Link aria-label="Ir para meus cursos" className="inline-flex" href="/app">
           <Image
             alt="Sysdoc"
@@ -79,7 +96,7 @@ export function StudentShell({ user, children }: StudentShellProps) {
         </div>
       </header>
 
-      <div className="md:pl-72">
+      <div className="transition-[padding] duration-200 peer-checked/sidebar:md:pl-72 md:pl-0">
         <main
           className="mx-auto min-h-screen max-w-7xl px-4 pb-24 pt-6 sm:px-6 md:pb-10 md:pt-8"
           id="conteudo"
