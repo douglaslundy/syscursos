@@ -17,6 +17,8 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
   const pagination = getPagination(searchParams);
   const { module, lessons } = await getLessons(params.moduleId, pagination);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
+  const editId = getStringParam(searchParams, "editId");
+  const editingLesson = lessons.items.find((lesson) => lesson.id === editId);
 
   return (
     <section>
@@ -32,32 +34,71 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
       </div>
       <Feedback status={status} />
       <div className="mb-6 rounded-md border bg-background p-4">
-        <h3 className="mb-4 font-medium">Nova aula</h3>
-        <LessonForm moduleId={module.id} />
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="font-medium">{editingLesson ? "Editar aula" : "Nova aula"}</h3>
+          {editingLesson ? (
+            <Link
+              className="text-sm text-muted-foreground hover:text-foreground"
+              href={`/admin/modules/${module.id}/lessons`}
+            >
+              Cancelar edicao
+            </Link>
+          ) : null}
+        </div>
+        <LessonForm
+          lesson={
+            editingLesson
+              ? {
+                  id: editingLesson.id,
+                  title: editingLesson.title,
+                  description: editingLesson.description ?? "",
+                  youtubeUrl: editingLesson.youtubeUrl,
+                  youtubeVideoId: editingLesson.youtubeVideoId ?? "",
+                  position: editingLesson.position,
+                  status: editingLesson.status,
+                }
+              : undefined
+          }
+          moduleId={module.id}
+        />
       </div>
       <SearchForm query={pagination.query} />
       <div className="space-y-3">
         {lessons.items.map((lesson) => (
           <article className="rounded-md border bg-background p-4" key={lesson.id}>
-            <LessonForm
-              lesson={{
-                id: lesson.id,
-                title: lesson.title,
-                description: lesson.description ?? "",
-                youtubeUrl: lesson.youtubeUrl,
-                youtubeVideoId: lesson.youtubeVideoId ?? "",
-                position: lesson.position,
-                status: lesson.status,
-              }}
-              moduleId={module.id}
-            />
-            <form action={deleteLessonAction} className="mt-3">
+            <div className="grid gap-2 md:grid-cols-[1.2fr_120px_120px]">
+              <div>
+                <div className="text-xs text-muted-foreground">Titulo</div>
+                <div className="font-medium">{lesson.title}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Posicao</div>
+                <div className="text-sm">{lesson.position}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Status</div>
+                <div className="text-sm">{lesson.status}</div>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">{lesson.youtubeUrl}</p>
+            {lesson.description ? (
+              <p className="mt-2 text-sm text-muted-foreground">{lesson.description}</p>
+            ) : null}
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <Link
+                className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+                href={adminEditHref(`/admin/modules/${module.id}/lessons`, searchParams, lesson.id)}
+              >
+                Editar
+              </Link>
+              <form action={deleteLessonAction}>
               <input name="id" type="hidden" value={lesson.id} />
               <input name="moduleId" type="hidden" value={module.id} />
               <SubmitButton destructive confirmMessage="Remover esta aula?">
                 Remover
               </SubmitButton>
-            </form>
+              </form>
+            </div>
           </article>
         ))}
       </div>
@@ -69,6 +110,32 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
       />
     </section>
   );
+}
+
+function getStringParam(
+  searchParams: LessonsPageProps["searchParams"],
+  key: string,
+): string | undefined {
+  const value = searchParams?.[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+function adminEditHref(
+  basePath: string,
+  searchParams: LessonsPageProps["searchParams"],
+  editId: string,
+) {
+  const params = new URLSearchParams();
+  const page = getStringParam(searchParams, "page");
+  const pageSize = getStringParam(searchParams, "pageSize");
+  const query = getStringParam(searchParams, "query");
+
+  if (page) params.set("page", page);
+  if (pageSize) params.set("pageSize", pageSize);
+  if (query) params.set("query", query);
+  params.set("editId", editId);
+
+  return `${basePath}?${params.toString()}`;
 }
 
 type LessonFormProps = {
