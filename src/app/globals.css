@@ -7,6 +7,41 @@
     --color-primary: #ff4d00;
     --color-primary-hover: #ff6a2a;
 
+    --bg-main: #f4f6f8;
+    --bg-elevated: #ffffff;
+    --bg-surface: #ffffff;
+    --bg-surface-hover: #f7f9fb;
+
+    --border-subtle: #d9e0e7;
+    --border-strong: #c2ccd7;
+
+    --text-primary: #18202a;
+    --text-secondary: #4b5b6b;
+    --text-muted: #6f7e8d;
+
+    --background: 210 25% 97%;
+    --foreground: 214 38% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 214 38% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 38% 13%;
+    --primary: 18 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 30% 94%;
+    --secondary-foreground: 214 38% 13%;
+    --muted: 210 22% 93%;
+    --muted-foreground: 214 14% 40%;
+    --accent: 210 22% 93%;
+    --accent-foreground: 214 38% 13%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 24% 86%;
+    --input: 214 24% 86%;
+    --ring: 18 100% 50%;
+    --radius: 0.5rem;
+  }
+
+  :root[data-theme="dark"] {
     --bg-main: #0f1115;
     --bg-elevated: #15181d;
     --bg-surface: #1a1d21;
@@ -33,34 +68,11 @@
     --muted-foreground: 213 7% 65%;
     --accent: 216 14% 15%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 214 13% 19%;
     --input: 214 13% 19%;
     --ring: 18 100% 50%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
   }
 
   * {
