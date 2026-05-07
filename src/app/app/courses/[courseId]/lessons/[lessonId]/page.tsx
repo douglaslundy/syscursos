@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { CheckCircle2, ChevronLeft, ChevronRight, Circle, PlayCircle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 import { CourseBlocked } from "@/components/student/course-blocked";
+import { LessonTrailSidebar } from "@/components/student/lesson-trail-sidebar";
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
-import { ProgressBar } from "@/components/student/progress-bar";
 import { completeLessonAction } from "@/server/actions/student-actions";
 import { getStudentLesson } from "@/server/services/student-service";
 import { studentLessonParamsSchema } from "@/server/validators/student";
@@ -61,7 +61,6 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
         </div>
       ) : null}
 
-      <input className="peer/trail sr-only" defaultChecked id="lesson-trail-toggle" type="checkbox" />
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
           {data.embedUrl ? (
@@ -79,68 +78,14 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
             </div>
           )}
         </div>
-        <aside className="relative w-11 overflow-hidden rounded-md border border-stroke-subtle bg-surface p-2 shadow-sm transition-[width,padding] duration-200 peer-checked/trail:w-[360px] peer-checked/trail:p-5">
-          <label
-            aria-label="Abrir ou fechar trilha de aulas"
-            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
-            htmlFor="lesson-trail-toggle"
-          >
-            <ChevronRight aria-hidden="true" className="h-4 w-4 peer-checked/trail:hidden" />
-            <ChevronLeft aria-hidden="true" className="hidden h-4 w-4 peer-checked/trail:block" />
-          </label>
-          <div className="mt-4 hidden peer-checked/trail:block">
-            <p className="mb-4 text-xs font-medium uppercase tracking-[0.12em] text-copy-muted">
-              Trilha de aulas
-            </p>
-            <div className="mb-5 max-h-[460px] space-y-3 overflow-y-auto pr-1">
-              {data.navigation?.modules.map((module) => (
-                <details
-                  className="rounded-md border border-stroke-subtle bg-background p-3"
-                  key={module.id}
-                  open={module.id === data.lesson.module.id}
-                >
-                  <summary className="cursor-pointer list-none text-sm font-medium text-copy-primary">
-                    Modulo {module.position}: {module.title}
-                  </summary>
-                  <div className="mt-3 space-y-1">
-                    {module.lessons.map((lesson) => {
-                      const isCurrent = lesson.id === lessonId;
-                      const completed = data.navigation?.completedLessonIds.has(lesson.id) ?? false;
-
-                      return (
-                        <Link
-                          aria-current={isCurrent ? "page" : undefined}
-                          className={
-                            isCurrent
-                              ? "flex items-center gap-2 rounded-md bg-surface-hover px-2 py-2 text-sm text-brand-primary"
-                              : "flex items-center gap-2 rounded-md px-2 py-2 text-sm text-copy-secondary transition hover:bg-surface-hover hover:text-brand-primary"
-                          }
-                          href={`/app/courses/${courseId}/lessons/${lesson.id}`}
-                          key={lesson.id}
-                        >
-                          {completed ? (
-                            <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0" />
-                          ) : isCurrent ? (
-                            <PlayCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
-                          ) : (
-                            <Circle aria-hidden="true" className="h-3 w-3 shrink-0" />
-                          )}
-                          <span>
-                            {lesson.position}. {lesson.title}
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </details>
-              ))}
-            </div>
-            <ProgressBar
-              label={`${data.progress.completedLessons}/${data.progress.totalLessons} aulas concluidas`}
-              percentage={data.progress.percentage}
-            />
-          </div>
-        </aside>
+        <LessonTrailSidebar
+          completedLessonIds={Array.from(data.navigation?.completedLessonIds ?? new Set<string>())}
+          courseId={courseId}
+          currentLessonId={lessonId}
+          currentModuleId={data.lesson.module.id}
+          modules={data.navigation?.modules ?? []}
+          progress={data.progress}
+        />
       </div>
 
       {data.lesson.description ? (

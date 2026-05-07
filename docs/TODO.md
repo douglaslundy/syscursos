@@ -307,4 +307,4 @@
 - [x] Executar typecheck
 - [x] Executar testes
 - [x] Executar build
-- [ ] Commitar e enviar ao GitHub
+- [x] Commitar e enviar ao GitHub
