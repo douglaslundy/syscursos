@@ -59,6 +59,10 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
   }
 
   if (user.role !== requiredRole) {
+    if (requiredRole === "STUDENT" && user.role === "ADMIN") {
+      return { allowed: true };
+    }
+
     return {
       allowed: false,
       redirectTo: getDefaultPathForRole(user.role),

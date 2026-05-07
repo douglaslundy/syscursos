@@ -10,7 +10,7 @@ const notFoundMock = vi.hoisted(() =>
     throw new Error("NOT_FOUND");
   }),
 );
-const requireRoleMock = vi.hoisted(() => vi.fn());
+const requireAnyRoleMock = vi.hoisted(() => vi.fn());
 const repositoryMock = vi.hoisted(() => ({
   listStudentCourseEnrollments: vi.fn(),
   countActiveLessonsByCourse: vi.fn(),
@@ -33,7 +33,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/server/auth/guards", () => ({
-  requireRole: requireRoleMock,
+  requireAnyRole: requireAnyRoleMock,
 }));
 
 vi.mock("@/server/repositories/student-repository", () => repositoryMock);
@@ -43,8 +43,8 @@ describe("student service", () => {
     vi.setSystemTime(new Date("2026-05-04T12:00:00.000Z"));
     redirectMock.mockClear();
     notFoundMock.mockClear();
-    requireRoleMock.mockReset();
-    requireRoleMock.mockResolvedValue({
+    requireAnyRoleMock.mockReset();
+    requireAnyRoleMock.mockResolvedValue({
       id: "user-student",
       role: "STUDENT",
       status: "ACTIVE",

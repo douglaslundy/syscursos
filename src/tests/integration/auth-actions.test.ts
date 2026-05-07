@@ -93,7 +93,7 @@ describe("loginAction", () => {
     expect(signOutMock).toHaveBeenCalledOnce();
   });
 
-  it("blocks client area login when authenticated user is admin", async () => {
+  it("allows client-area login for admin and redirects to app", async () => {
     const { loginAction } = await import("@/server/actions/auth-actions");
     signInWithPasswordMock.mockResolvedValue({
       data: { user: { id: "auth-admin", email: "admin@example.com" } },
@@ -106,9 +106,9 @@ describe("loginAction", () => {
     });
 
     await expect(loginAction(loginForm("admin@example.com", "client"))).rejects.toThrow(
-      "REDIRECT:/login/client?error=forbidden",
+      "REDIRECT:/app",
     );
-    expect(signOutMock).toHaveBeenCalledOnce();
+    expect(signOutMock).not.toHaveBeenCalled();
   });
 
   it("blocks inactive application users after Supabase authentication", async () => {

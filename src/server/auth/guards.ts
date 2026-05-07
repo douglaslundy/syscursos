@@ -5,6 +5,10 @@ import { getCurrentUser } from "@/server/auth/session";
 import { getDefaultPathForRole } from "@/server/permissions/rbac";
 
 export async function requireRole(role: UserRole) {
+  return requireAnyRole([role]);
+}
+
+export async function requireAnyRole(roles: UserRole[]) {
   const result = await getCurrentUser();
 
   if (!result.ok) {
@@ -15,7 +19,7 @@ export async function requireRole(role: UserRole) {
     redirect("/login/client");
   }
 
-  if (result.user.role !== role) {
+  if (!roles.includes(result.user.role)) {
     redirect(getDefaultPathForRole(result.user.role));
   }
 

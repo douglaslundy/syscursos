@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import { requireRole } from "@/server/auth/guards";
+import { requireAnyRole } from "@/server/auth/guards";
 import * as repository from "@/server/repositories/student-repository";
 import { calculateCourseProgress } from "@/server/services/progress-service";
 import { getYouTubeEmbedUrl } from "@/server/services/youtube-service";
@@ -214,7 +214,7 @@ export async function getStudentNotebook(input: NotebookQueryInput) {
 }
 
 async function requireStudentProfileId() {
-  const user = await requireRole("STUDENT");
+  const user = await requireAnyRole(["STUDENT", "ADMIN"]);
 
   if (!user.studentProfileId) {
     redirect("/app/forbidden");
