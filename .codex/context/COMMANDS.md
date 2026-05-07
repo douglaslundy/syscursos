@@ -1,38 +1,35 @@
-# Comandos Identificados
+# Commands
 
-## Ambiente
-- Node: `20.x` (campo `engines` em `package.json`)
-- npm: `>=9.0.0`
+## Pré-requisitos identificados
+- Node.js `20.x`
+- npm `>=9.0.0`
 
-## Comandos principais (package.json)
-- `npm run dev` - iniciar desenvolvimento com Next.js.
-- `npm run build` - `prisma generate && next build`.
-- `npm run start` - iniciar app buildada.
-- `npm run lint` - lint com Next ESLint.
-- `npm run typecheck` - `tsc --noEmit`.
+Evidência: campo `engines` em `package.json`.
+
+## Desenvolvimento
+- `npm run dev`: iniciar ambiente local Next.js.
+- `npm run build`: gerar Prisma Client e build de produção.
+- `npm run start`: iniciar app após build.
+
+## Qualidade
+- `npm run lint`: lint com Next/ESLint.
+- `npm run typecheck`: checagem TypeScript sem emissão.
 
 ## Testes
-- `npm run test` - executar Vitest completo.
-- `npm run test:unit` - unitarios em `src/tests/unit`.
-- `npm run test:integration` - integracao em `src/tests/integration`.
-- `npm run test:e2e` - E2E com Playwright.
-- `npm run test:watch` - Vitest em watch.
+- `npm run test`: suíte Vitest completa.
+- `npm run test:unit`: testes unitários.
+- `npm run test:integration`: testes de integração.
+- `npm run test:e2e`: testes ponta a ponta (Playwright).
+- `npm run test:watch`: Vitest em modo watch.
 
-## Prisma / banco
-- `npm run prisma:validate`
-- `npm run prisma:migrate`
-- `npm run prisma:seed`
-- `npm run auth:provision` (script `prisma/provision-auth-users.ts`)
+## Banco/Prisma
+- `npm run prisma:validate`: validar schema Prisma.
+- `npm run prisma:migrate`: criar/aplicar migration em ambiente de desenvolvimento.
+- `npm run prisma:seed`: popular base com seed.
 
-## Hooks e qualidade
-- `prepare` -> `husky`
-- `postinstall` -> `prisma generate`
-- `lint-staged` configurado para ESLint/Prettier em arquivos staged.
+## Provisionamento de auth
+- `npm run auth:provision`: provisionar usuários de autenticação conforme script.
 
-## Scripts auxiliares de contexto identificados
-- `.codex/scripts/update-state.sh`
-- `.codex/scripts/context-pack.sh`
-- `.codex/scripts/update-state.ps1`
-- `.codex/scripts/context-pack.ps1`
-
-Uso oficial dos scripts PowerShell/Bash auxiliares: nao identificado no repositorio.
+## Comandos de produção não identificados
+- Comando dedicado no `package.json` para `prisma migrate deploy`: não identificado no repositório.
+- Script CI/CD oficial: não identificado no repositório.

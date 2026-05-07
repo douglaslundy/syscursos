@@ -1,34 +1,51 @@
-# Project Brief - SysCursos
+# Project Brief
 
-## Objetivo
-Plataforma SaaS de cursos online com area administrativa (`/admin`) e area do aluno (`/app`), conforme `docs/PROJECT_CONTEXT.md`.
+## Objetivo do produto
+Plataforma web de cursos (LMS) com área administrativa e área do aluno, incluindo gestão de cursos/módulos/aulas, matrículas, progresso e cadernos de anotações.
+
+Evidências:
+- Rotas administrativas em `src/app/admin/*`
+- Rotas do aluno em `src/app/app/*`
+- Modelos Prisma em `prisma/schema.prisma`
 
 ## Stack identificada
-- Frontend: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS.
-- Backend no mesmo app: Server Actions + services/repositories em `src/server`.
-- Banco: PostgreSQL via Prisma ORM (`prisma/schema.prisma`).
-- Autenticacao: Supabase Auth (`src/lib/supabase/*`, `middleware.ts`).
-- Validacao: Zod.
-- Testes: Vitest (unitario/integracao) e Playwright (E2E).
+- Frontend/App: Next.js 14 (App Router) + React 18 + TypeScript
+- Estilo: Tailwind CSS
+- Backend na aplicação: Server Actions + camadas de serviço/repositório/validação
+- Banco: PostgreSQL via Prisma ORM
+- Autenticação/Sessão: Supabase (`@supabase/ssr`, `@supabase/supabase-js`)
+- Testes: Vitest (unitário/integração) e Playwright (E2E)
+- Qualidade: ESLint, Prettier, Husky + lint-staged
 
-## Dominios principais identificados
-- Cursos (`Course`)
-- Modulos (`Module`)
-- Aulas (`Lesson`)
-- Alunos (`User` + `StudentProfile`)
-- Matriculas (`Enrollment`)
-- Anotacoes (`LessonNote`)
-- Progresso (`LessonProgress`)
+Evidências:
+- `package.json`
+- `prisma/schema.prisma`
+- `src/lib/supabase/*`
+- `src/tests/*`
 
-## Estrutura funcional principal identificada
-- `src/app/admin/*`: area administrativa.
-- `src/app/app/*`: area do aluno.
-- `src/server/actions/*`: entrada de mutacoes server-side.
-- `src/server/services/*`: regras de negocio.
-- `src/server/repositories/*`: acesso a dados via Prisma.
-- `src/server/validators/*`: schemas/validacoes.
+## Domínios funcionais identificados
+- Usuários e papéis (`User`, `UserRole`)
+- Perfil de aluno (`StudentProfile`)
+- Cursos, módulos e aulas (`Course`, `Module`, `Lesson`)
+- Matrículas (`Enrollment`)
+- Progresso por aula (`LessonProgress`)
+- Cadernos/anotações (`LessonNote`)
 
-## Estado geral observado
-- Repositorio em desenvolvimento ativo.
-- `docs/TODO.md` e `PROJECT_STATUS.md` indicam varias etapas ja concluidas e ajustes recentes em CRUD/admin e experiencia do aluno.
-- Pendencias operacionais especificas: nao identificado no repositorio de forma definitiva (existem listas de pendencias em `PROJECT_STATUS.md` e `docs/TODO.md`).
+Evidência:
+- `prisma/schema.prisma`
+
+## Regras/restrições aparentes
+- Autorização não confiada ao frontend; presença de guards/RBAC no servidor.
+- Separação de áreas por rotas: admin e aluno.
+- Validações de entrada com schemas (Zod).
+
+Evidências:
+- `src/server/auth/guards.ts`
+- `src/server/permissions/rbac.ts`
+- `src/server/validators/*`
+
+## Itens não identificados no repositório
+- SLA/SLO
+- Requisitos de LGPD formalizados
+- Estratégia oficial de observabilidade centralizada
+- Processo formal de release/versionamento semântico

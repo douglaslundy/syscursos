@@ -1,45 +1,53 @@
-# Arquitetura Identificada
+# Architecture
 
-## Visao geral
-- Aplicacao monorepo unica (frontend + backend) em Next.js App Router.
-- Separacao clara entre camadas de interface (`src/app`, `src/components`) e backend (`src/server`).
-- Persistencia relacional com Prisma + PostgreSQL.
-- Autenticacao e sessao com Supabase.
+## Visão geral
+Aplicação monolítica Next.js (App Router) com renderização server-side e uso de Server Actions para operações de backend. O domínio é organizado em camadas no diretório `src/server`.
 
-## Camadas e responsabilidades observadas
-- `src/app`: rotas, layouts, paginas e composicao por contexto (auth, admin, aluno).
-- `src/components`: componentes de interface (admin, student, shared, ui).
-- `src/server/actions`: funcoes de entrada de operacoes do servidor.
-- `src/server/services`: regras de negocio e orquestracao.
-- `src/server/repositories`: queries e persistencia.
-- `src/server/auth` e `src/server/permissions`: sessao, guards e RBAC.
-- `src/server/validators`: validacao de entrada com Zod.
-- `src/lib/db` e `src/lib/supabase`: infraestrutura compartilhada.
+Fluxo principal identificado:
+1. UI em `src/app/*` e `src/components/*`.
+2. Chamadas para actions em `src/server/actions/*`.
+3. Orquestração de regras em `src/server/services/*`.
+4. Acesso a dados em `src/server/repositories/*`.
+5. Persistência PostgreSQL via Prisma (`src/lib/db/prisma.ts`).
 
-## Rotas principais identificadas
-- Publico/auth: `src/app/(auth)/login/page.tsx`, `src/app/page.tsx`.
-- Admin: `src/app/admin/*`.
-- Aluno: `src/app/app/*`.
+## Camadas e módulos
+- `src/app`: rotas, layouts e páginas (admin, aluno e autenticação).
+- `src/components`: componentes de interface por domínio (`admin`, `student`, `shared`, `ui`).
+- `src/server/actions`: ponto de entrada do backend acionado pela UI.
+- `src/server/services`: regras de negócio e orquestrações.
+- `src/server/repositories`: consultas e mutações de dados.
+- `src/server/validators`: validação de payloads e parâmetros.
+- `src/server/auth` e `src/server/permissions`: sessão, guards e RBAC.
+- `src/lib/supabase`: clientes e middleware de autenticação.
 
-## Modelo de dados identificado (Prisma)
-Entidades: `User`, `StudentProfile`, `Course`, `Module`, `Lesson`, `Enrollment`, `LessonNote`, `LessonProgress`.
+## Banco de dados
+Modelo relacional com Prisma para:
+- usuários e perfis de aluno;
+- cursos, módulos e aulas;
+- matrículas;
+- progresso e anotações por aula.
 
-Evidencias de regras de integridade:
-- unicidade por email de usuario;
-- unicidade de posicao por curso/modulo e modulo/aula;
-- unicidade de matricula (`studentId`, `courseId`);
-- unicidade de anotacao e progresso por aluno/aula.
+Evidência: `prisma/schema.prisma`.
 
-## Seguranca e acesso (evidencias)
-- Middleware presente (`middleware.ts`).
-- Modulos de auth/permissions (`src/server/auth/*`, `src/server/permissions/rbac.ts`).
-- Documento de seguranca e RLS em `docs/SECURITY.md` e migracao `20260504130000_auth_rls_policies`.
+## Autenticação e autorização
+- Integração com Supabase para sessão/auth.
+- Guardas de autorização no backend e RBAC por papéis.
+- Middleware de sessão na aplicação.
 
-## PadrÃµes aparentes
-- Validacao server-side antes de persistencia.
-- Separacao entre regra de negocio e acesso a dados.
-- Testes divididos por nivel (unit, integration, e2e).
+Evidências:
+- `src/lib/supabase/middleware.ts`
+- `src/server/auth/guards.ts`
+- `src/server/permissions/rbac.ts`
 
-## Pontos nao identificados claramente
-- Eventuais integracoes externas adicionais alem de Supabase/YouTube: nao identificado no repositorio.
-- Topologia de deploy detalhada (infra completa): nao identificado no repositorio.
+## Testes e qualidade
+- Unitários e integração com Vitest.
+- E2E com Playwright.
+- Qualidade estática com ESLint + TypeScript.
+- Hooks git com Husky/lint-staged.
+
+Evidência: `package.json`, `src/tests/*`, `.husky/*`.
+
+## Pontos não identificados no repositório
+- Arquitetura de microserviços/eventos (não identificado no repositório).
+- Mensageria assíncrona dedicada (não identificado no repositório).
+- Cache distribuído explícito (não identificado no repositório).

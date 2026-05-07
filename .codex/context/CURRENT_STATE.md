@@ -1,35 +1,30 @@
-# Estado atual
+# Current State
 
-Branch atual:
-main
+## Branch
+- `main`
 
-Ultimo commit:
-5b0c0cc feat(courses): adicionar capa no cadastro e exibicao do aluno
+## Último commit identificado
+- `a618b04 fix(admin-courses): tratar falha de upload sem application error`
 
-Arquivos modificados:
-M PROJECT_STATUS.md
-M .codex/context/CURRENT_STATE.md
-M docs/TODO.md
-M docs/DECISIONS.md
-M docs/REVIEW.md
+## Escopo desta atualização
+- Documentação de contexto em `.codex/context/*` (sem alteração de código-fonte da aplicação).
 
-Objetivo atual:
-- Planejar e executar os ajustes solicitados em 2026-05-07 para login separado, landing page, markdown nos cadernos, correcoes de UX no admin e capa de curso.
+## Arquivos de contexto atualizados nesta tarefa
+- `.codex/context/PROJECT_BRIEF.md`
+- `.codex/context/ARCHITECTURE.md`
+- `.codex/context/COMMANDS.md`
+- `.codex/context/GLOSSARY.md`
+- `.codex/context/DECISIONS.md`
+- `.codex/context/CURRENT_STATE.md`
 
-Status desta atividade:
-- Tarefas 1 a 7 concluidas.
-- Landing page em `/` com entradas separadas para cliente e admin.
-- Logins separados em `/login/client` e `/login/admin`.
-- Fluxo cliente agora permite acesso de usuario admin em `/app` quando houver perfil de aluno.
-- Cadernos renderizados em markdown com titulo de aula como heading.
-- Cadastro de curso com `coverImageUrl` e exibicao elegante de capa na area do aluno.
-- Migration criada para coluna `cover_image_url`.
-- Validacao executada com sucesso em todas as etapas com `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
+## Status geral inferido
+- Projeto em desenvolvimento ativo.
+- Stack e módulos principais identificados no código.
+- Testes automatizados configurados (unit, integration, e2e).
 
-Pendencias imediatas:
-- Aplicar migration `20260507195500_course_cover_image` no banco de producao (Supabase).
-- Validar manualmente no browser os novos fluxos de login separado e capa de curso com dados reais.
+## Pendências técnicas visíveis
+- Processo CI/CD oficial: não identificado no repositório.
+- Estratégia formal de observabilidade: não identificado no repositório.
 
-Riscos:
-- Nesta iteracao a capa foi definida como URL HTTPS validada; upload binario via storage permanece fora do escopo.
-- Acesso de admin ao fluxo cliente depende de `studentProfileId` vinculado ao usuario.
+## Riscos atuais percebidos (documentação)
+- Parte do contexto histórico pode divergir de commits anteriores; esta camada registra somente evidências presentes no repositório atual.
