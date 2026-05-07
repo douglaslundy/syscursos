@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 
 import { EmptyState } from "@/components/student/empty-state";
+import { MarkdownContent } from "@/components/student/markdown-content";
 import { getStudentNotebook } from "@/server/services/student-service";
 import { notebookQuerySchema } from "@/server/validators/student";
 
@@ -94,12 +95,9 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
                       </span>
                     </div>
                     <div className="mt-4 rounded-md border bg-card/60 p-4">
-                      <h3 className="text-sm font-semibold tracking-normal">
-                        Anotacao - {note.lessonTitle}
-                      </h3>
-                      <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                        {note.content}
-                      </p>
+                      <MarkdownContent
+                        content={`# ${note.lessonPosition}. ${note.lessonTitle}\n\n${note.content}`}
+                      />
                     </div>
                   </article>
                 ))}

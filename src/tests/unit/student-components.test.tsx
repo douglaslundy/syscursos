@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { EmptyState } from "@/components/student/empty-state";
+import { MarkdownContent } from "@/components/student/markdown-content";
 import { NoteAutosaveEditor } from "@/components/student/note-autosave-editor";
 import { ProgressBar } from "@/components/student/progress-bar";
 import { saveLessonNoteAction } from "@/server/actions/student-actions";
@@ -72,5 +73,12 @@ describe("student UI components", () => {
       lessonId: "lesson-id",
       content: "Conteudo atualizado",
     });
+  });
+
+  it("renders markdown notebook content with lesson title heading", () => {
+    render(<MarkdownContent content={"# Aula 1\n\nResumo principal da aula."} />);
+
+    expect(screen.getByRole("heading", { name: "Aula 1" })).toBeInTheDocument();
+    expect(screen.getByText("Resumo principal da aula.")).toBeInTheDocument();
   });
 });
