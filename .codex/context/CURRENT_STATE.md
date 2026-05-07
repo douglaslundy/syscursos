@@ -4,31 +4,29 @@ Branch atual:
 main
 
 Ultimo commit:
-c044640 fix(student-lesson): corrigir abertura da trilha lateral e toggle horizontal
+3b9a660 chore: add codex context layer
 
-Arquivos modificados (snapshot observado):
-A  .codex/scripts/context-pack.sh
-A  .codex/scripts/update-state.sh
- M AGENTS.md
-?? .codex/context/
-?? .codex/scripts/context-pack.ps1
-?? .codex/scripts/update-state.ps1
-?? .codex/tasks/
+Arquivos modificados:
+M PROJECT_STATUS.md
+M .codex/context/CURRENT_STATE.md
 
 Objetivo atual:
-- Estruturar memoria de contexto em `.codex/context/*` para continuidade operacional.
+- Planejar e executar os ajustes solicitados em 2026-05-07 para login separado, landing page, markdown nos cadernos, correcoes de UX no admin e capa de curso.
 
-Status desta atividade de contexto:
-- `PROJECT_BRIEF.md`: preenchido com objetivo, stack e dominios identificados.
-- `ARCHITECTURE.md`: preenchido com camadas, rotas e responsabilidades observadas.
-- `COMMANDS.md`: preenchido com comandos reais identificados no `package.json`.
-- `GLOSSARY.md`: preenchido com termos do dominio e arquitetura.
-- `DECISIONS.md`: preenchido apenas com decisoes evidentes no codigo/repositorio.
+Status desta atividade:
+- Contexto obrigatorio lido (`AGENTS.md`, `.codex/context/PACK.md`, `docs/PROJECT_CONTEXT.md`, `docs/TODO.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`).
+- Status persistente atualizado em `PROJECT_STATUS.md`.
+- Requisitos e plano prontos para execucao por tarefas pequenas com commit por tarefa.
 
-Pendencias imediatas de contexto:
-- Validar periodicamente se `CURRENT_STATE.md` acompanha o estado do git apos novos commits.
-- Completar detalhes operacionais adicionais somente quando surgirem evidencias no repositorio.
+Pendencias imediatas:
+- Corrigir limpeza do formulario de cadastro de aula no admin.
+- Criar landing page inicial com botoes separados para login de cliente e admin.
+- Separar fluxos visuais de login em paginas distintas.
+- Migrar exibicao do caderno para markdown seguro.
+- Adicionar campo de capa de curso e exibir capa na area do aluno.
+- Executar lint, typecheck, testes e build apos cada etapa funcional.
 
 Riscos:
-- Contexto inicial pode estar incompleto.
-- Algumas regras podem existir apenas implicitamente no codigo.
+- Ambiguidade de produto sobre armazenamento/upload de imagem de capa.
+- Possivel regressao de autorizacao ao separar fluxos de login.
+- Risco de XSS se markdown nao for sanitizado corretamente.

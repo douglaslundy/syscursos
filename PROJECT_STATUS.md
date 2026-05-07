@@ -2,69 +2,50 @@
 
 ## Objetivo
 
-Manter um status persistente do projeto SysCursos para continuidade de trabalho com contexto minimo e confiavel.
+Planejar e executar os ajustes solicitados em 2026-05-07 no SysCursos, com separacao de login admin/cliente, landing page inicial, melhoria de UX no cadastro de aulas, cadernos em markdown e capa de curso no cadastro/exibicao.
 
 ## Decisoes
 
-- Usar este arquivo como snapshot operacional de alto nivel.
-- Atualizar este arquivo no inicio de demandas grandes e ao final de marcos relevantes.
-- Manter rastreabilidade com `docs/TODO.md`, `docs/REVIEW.md` e `docs/DEVELOPMENT_MEMORY.md`.
+- Tratar a demanda em etapas pequenas com commit por tarefa para reduzir risco de regressao.
+- Preservar regras atuais de seguranca (RBAC, validacoes server-side e filtros por matricula ativa).
+- Manter alteracoes focadas no escopo funcional solicitado, sem refatoracao ampla.
 
 ## Tarefas concluidas
 
-- CRUD administrativo de cursos, alunos e matriculas ajustado para listagem em modo leitura com edicao via formulario principal.
-- Correcao de update de matricula por `id`.
-- Dashboard do aluno mantendo curso cancelado visivel com bloqueio de acesso.
-- Navegacao da aula com trilha lateral direita e botoes de aula anterior/proxima.
-- Caderno em modo somente leitura.
-- Normalizacao de embed YouTube e testes associados.
-- E2E publico ajustado para redirect real de `/` para `/login`.
-- Correcao de validacao no update de curso para normalizar `slug` em entrada humana.
-- Modulos e aulas do admin padronizados para fluxo de listagem em modo leitura + editar por formulario principal.
-- Area do aluno com toggle para abrir/fechar menu lateral esquerdo.
-- Tela de aula com retorno explicito para pagina inicial de cursos.
-- Trilha da aula mantida na lateral direita com controle de abrir/fechar.
+- Leitura obrigatoria de contexto (`AGENTS.md`, `.codex/context/PACK.md`, `docs/PROJECT_CONTEXT.md`, `docs/TODO.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`).
+- Verificacao do estado atual do repositorio e do ultimo commit.
+- Consolidacao dos novos requisitos funcionais, nao funcionais, implicitos, ambiguidades, riscos e dependencias para execucao.
 
 ## Tarefas pendentes (foco atual)
 
-- Validacao manual em navegador dos fluxos administrativos e da experiencia da aula com dados reais.
+- Corrigir limpeza do formulario no cadastro de aula no admin.
+- Criar landing page basica em `/` com botoes separados para login de clientes e login/admin.
+- Separar fluxos visuais de login para cliente e admin, mantendo possibilidade de um usuario admin tambem acessar area do aluno quando possuir perfil/alocacao valida.
+- Exibir caderno com renderizacao markdown (titulo da aula como heading markdown e conteudo da anotacao como bloco markdown por aula).
+- Permitir upload/registro de imagem de capa no cadastro de curso e exibir capa de forma elegante na area do aluno sem remover componentes existentes.
+- Atualizar testes de integridade, funcionalidade, seguranca e regressao.
 
-## Arquivos alterados recentemente
+## Arquivos alterados
 
-- `src/app/admin/courses/page.tsx`
-- `src/app/admin/students/page.tsx`
-- `src/app/admin/enrollments/page.tsx`
-- `src/server/repositories/admin-repository.ts`
-- `src/app/app/courses/[courseId]/page.tsx`
-- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
-- `src/app/app/notebooks/page.tsx`
-- `src/server/services/student-service.ts`
-- `src/server/services/youtube-service.ts`
-- `src/tests/integration/student-service.test.ts`
-- `src/tests/unit/youtube-service.test.ts`
+- `PROJECT_STATUS.md`
 
 ## Riscos
 
-- Alteracoes locais nao versionadas em `AGENTS.md` e `AGENTS.OLD.md` podem gerar divergencia de diretrizes.
-- Fluxos de formulario administrativo dependem de parsing e validacao server-side; pequenos desvios de campos podem quebrar update.
-- Mudancas de layout na area do aluno podem causar regressao de responsividade e navegacao.
-- Falhas de reproducao no YouTube podem persistir para videos privados/bloqueados na origem.
+- Ambiguidade sobre estrategia de armazenamento da imagem de capa (URL externa vs upload no storage).
+- Separacao de login por rota pode conflitar com regra historica de redirecionamento automatico por role.
+- Renderizacao markdown exige sanitizacao para prevenir XSS e preservar isolamento de dados.
+- Alteracoes de formulario admin podem quebrar fluxo de edicao existente se reset ocorrer no momento errado.
 
-## Testes executados (ultimo ciclo funcional)
+## Testes executados
 
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test` (56 testes aprovados)
-- `npm run build`
-- `npm run test:e2e` (2 testes aprovados)
+- Nao aplicavel nesta etapa de analise/documentacao (nenhuma alteracao funcional de codigo executada ainda).
 
 ## Ultimo commit
 
-- `438df57 feat(student-layout): adicionar toggles e navegacao da aula`
+- `3b9a660 chore: add codex context layer`
 
 ## Proximos passos
 
-1. Reproduzir e corrigir o erro de update de curso (`slug` e `description`).
-2. Aplicar padrao de listagem + edicao para modulos e aulas.
-3. Ajustar toggles de menus esquerdo/direito na experiencia do aluno.
-4. Executar validacao manual ponta a ponta no browser e coletar feedback visual/ergonomico.
+1. Confirmar arquitetura existente dos fluxos de login, curso, aula e cadernos nos arquivos de codigo.
+2. Executar implementacao por tarefa com commit individual.
+3. Rodar `npm run lint`, `npm run typecheck`, `npm run test` e `npm run build` apos cada tarefa funcional.
