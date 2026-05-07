@@ -316,7 +316,9 @@
 - [x] Executar typecheck
 - [x] Executar testes
 - [x] Executar build
-- [ ] Criar landing page inicial com acessos separados
-- [ ] Separar login admin e cliente em paginas distintas
-- [ ] Renderizar cadernos com markdown seguro
-- [ ] Adicionar capa de curso no cadastro e exibicao do aluno
+- [x] Criar landing page inicial com acessos separados
+- [x] Separar login admin e cliente em paginas distintas
+- [x] Permitir acesso de administrador no fluxo cliente quando houver perfil de aluno vinculado
+- [x] Renderizar cadernos com markdown seguro
+- [x] Adicionar capa de curso no cadastro e exibicao do aluno
+- [x] Criar migration para `cover_image_url`

@@ -509,3 +509,63 @@ Arquivos afetados:
 - `docs/DEVELOPMENT_MEMORY.md`
 - `prompts/11_CRUD_ADMIN_UX_FIXES.md`
 - `prompts/12_STUDENT_LESSON_NOTEBOOK_VIDEO_FIXES.md`
+
+## 2026-05-07 - Login separado por publico com redirecionamento por intencao
+
+Decisao:
+
+Separar o login em paginas dedicadas (`/login/client` e `/login/admin`) e manter a autenticacao no mesmo `loginAction`, adicionando o campo `audience` para orientar o destino apos autenticar.
+
+Motivo:
+
+A demanda exige entradas separadas para clientes e administradores sem duplicar logica de autenticacao server-side.
+
+Alternativas consideradas:
+
+Duplicar Server Actions por publico; manter pagina unica com toggle visual.
+
+Impacto:
+
+Landing publica em `/` passa a direcionar para o login correto. O fluxo de cliente redireciona para `/app` mesmo para usuario admin, e o acesso final ao conteudo continua condicionado a `studentProfileId` no servidor.
+
+Arquivos afetados:
+
+- `src/app/page.tsx`
+- `src/app/(auth)/login/page.tsx`
+- `src/app/(auth)/login/client/page.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `src/components/shared/login-form.tsx`
+- `src/server/actions/auth-actions.ts`
+- `src/server/auth/guards.ts`
+- `src/server/permissions/rbac.ts`
+- `src/app/app/layout.tsx`
+- `middleware.ts`
+
+## 2026-05-07 - Capa de curso via URL HTTPS validada
+
+Decisao:
+
+Implementar capa de curso na forma de URL HTTPS (`coverImageUrl`) em vez de upload binario nesta iteracao.
+
+Motivo:
+
+Atende o requisito funcional com baixo risco, sem introduzir storage, upload, assinatura de URL ou pipeline adicional de seguranca de arquivos.
+
+Alternativas consideradas:
+
+Upload direto para Supabase Storage nesta mesma etapa; uso de assets locais fixos.
+
+Impacto:
+
+Curso passa a armazenar e exibir capa no dashboard do aluno mantendo os componentes existentes. Foi criada migration para coluna `cover_image_url`.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260507195500_course_cover_image/migration.sql`
+- `src/server/validators/admin.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/app/admin/courses/page.tsx`
+- `src/components/student/course-card.tsx`

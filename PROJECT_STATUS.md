@@ -17,20 +17,41 @@ Planejar e executar os ajustes solicitados em 2026-05-07 no SysCursos, com separ
 - Consolidacao dos novos requisitos funcionais, nao funcionais, implicitos, ambiguidades, riscos e dependencias para execucao.
 - Correcao da limpeza do formulario de aulas no admin apos salvar.
 - Validacao completa executada com `lint`, `typecheck`, `test` e `build`.
+- Landing page inicial criada em `/` com botoes para login cliente e admin.
+- Logins separados em `/login/client` e `/login/admin`.
+- Fluxo de cliente ajustado para aceitar usuario admin na area `/app` quando existir perfil de aluno.
+- Cadernos migrados para renderizacao markdown segura com titulo da aula em heading.
+- Cadastro de curso ampliado com `coverImageUrl` e exibicao de capa nos cards da area do aluno.
+- Migration criada: `20260507195500_course_cover_image`.
 
 ## Tarefas pendentes (foco atual)
 
-- Criar landing page basica em `/` com botoes separados para login de clientes e login/admin.
-- Separar fluxos visuais de login para cliente e admin, mantendo possibilidade de um usuario admin tambem acessar area do aluno quando possuir perfil/alocacao valida.
-- Exibir caderno com renderizacao markdown (titulo da aula como heading markdown e conteudo da anotacao como bloco markdown por aula).
-- Permitir upload/registro de imagem de capa no cadastro de curso e exibir capa de forma elegante na area do aluno sem remover componentes existentes.
-- Atualizar testes de integridade, funcionalidade, seguranca e regressao.
+- Aplicar migration de capa no Supabase de producao.
+- Validar manualmente os fluxos atualizados em navegador com dados reais.
 
 ## Arquivos alterados
 
 - `PROJECT_STATUS.md`
-- `src/server/actions/admin-actions.ts`
-- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/page.tsx`
+- `src/app/(auth)/login/page.tsx`
+- `src/app/(auth)/login/client/page.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `src/components/shared/login-form.tsx`
+- `middleware.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/server/auth/guards.ts`
+- `src/server/permissions/rbac.ts`
+- `src/app/app/layout.tsx`
+- `src/app/app/notebooks/page.tsx`
+- `src/components/student/markdown-content.tsx`
+- `prisma/schema.prisma`
+- `prisma/migrations/20260507195500_course_cover_image/migration.sql`
+- `src/server/validators/admin.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/components/student/course-card.tsx`
+- `src/app/admin/courses/page.tsx`
 
 ## Riscos
 
@@ -48,10 +69,10 @@ Planejar e executar os ajustes solicitados em 2026-05-07 no SysCursos, com separ
 
 ## Ultimo commit
 
-- `fc97112 docs: atualizar status e estado atual para nova demanda`
+- `5b0c0cc feat(courses): adicionar capa no cadastro e exibicao do aluno`
 
 ## Proximos passos
 
-1. Confirmar arquitetura existente dos fluxos de login, curso, aula e cadernos nos arquivos de codigo.
-2. Executar implementacao por tarefa com commit individual.
-3. Rodar `npm run lint`, `npm run typecheck`, `npm run test` e `npm run build` apos cada tarefa funcional.
+1. Aplicar migration no ambiente Supabase.
+2. Executar validacao manual em browser para login admin/cliente e cards com capa.
+3. Caso necessario, evoluir de URL de capa para upload em storage em etapa dedicada.

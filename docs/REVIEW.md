@@ -1254,3 +1254,77 @@ Fazer deploy/push conforme fluxo do projeto e testar os fluxos administrativos e
 ### Proxima etapa recomendada
 
 Executar separacao de login por pagina publica dedicada e ajustar os testes E2E publicos.
+
+---
+
+### 2026-05-07 - Tarefas 2 a 7: landing, login separado, markdown e capa
+
+### Arquivos criados ou alterados
+
+- `src/app/page.tsx`
+- `src/app/(auth)/login/page.tsx`
+- `src/app/(auth)/login/client/page.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `src/components/shared/login-form.tsx`
+- `middleware.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/server/auth/guards.ts`
+- `src/server/permissions/rbac.ts`
+- `src/app/app/layout.tsx`
+- `src/server/services/student-service.ts`
+- `src/app/app/notebooks/page.tsx`
+- `src/components/student/markdown-content.tsx`
+- `prisma/schema.prisma`
+- `prisma/migrations/20260507195500_course_cover_image/migration.sql`
+- `src/server/validators/admin.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/app/admin/courses/page.tsx`
+- `src/components/student/course-card.tsx`
+- `src/app/app/page.tsx`
+- `src/tests/e2e/public.spec.ts`
+- `src/tests/integration/auth-actions.test.ts`
+- `src/tests/integration/student-service.test.ts`
+- `src/tests/integration/admin-service.test.ts`
+- `src/tests/unit/rbac.test.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `src/tests/unit/student-components.test.tsx`
+
+### O que foi implementado
+
+- Landing page publica em `/` com botoes para login de clientes e administradores.
+- Login separado por publico em `/login/client` e `/login/admin`.
+- `loginAction` unificada com parametro `audience` para redirecionamento correto.
+- Fluxo cliente habilitado para usuario admin acessar `/app` quando houver perfil de aluno vinculado.
+- Caderno do aluno migrado para renderizacao markdown segura, incluindo heading da aula por anotacao.
+- Cadastro de cursos atualizado com `coverImageUrl` (HTTPS) e exibicao de capa no card da area do aluno.
+- Migration criada para adicionar `cover_image_url` em `courses`.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 61 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- A migration de capa ainda precisa ser aplicada no banco de producao.
+- Capa por URL depende da disponibilidade da imagem remota.
+- Acesso de admin ao fluxo cliente continua condicionado a `studentProfileId`; sem esse vinculo, o acesso ao conteudo segue bloqueado.
+
+### Pendencias
+
+- Executar migration `20260507195500_course_cover_image` no Supabase.
+- Validar manualmente o fluxo completo no browser com usuarios reais.
+
+### Proxima etapa recomendada
+
+Publicar as alteracoes, aplicar migration em producao e executar smoke manual dos fluxos de login/cursos/cadernos.
