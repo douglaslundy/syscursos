@@ -1,22 +1,32 @@
 # AGENTS
 
+
+# Camada de contexto para Codex
+
+Antes de alterar código:
+1. Leia `.codex/context/PROJECT_BRIEF.md`.
+2. Leia `.codex/context/ARCHITECTURE.md`.
+3. Leia `.codex/context/CURRENT_STATE.md`.
+4. Use somente evidências do repositório.
+5. Não invente APIs, rotas, schemas, regras de negócio ou variáveis de ambiente.
+6. Se algo não estiver claro, escreva “não identificado no repositório”.
+7. Faça mudanças pequenas e testáveis.
+8. Ao final, atualize `.codex/context/CURRENT_STATE.md`.
+
 ## Objetivo
 
-Este arquivo define as regras globais para qualquer agente de IA, Codex, Codex CLI ou assistente de desenvolvimento que atuar neste projeto.
+Este arquivo define regras globais para qualquer agente de IA, Codex, Codex CLI ou assistente que atuar neste projeto.
 
-A IA deve desenvolver uma plataforma de cursos online com área administrativa e área do aluno, respeitando integralmente os requisitos funcionais, técnicos, arquiteturais, de segurança e qualidade definidos em `docs/PROJECT_CONTEXT.md`.
+O projeto deve evoluir a plataforma SysCursos conforme os requisitos funcionais, tecnicos, arquiteturais, de seguranca e qualidade definidos em `docs/PROJECT_CONTEXT.md`.
 
 ## Modo de trabalho
 
-A IA deve trabalhar em modo autônomo.
+- Trabalhar em modo autonomo.
+- Tomar decisoes tecnicas comuns sem interromper o fluxo.
+- Em caso de ambiguidade, escolher a alternativa mais segura, simples, escalavel e facil de manter.
+- Registrar decisoes tecnicas relevantes em `docs/DECISIONS.md`.
 
-Isso significa que ela deve tomar decisões técnicas adequadas sem interromper o desenvolvimento para perguntas triviais. Quando houver ambiguidade, a IA deve escolher a alternativa mais segura, simples, escalável e fácil de manter.
-
-A IA deve registrar decisões técnicas relevantes em `docs/DECISIONS.md`.
-
-## Leitura obrigatória antes de qualquer tarefa
-
-Antes de implementar qualquer coisa, a IA deve ler:
+## Leitura obrigatoria antes de qualquer tarefa
 
 - `AGENTS.md`
 - `docs/PROJECT_CONTEXT.md`
@@ -24,46 +34,79 @@ Antes de implementar qualquer coisa, a IA deve ler:
 - `docs/DECISIONS.md`
 - `docs/REVIEW.md`
 
-## Regras obrigatórias
+## Regras obrigatorias gerais
 
 - Trabalhar por etapas.
-- Não implementar funcionalidades fora da etapa atual.
-- Não pedir confirmação para decisões técnicas comuns.
-- Não usar `any`.
-- Não ignorar erros silenciosamente.
-- Não criar código duplicado.
-- Não criar componentes monolíticos.
-- Não misturar UI com regras de negócio.
-- Não expor secrets.
-- Não confiar no frontend para autorização.
-- Não copiar identidade visual, marca, logo, textos ou assets da Hotmart.
-- Atualizar documentação ao final de cada etapa.
+- Nao implementar funcionalidades fora da etapa atual.
+- Nao usar `any`.
+- Nao ignorar erros silenciosamente.
+- Nao criar codigo duplicado.
+- Nao criar componentes monoliticos.
+- Nao misturar UI com regra de negocio.
+- Nao expor secrets.
+- Nao confiar no frontend para autorizacao.
+- Atualizar documentacao ao final de cada etapa.
 
-## Critérios de decisão
+## Criterios de decisao
 
-Quando precisar decidir entre alternativas, escolher a solução:
+Quando houver mais de uma alternativa valida, priorizar:
 
-1. mais segura;
-2. mais simples;
-3. mais escalável;
-4. mais fácil de manter;
-5. mais alinhada ao stack definido;
-6. mais adequada para produção.
+1. seguranca;
+2. simplicidade;
+3. escalabilidade;
+4. manutencao;
+5. alinhamento ao stack do projeto;
+6. adequacao para producao.
 
-## Checklist obrigatório antes de concluir etapa
+## Regra adicional para tarefas de reestilizacao visual
 
-Antes de declarar uma etapa como concluída, executar:
+Quando a tarefa for explicitamente de reestilizacao UI/theme, aplicar tambem as regras abaixo:
 
-1. lint;
-2. typecheck;
-3. testes relevantes;
-4. build quando aplicável;
-5. revisão de segurança;
-6. revisão de legibilidade;
-7. atualização de `docs/TODO.md`;
-8. atualização de `docs/REVIEW.md`;
-9. registro de decisões em `docs/DECISIONS.md`.
+- Nao alterar logica de negocio.
+- Nao alterar rotas.
+- Nao alterar APIs.
+- Nao alterar banco de dados.
+- Nao alterar fluxo de autenticacao ou pagamentos.
+- Nao quebrar responsividade.
+- Nao introduzir inconsistencia visual.
 
-## Padrão esperado
+### Direcao visual (LMS dark premium)
 
-O projeto deve seguir padrão de qualidade comparável a aplicações SaaS modernas de produção.
+```css
+:root {
+  --color-primary: #FF4D00;
+  --color-primary-hover: #FF6A2A;
+
+  --bg-main: #0F1115;
+  --bg-elevated: #15181D;
+  --bg-surface: #1A1D21;
+  --bg-surface-hover: #20242A;
+
+  --border-subtle: #2A2F36;
+  --border-strong: #3A4048;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A6AD;
+  --text-muted: #6F7680;
+
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+}
+```
+
+## Checklist obrigatorio antes de concluir etapa
+
+1. Executar lint.
+2. Executar typecheck.
+3. Executar testes relevantes.
+4. Executar build quando aplicavel.
+5. Revisar seguranca.
+6. Revisar legibilidade e duplicacoes.
+7. Atualizar `docs/TODO.md`.
+8. Atualizar `docs/REVIEW.md`.
+9. Registrar decisoes em `docs/DECISIONS.md`.
+
+## Padrao esperado
+
+O projeto deve manter qualidade equivalente a aplicacoes SaaS modernas em producao.
