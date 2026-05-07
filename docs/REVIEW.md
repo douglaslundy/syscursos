@@ -1209,3 +1209,48 @@ Executar `prompts/12_STUDENT_LESSON_NOTEBOOK_VIDEO_FIXES.md`.
 ### Proxima etapa recomendada
 
 Fazer deploy/push conforme fluxo do projeto e testar os fluxos administrativos e do aluno em ambiente real.
+
+---
+
+### 2026-05-07 - Tarefa 1: limpar formulario de cadastro de aula
+
+### Arquivos criados ou alterados
+
+- `src/server/actions/admin-actions.ts`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `PROJECT_STATUS.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Ajustado `saveLessonAction` para redirecionar com `formReset` apos salvamento com sucesso.
+- Aplicado `key` no `LessonForm` com base em `formReset` para forcar remount do formulario e limpar campos no fluxo de criacao.
+- Mantido tratamento de erro controlado ja existente para status administrativos.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado.
+- `npm run typecheck`: aprovado.
+- `npm run test`: aprovado, 57 testes.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- O parametro `formReset` adiciona variacao de query string apos salvar; impacto esperado apenas de UX no formulario.
+
+### Pendencias
+
+- Implementar tarefa 2: landing page inicial com botoes separados para login de cliente e admin.
+
+### Proxima etapa recomendada
+
+Executar separacao de login por pagina publica dedicada e ajustar os testes E2E publicos.

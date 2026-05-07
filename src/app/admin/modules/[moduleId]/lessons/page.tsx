@@ -17,6 +17,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
   const pagination = getPagination(searchParams);
   const { module, lessons } = await getLessons(params.moduleId, pagination);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
+  const formReset = getStringParam(searchParams, "formReset") ?? "idle";
   const editId = getStringParam(searchParams, "editId");
   const editingLesson = lessons.items.find((lesson) => lesson.id === editId);
 
@@ -46,6 +47,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
           ) : null}
         </div>
         <LessonForm
+          key={`${editingLesson?.id ?? "new"}-${formReset}`}
           lesson={
             editingLesson
               ? {

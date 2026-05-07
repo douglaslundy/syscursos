@@ -4,22 +4,24 @@ Branch atual:
 main
 
 Ultimo commit:
-3b9a660 chore: add codex context layer
+fc97112 docs: atualizar status e estado atual para nova demanda
 
 Arquivos modificados:
 M PROJECT_STATUS.md
 M .codex/context/CURRENT_STATE.md
+M docs/TODO.md
+M docs/REVIEW.md
+M src/app/admin/modules/[moduleId]/lessons/page.tsx
+M src/server/actions/admin-actions.ts
 
 Objetivo atual:
 - Planejar e executar os ajustes solicitados em 2026-05-07 para login separado, landing page, markdown nos cadernos, correcoes de UX no admin e capa de curso.
 
 Status desta atividade:
-- Contexto obrigatorio lido (`AGENTS.md`, `.codex/context/PACK.md`, `docs/PROJECT_CONTEXT.md`, `docs/TODO.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`).
-- Status persistente atualizado em `PROJECT_STATUS.md`.
-- Requisitos e plano prontos para execucao por tarefas pequenas com commit por tarefa.
+- Tarefa 1 concluida: formulario de aula no admin agora limpa apos salvamento com sucesso.
+- Validacao executada com sucesso: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
 
 Pendencias imediatas:
-- Corrigir limpeza do formulario de cadastro de aula no admin.
 - Criar landing page inicial com botoes separados para login de cliente e admin.
 - Separar fluxos visuais de login em paginas distintas.
 - Migrar exibicao do caderno para markdown seguro.

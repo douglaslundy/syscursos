@@ -308,3 +308,15 @@
 - [x] Executar testes
 - [x] Executar build
 - [x] Commitar e enviar ao GitHub
+
+## Ajustes 2026-05-07 - Separacao de Login, Landing e Capa
+
+- [x] Corrigir limpeza do formulario de cadastro de aula no admin apos salvar
+- [x] Executar lint
+- [x] Executar typecheck
+- [x] Executar testes
+- [x] Executar build
+- [ ] Criar landing page inicial com acessos separados
+- [ ] Separar login admin e cliente em paginas distintas
+- [ ] Renderizar cadernos com markdown seguro
+- [ ] Adicionar capa de curso no cadastro e exibicao do aluno

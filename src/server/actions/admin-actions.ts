@@ -69,10 +69,15 @@ export async function deleteModuleAction(formData: FormData) {
 export async function saveLessonAction(formData: FormData) {
   const input = parseForm(lessonSchema, formData, "/admin/courses");
   const path = `/admin/modules/${input.moduleId}/lessons`;
-  await runAdminMutation(path, "saved", async () => {
+  try {
     await saveLesson(input);
     revalidatePath(path);
-  });
+  } catch (error) {
+    console.error("Admin mutation failed.", error);
+    redirect(`${path}?status=${adminErrorStatus(error)}`);
+  }
+
+  redirect(`${path}?status=saved&formReset=${Date.now()}`);
 }
 
 export async function deleteLessonAction(formData: FormData) {

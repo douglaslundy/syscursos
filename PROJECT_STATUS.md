@@ -15,10 +15,11 @@ Planejar e executar os ajustes solicitados em 2026-05-07 no SysCursos, com separ
 - Leitura obrigatoria de contexto (`AGENTS.md`, `.codex/context/PACK.md`, `docs/PROJECT_CONTEXT.md`, `docs/TODO.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`).
 - Verificacao do estado atual do repositorio e do ultimo commit.
 - Consolidacao dos novos requisitos funcionais, nao funcionais, implicitos, ambiguidades, riscos e dependencias para execucao.
+- Correcao da limpeza do formulario de aulas no admin apos salvar.
+- Validacao completa executada com `lint`, `typecheck`, `test` e `build`.
 
 ## Tarefas pendentes (foco atual)
 
-- Corrigir limpeza do formulario no cadastro de aula no admin.
 - Criar landing page basica em `/` com botoes separados para login de clientes e login/admin.
 - Separar fluxos visuais de login para cliente e admin, mantendo possibilidade de um usuario admin tambem acessar area do aluno quando possuir perfil/alocacao valida.
 - Exibir caderno com renderizacao markdown (titulo da aula como heading markdown e conteudo da anotacao como bloco markdown por aula).
@@ -28,6 +29,8 @@ Planejar e executar os ajustes solicitados em 2026-05-07 no SysCursos, com separ
 ## Arquivos alterados
 
 - `PROJECT_STATUS.md`
+- `src/server/actions/admin-actions.ts`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
 
 ## Riscos
 
@@ -38,11 +41,14 @@ Planejar e executar os ajustes solicitados em 2026-05-07 no SysCursos, com separ
 
 ## Testes executados
 
-- Nao aplicavel nesta etapa de analise/documentacao (nenhuma alteracao funcional de codigo executada ainda).
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
 
 ## Ultimo commit
 
-- `3b9a660 chore: add codex context layer`
+- `fc97112 docs: atualizar status e estado atual para nova demanda`
 
 ## Proximos passos
 
