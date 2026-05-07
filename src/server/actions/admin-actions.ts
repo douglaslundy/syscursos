@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
   cancelEnrollment as cancelEnrollmentService,
   removeCourse,
@@ -31,7 +32,7 @@ import {
 
 export async function saveCourseAction(formData: FormData) {
   const path = "/admin/courses";
-  const input = parseForm(courseSchema, formData, path);
+  const input = await parseCourseForm(formData, path);
   await runAdminMutation(path, "saved", async () => {
     await saveCourse(input);
     revalidatePath(path);
@@ -150,6 +151,26 @@ function parseForm<TSchema extends z.ZodTypeAny>(
   return parsed.data;
 }
 
+async function parseCourseForm(formData: FormData, errorPath: string) {
+  const draft = Object.fromEntries(formData.entries());
+  const coverFile = formData.get("coverImageFile");
+  delete draft.coverImageFile;
+
+  if (coverFile instanceof File && coverFile.size > 0) {
+    assertValidCourseCover(coverFile, errorPath);
+    draft.coverImageUrl = await uploadCourseCover(coverFile);
+  }
+
+  const parsed = courseSchema.safeParse(draft);
+
+  if (!parsed.success) {
+    console.error("Invalid admin course input.", parsed.error.flatten());
+    redirect(`${errorPath}?status=invalid`);
+  }
+
+  return parsed.data;
+}
+
 function requiredString(formData: FormData, key: string, errorPath: string) {
   const value = formData.get(key);
 
@@ -187,4 +208,34 @@ function adminErrorStatus(error: unknown) {
   }
 
   return "error";
+}
+
+function assertValidCourseCover(file: File, errorPath: string) {
+  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+  const maxBytes = 5 * 1024 * 1024;
+
+  if (!allowedTypes.has(file.type) || file.size > maxBytes) {
+    redirect(`${errorPath}?status=invalid`);
+  }
+}
+
+async function uploadCourseCover(file: File) {
+  const supabase = createSupabaseAdminClient();
+  const bucket = process.env.SUPABASE_COURSE_COVER_BUCKET ?? "course-covers";
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "bin";
+  const sanitizedExtension = extension.replace(/[^a-z0-9]/g, "") || "bin";
+  const path = `courses/${Date.now()}-${crypto.randomUUID()}.${sanitizedExtension}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  const upload = await supabase.storage.from(bucket).upload(path, bytes, {
+    contentType: file.type,
+    upsert: false,
+  });
+
+  if (upload.error) {
+    throw new Error(`Erro ao enviar capa para storage: ${upload.error.message}`);
+  }
+
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
 }

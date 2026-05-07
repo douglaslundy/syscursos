@@ -155,7 +155,11 @@ type CourseFormProps = {
 
 function CourseForm({ course }: CourseFormProps) {
   return (
-    <form action={saveCourseAction} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+    <form
+      action={saveCourseAction}
+      className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
+      encType="multipart/form-data"
+    >
       {course ? <input name="id" type="hidden" value={course.id} /> : null}
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
@@ -187,7 +191,13 @@ function CourseForm({ course }: CourseFormProps) {
         className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
         defaultValue={course?.coverImageUrl}
         name="coverImageUrl"
-        placeholder="https://... (capa do curso)"
+        placeholder="URL da capa atual (opcional)"
+      />
+      <input
+        accept="image/png,image/jpeg,image/webp"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
+        name="coverImageFile"
+        type="file"
       />
       <SubmitButton>{course ? "Salvar" : "Criar"}</SubmitButton>
     </form>
