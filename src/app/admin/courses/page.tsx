@@ -43,6 +43,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                   title: editingCourse.title,
                   slug: editingCourse.slug,
                   description: editingCourse.description ?? "",
+                  coverImageUrl: editingCourse.coverImageUrl ?? "",
                   status: editingCourse.status,
                 }
               : undefined
@@ -69,6 +70,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
             </div>
             {course.description ? (
               <p className="mt-3 text-sm text-muted-foreground">{course.description}</p>
+            ) : null}
+            {course.coverImageUrl ? (
+              <p className="mt-2 break-all text-xs text-muted-foreground">{course.coverImageUrl}</p>
             ) : null}
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
@@ -144,6 +148,7 @@ type CourseFormProps = {
     title: string;
     slug: string;
     description: string;
+    coverImageUrl: string;
     status: string;
   };
 };
@@ -173,10 +178,16 @@ function CourseForm({ course }: CourseFormProps) {
         <option value="INACTIVE">Inativo</option>
       </select>
       <textarea
-        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
         defaultValue={course?.description}
         name="description"
         placeholder="Descricao"
+      />
+      <input
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
+        defaultValue={course?.coverImageUrl}
+        name="coverImageUrl"
+        placeholder="https://... (capa do curso)"
       />
       <SubmitButton>{course ? "Salvar" : "Criar"}</SubmitButton>
     </form>

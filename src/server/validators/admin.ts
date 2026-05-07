@@ -9,6 +9,13 @@ import { z } from "zod";
 
 const uuidSchema = z.string().uuid();
 const optionalTextSchema = z.string().trim().max(2000).optional().transform(emptyToNull);
+const optionalHttpsUrlSchema = z
+  .string()
+  .trim()
+  .max(500)
+  .optional()
+  .transform(emptyToNull)
+  .refine((value) => value === null || isHttpsUrl(value), "Informe uma URL HTTPS valida para a capa.");
 
 export const idSchema = z.object({
   id: uuidSchema,
@@ -22,6 +29,7 @@ export const courseSchema = z.object({
     .transform(normalizeSlug)
     .pipe(z.string().min(2).max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)),
   description: optionalTextSchema,
+  coverImageUrl: optionalHttpsUrlSchema,
   status: z.nativeEnum(CourseStatus).default(CourseStatus.ACTIVE),
 });
 
@@ -131,6 +139,15 @@ function isYouTubeUrl(value: string) {
           url.pathname.startsWith("/live/"))) ||
       host === "youtu.be"
     );
+  } catch {
+    return false;
+  }
+}
+
+function isHttpsUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:";
   } catch {
     return false;
   }

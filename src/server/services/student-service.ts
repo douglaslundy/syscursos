@@ -13,6 +13,7 @@ export type StudentCourseCard = {
   id: string;
   title: string;
   description: string | null;
+  coverImageUrl: string | null;
   enrollmentStatus: CourseAccessStatus;
   expiresAt: Date | null;
   progress: {
@@ -38,6 +39,7 @@ export async function getStudentDashboard() {
         id: enrollment.course.id,
         title: enrollment.course.title,
         description: enrollment.course.description,
+        coverImageUrl: enrollment.course.coverImageUrl,
         enrollmentStatus: getCourseAccessStatus(enrollment),
         expiresAt: enrollment.expiresAt,
         progress: calculateCourseProgress(completedLessons, totalLessons),

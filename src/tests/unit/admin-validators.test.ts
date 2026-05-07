@@ -9,17 +9,30 @@ describe("admin validators", () => {
       title: "Curso Admin",
       slug: "curso-admin",
       description: "",
+      coverImageUrl: "https://example.com/capa.jpg",
       status: "ACTIVE",
     });
 
     expect(result.success).toBe(true);
     expect(result.success ? result.data.description : "invalid").toBeNull();
+    expect(result.success ? result.data.coverImageUrl : "invalid").toBe("https://example.com/capa.jpg");
   });
 
   it("rejects invalid course slug", () => {
     const result = courseSchema.safeParse({
       title: "Curso Admin",
       slug: "!",
+      status: "ACTIVE",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects course cover URL without HTTPS", () => {
+    const result = courseSchema.safeParse({
+      title: "Curso Admin",
+      slug: "curso-admin",
+      coverImageUrl: "http://example.com/capa.jpg",
       status: "ACTIVE",
     });
 

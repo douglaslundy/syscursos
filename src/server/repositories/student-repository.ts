@@ -15,6 +15,7 @@ const courseAccessInclude = {
       title: true,
       slug: true,
       description: true,
+      coverImageUrl: true,
       status: true,
     },
   },

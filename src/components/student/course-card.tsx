@@ -8,6 +8,7 @@ type CourseCardProps = {
   id: string;
   title: string;
   description: string | null;
+  coverImageUrl: string | null;
   expiresAt: Date | null;
   enrollmentStatus: string;
   progress: {
@@ -21,6 +22,7 @@ export function CourseCard({
   id,
   title,
   description,
+  coverImageUrl,
   expiresAt,
   enrollmentStatus,
   progress,
@@ -31,6 +33,13 @@ export function CourseCard({
       href={`/app/courses/${id}`}
     >
       <div>
+        {coverImageUrl ? (
+          <div
+            aria-hidden="true"
+            className="mb-4 h-28 w-full rounded-md border border-stroke-subtle bg-cover bg-center"
+            style={{ backgroundImage: `url("${coverImageUrl}")` }}
+          />
+        ) : null}
         <div className="flex items-start justify-between gap-3">
           <span
             className={cn(

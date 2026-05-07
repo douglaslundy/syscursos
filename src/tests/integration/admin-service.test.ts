@@ -34,6 +34,7 @@ describe("admin service", () => {
       title: "Curso",
       slug: "curso",
       description: null,
+      coverImageUrl: null,
       status: "ACTIVE" as const,
     };
     repositoryMock.upsertCourse.mockResolvedValue({ id: "course-id", ...input });

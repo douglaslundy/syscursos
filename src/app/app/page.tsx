@@ -34,6 +34,7 @@ export default async function StudentHomePage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {courses.map((course) => (
             <CourseCard
+              coverImageUrl={course.coverImageUrl}
               description={course.description}
               enrollmentStatus={course.enrollmentStatus}
               expiresAt={course.expiresAt}

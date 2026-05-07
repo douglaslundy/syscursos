@@ -79,6 +79,7 @@ model Course {
   title       String       @db.VarChar(180)
   slug        String       @unique @db.VarChar(200)
   description String?
+  coverImageUrl String?    @map("cover_image_url") @db.VarChar(500)
   status      CourseStatus @default(ACTIVE)
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)

@@ -88,6 +88,7 @@ export async function upsertCourse(input: CourseInput) {
         title: input.title,
         slug: input.slug,
         description: input.description,
+        coverImageUrl: input.coverImageUrl,
         status: input.status,
       },
     });
@@ -98,6 +99,7 @@ export async function upsertCourse(input: CourseInput) {
       title: input.title,
       slug: input.slug,
       description: input.description,
+      coverImageUrl: input.coverImageUrl,
       status: input.status ?? CourseStatus.ACTIVE,
     },
   });
