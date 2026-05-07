@@ -9,13 +9,15 @@ import { loginSchema } from "@/server/auth/schemas";
 import { getDefaultPathForRole } from "@/server/permissions/rbac";
 
 export async function loginAction(formData: FormData) {
+  const audience = parseAudience(formData.get("audience"));
+  const loginPath = audience === "admin" ? "/login/admin" : "/login/client";
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
 
   if (!parsed.success) {
-    redirect("/login?error=invalid_input");
+    redirect(`${loginPath}?error=invalid_input`);
   }
 
   const supabase = createSupabaseServerClient();
@@ -25,13 +27,13 @@ export async function loginAction(formData: FormData) {
     authResult = await supabase.auth.signInWithPassword(parsed.data);
   } catch (error) {
     console.error("Failed to authenticate with Supabase.", error);
-    redirect("/login?error=server");
+    redirect(`${loginPath}?error=server`);
   }
 
   const { data, error } = authResult;
 
   if (error || !data.user?.email) {
-    redirect("/login?error=invalid_credentials");
+    redirect(`${loginPath}?error=invalid_credentials`);
   }
 
   let appUser: { id: string; role: UserRole; status: UserStatus } | null;
@@ -50,12 +52,22 @@ export async function loginAction(formData: FormData) {
   } catch (error) {
     console.error("Failed to load application user during login.", error);
     await supabase.auth.signOut();
-    redirect("/login?error=server");
+    redirect(`${loginPath}?error=server`);
   }
 
   if (!appUser || appUser.status !== "ACTIVE") {
     await supabase.auth.signOut();
-    redirect("/login?error=forbidden");
+    redirect(`${loginPath}?error=forbidden`);
+  }
+
+  if (audience === "admin" && appUser.role !== "ADMIN") {
+    await supabase.auth.signOut();
+    redirect("/login/admin?error=forbidden");
+  }
+
+  if (audience === "client" && appUser.role !== "STUDENT") {
+    await supabase.auth.signOut();
+    redirect("/login/client?error=forbidden");
   }
 
   redirect(getDefaultPathForRole(appUser.role));
@@ -64,5 +76,9 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   const supabase = createSupabaseServerClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect("/login/client");
+}
+
+function parseAudience(value: FormDataEntryValue | null) {
+  return value === "admin" ? "admin" : "client";
 }

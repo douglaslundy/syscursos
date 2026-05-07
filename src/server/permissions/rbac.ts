@@ -45,7 +45,7 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
   if (!user) {
     return {
       allowed: false,
-      redirectTo: `/login?next=${encodeURIComponent(pathname)}`,
+      redirectTo: `/login/client?next=${encodeURIComponent(pathname)}`,
       reason: "UNAUTHENTICATED",
     };
   }
@@ -53,7 +53,7 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
   if (user.status !== "ACTIVE") {
     return {
       allowed: false,
-      redirectTo: "/login?error=inactive",
+      redirectTo: "/login/client?error=inactive",
       reason: "INACTIVE",
     };
   }

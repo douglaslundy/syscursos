@@ -34,7 +34,12 @@ export async function middleware(request: NextRequest) {
     supabaseUser?.email ?? null,
   );
 
-  if (request.nextUrl.pathname === "/login" && user?.status === "ACTIVE") {
+  const isLoginPath =
+    request.nextUrl.pathname === "/login" ||
+    request.nextUrl.pathname === "/login/client" ||
+    request.nextUrl.pathname === "/login/admin";
+
+  if (isLoginPath && user?.status === "ACTIVE") {
     return NextResponse.redirect(new URL(getDefaultPathForRole(user.role), request.url));
   }
 
@@ -48,11 +53,16 @@ export async function middleware(request: NextRequest) {
 }
 
 function handleMiddlewareFailure(request: NextRequest, response: NextResponse) {
-  if (request.nextUrl.pathname === "/login") {
+  const isLoginPath =
+    request.nextUrl.pathname === "/login" ||
+    request.nextUrl.pathname === "/login/client" ||
+    request.nextUrl.pathname === "/login/admin";
+
+  if (isLoginPath) {
     return response;
   }
 
-  return NextResponse.redirect(new URL("/login?error=server", request.url));
+  return NextResponse.redirect(new URL("/login/client?error=server", request.url));
 }
 
 async function resolveAccessContext(
@@ -81,5 +91,5 @@ async function resolveAccessContext(
 }
 
 export const config = {
-  matcher: ["/login", "/admin/:path*", "/app/:path*"],
+  matcher: ["/login/:path*", "/admin/:path*", "/app/:path*"],
 };

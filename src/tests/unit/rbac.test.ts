@@ -20,7 +20,7 @@ describe("rbac route decisions", () => {
   it("redirects unauthenticated users to login with next path", () => {
     expect(decideRouteAccess("/admin", null)).toEqual({
       allowed: false,
-      redirectTo: "/login?next=%2Fadmin",
+      redirectTo: "/login/client?next=%2Fadmin",
       reason: "UNAUTHENTICATED",
     });
   });
@@ -50,7 +50,7 @@ describe("rbac route decisions", () => {
   it("blocks inactive users", () => {
     expect(decideRouteAccess("/app", { role: "STUDENT", status: "INACTIVE" })).toEqual({
       allowed: false,
-      redirectTo: "/login?error=inactive",
+      redirectTo: "/login/client?error=inactive",
       reason: "INACTIVE",
     });
   });

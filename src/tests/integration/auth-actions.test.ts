@@ -51,7 +51,9 @@ describe("loginAction", () => {
       status: "ACTIVE",
     });
 
-    await expect(loginAction(loginForm("admin@example.com"))).rejects.toThrow("REDIRECT:/admin");
+    await expect(loginAction(loginForm("admin@example.com", "admin"))).rejects.toThrow(
+      "REDIRECT:/admin",
+    );
     expect(signInWithPasswordMock).toHaveBeenCalledWith({
       email: "admin@example.com",
       password: "password123",
@@ -73,6 +75,42 @@ describe("loginAction", () => {
     await expect(loginAction(loginForm("student@example.com"))).rejects.toThrow("REDIRECT:/app");
   });
 
+  it("blocks admin area login when authenticated user is student", async () => {
+    const { loginAction } = await import("@/server/actions/auth-actions");
+    signInWithPasswordMock.mockResolvedValue({
+      data: { user: { id: "auth-student", email: "student@example.com" } },
+      error: null,
+    });
+    findFirstMock.mockResolvedValue({
+      id: "user-student",
+      role: "STUDENT",
+      status: "ACTIVE",
+    });
+
+    await expect(loginAction(loginForm("student@example.com", "admin"))).rejects.toThrow(
+      "REDIRECT:/login/admin?error=forbidden",
+    );
+    expect(signOutMock).toHaveBeenCalledOnce();
+  });
+
+  it("blocks client area login when authenticated user is admin", async () => {
+    const { loginAction } = await import("@/server/actions/auth-actions");
+    signInWithPasswordMock.mockResolvedValue({
+      data: { user: { id: "auth-admin", email: "admin@example.com" } },
+      error: null,
+    });
+    findFirstMock.mockResolvedValue({
+      id: "user-admin",
+      role: "ADMIN",
+      status: "ACTIVE",
+    });
+
+    await expect(loginAction(loginForm("admin@example.com", "client"))).rejects.toThrow(
+      "REDIRECT:/login/client?error=forbidden",
+    );
+    expect(signOutMock).toHaveBeenCalledOnce();
+  });
+
   it("blocks inactive application users after Supabase authentication", async () => {
     const { loginAction } = await import("@/server/actions/auth-actions");
     signInWithPasswordMock.mockResolvedValue({
@@ -86,7 +124,7 @@ describe("loginAction", () => {
     });
 
     await expect(loginAction(loginForm("inactive@example.com"))).rejects.toThrow(
-      "REDIRECT:/login?error=forbidden",
+      "REDIRECT:/login/client?error=forbidden",
     );
     expect(signOutMock).toHaveBeenCalledOnce();
   });
@@ -101,7 +139,7 @@ describe("loginAction", () => {
     findFirstMock.mockRejectedValue(new Error("database unavailable"));
 
     await expect(loginAction(loginForm("admin@example.com"))).rejects.toThrow(
-      "REDIRECT:/login?error=server",
+      "REDIRECT:/login/client?error=server",
     );
     expect(signOutMock).toHaveBeenCalledOnce();
     expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -112,8 +150,9 @@ describe("loginAction", () => {
   });
 });
 
-function loginForm(email: string) {
+function loginForm(email: string, audience: "admin" | "client" = "client") {
   const formData = new FormData();
+  formData.set("audience", audience);
   formData.set("email", email);
   formData.set("password", "password123");
   return formData;

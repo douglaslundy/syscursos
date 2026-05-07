@@ -9,10 +9,10 @@ export async function requireRole(role: UserRole) {
 
   if (!result.ok) {
     if (result.reason === "SERVER_ERROR") {
-      redirect("/login?error=server");
+      redirect("/login/client?error=server");
     }
 
-    redirect("/login");
+    redirect("/login/client");
   }
 
   if (result.user.role !== role) {
