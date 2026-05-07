@@ -32,7 +32,15 @@ import {
 
 export async function saveCourseAction(formData: FormData) {
   const path = "/admin/courses";
-  const input = await parseCourseForm(formData, path);
+  let input: z.output<typeof courseSchema>;
+
+  try {
+    input = await parseCourseForm(formData, path);
+  } catch (error) {
+    console.error("Failed to parse or upload course cover.", error);
+    redirect(`${path}?status=${adminErrorStatus(error)}`);
+  }
+
   await runAdminMutation(path, "saved", async () => {
     await saveCourse(input);
     revalidatePath(path);
