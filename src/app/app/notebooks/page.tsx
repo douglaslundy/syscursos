@@ -73,38 +73,20 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
           title="Nenhuma anotacao encontrada"
         />
       ) : (
-        <div className="space-y-5">
-          {notebook.groups.map((group) => (
-            <section className="rounded-md border bg-card p-5 shadow-sm" key={group.moduleId}>
-              <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                Modulo {group.modulePosition}
-              </p>
-              <h2 className="mt-1 text-lg font-semibold tracking-normal">{group.moduleTitle}</h2>
-              <div className="mt-4 space-y-3">
-                {group.notes.map((note) => (
-                  <article className="rounded-md border bg-background p-4" key={note.id}>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Link
-                        className="font-medium hover:text-primary"
-                        href={`/app/courses/${selectedCourseId}/lessons/${note.lessonId}`}
-                      >
-                        {note.lessonPosition}. {note.lessonTitle}
-                      </Link>
-                      <span className="text-xs text-muted-foreground">
-                        {new Intl.DateTimeFormat("pt-BR").format(note.updatedAt)}
-                      </span>
-                    </div>
-                    <div className="mt-4 rounded-md border bg-card/60 p-4">
-                      <MarkdownContent
-                        content={`# ${note.lessonPosition}. ${note.lessonTitle}\n\n${note.content}`}
-                      />
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
+        <section className="rounded-md border bg-card p-5 shadow-sm">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold tracking-normal">Caderno do curso</h2>
+            <Link
+              className="text-sm text-muted-foreground transition hover:text-foreground"
+              href={`/app/courses/${selectedCourseId}`}
+            >
+              Ver aulas
+            </Link>
+          </div>
+          <div className="rounded-md border bg-background p-5">
+            <MarkdownContent content={buildNotebookMarkdown(notebook.groups)} />
+          </div>
+        </section>
       )}
     </section>
   );
@@ -112,4 +94,22 @@ export default async function NotebooksPage({ searchParams }: NotebooksPageProps
 
 function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+type NotebookGroup = Awaited<ReturnType<typeof getStudentNotebook>>["groups"][number];
+
+function buildNotebookMarkdown(groups: NotebookGroup[]) {
+  return groups
+    .flatMap((group) => {
+      const moduleHeader = `## Modulo ${group.modulePosition}: ${group.moduleTitle}`;
+      const notes = group.notes.map(
+        (note) =>
+          `### ${note.lessonPosition}. ${note.lessonTitle}\n\n${note.content}\n\nAtualizado em ${new Intl.DateTimeFormat(
+            "pt-BR",
+          ).format(note.updatedAt)}`,
+      );
+
+      return [moduleHeader, ...notes];
+    })
+    .join("\n\n");
 }
