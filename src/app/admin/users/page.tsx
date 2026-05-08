@@ -15,14 +15,14 @@ export default function AdminUsersPage({ searchParams }: UsersPageProps) {
       <div className="mb-6">
         <h2 className="text-2xl font-semibold tracking-normal">Novo usuario</h2>
         <p className="text-sm text-muted-foreground">
-          Cadastre administradores e clientes (alunos) dentro do seu ambiente.
+          Cadastre produtores e clientes (alunos) dentro do seu ambiente.
         </p>
       </div>
       <Feedback status={status} />
       <form action={saveManagedUserAction} className="grid gap-3 rounded-md border bg-background p-4 md:grid-cols-2">
         <select className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue={UserRole.STUDENT} name="role">
           <option value={UserRole.STUDENT}>Cliente (aluno)</option>
-          <option value={UserRole.ADMIN}>Administrador</option>
+          <option value={UserRole.PRODUCER}>Produtor</option>
         </select>
         <input className="rounded-md border px-3 py-2 text-sm outline-none" name="name" placeholder="Nome" required />
         <input

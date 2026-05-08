@@ -61,7 +61,7 @@ export async function loginAction(formData: FormData) {
     redirect(`${loginPath}?error=forbidden`);
   }
 
-  if (audience === "admin" && appUser.role !== "ADMIN") {
+  if (audience === "admin" && appUser.role !== "ADMIN" && appUser.role !== "PRODUCER") {
     await supabase.auth.signOut();
     redirect("/login/admin?error=forbidden");
   }
@@ -81,7 +81,7 @@ export async function logoutAction() {
 
 export async function registerAction(formData: FormData) {
   const audience = parseAudience(formData.get("audience"));
-  const role = audience === "admin" ? UserRole.ADMIN : UserRole.STUDENT;
+  const role = audience === "admin" ? UserRole.PRODUCER : UserRole.STUDENT;
   const registerPath = audience === "admin" ? "/login/admin/register" : "/login/client/register";
 
   const parsed = registerSchema.safeParse({

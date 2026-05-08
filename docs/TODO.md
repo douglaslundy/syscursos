@@ -353,3 +353,18 @@ px prisma migrate deploy no banco configurado.
 - [x] Executar `npm run lint`
 - [x] Executar `npm run typecheck`
 - [ ] Executar testes relevantes (falha de ambiente local EPERM em `C:\Users\User`)
+
+## Ajustes 2026-05-08 - Papel PRODUCER e escopo administrativo
+
+- [x] Adicionar `PRODUCER` no enum `UserRole`
+- [x] Criar migration para novo papel (`add_producer_role`)
+- [x] Permitir login administrativo para `ADMIN` e `PRODUCER`
+- [x] Alterar cadastro da pagina admin para criar `PRODUCER`
+- [x] Permitir acesso de `PRODUCER` ao `/admin` com restricao de rotas sensiveis
+- [x] Bloquear `PRODUCER` em usuarios, alunos e matriculas
+- [x] Atualizar menu admin para ocultar itens restritos ao produtor
+- [x] Ajustar services/admin para `ADMIN` ou `PRODUCER` em cursos, modulos, aulas e perfil proprio
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [x] Executar `npm run test`
+- [x] Executar `npm run build`

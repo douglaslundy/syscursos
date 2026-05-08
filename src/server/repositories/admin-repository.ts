@@ -562,7 +562,7 @@ export async function upsertManagedUser(organizationId: string, input: {
 
 export async function updateAdminProfile(organizationId: string, userId: string, name: string) {
   return prisma.user.updateMany({
-    where: { id: userId, organizationId, role: UserRole.ADMIN },
+    where: { id: userId, organizationId, role: { in: [UserRole.ADMIN, UserRole.PRODUCER] } },
     data: { name },
   });
 }

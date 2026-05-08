@@ -1,13 +1,13 @@
 import { Feedback } from "@/components/admin/feedback";
 import { saveOwnAdminProfileAction } from "@/server/actions/admin-actions";
-import { requireRole } from "@/server/auth/guards";
+import { requireAnyRole } from "@/server/auth/guards";
 
 type AdminMePageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
 export default async function AdminMePage({ searchParams }: AdminMePageProps) {
-  const user = await requireRole("ADMIN");
+  const user = await requireAnyRole(["ADMIN", "PRODUCER"]);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
 
   return (

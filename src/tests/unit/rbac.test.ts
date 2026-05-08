@@ -55,6 +55,18 @@ describe("rbac route decisions", () => {
 
   it("maps default route by role", () => {
     expect(getDefaultPathForRole("ADMIN")).toBe("/admin");
+    expect(getDefaultPathForRole("PRODUCER")).toBe("/admin");
     expect(getDefaultPathForRole("STUDENT")).toBe("/app");
+  });
+
+  it("allows producer on allowed admin pages and blocks restricted pages", () => {
+    expect(decideRouteAccess("/admin/courses", { role: "PRODUCER", status: "ACTIVE" })).toEqual({
+      allowed: true,
+    });
+    expect(decideRouteAccess("/admin/students", { role: "PRODUCER", status: "ACTIVE" })).toEqual({
+      allowed: false,
+      redirectTo: "/admin?error=forbidden",
+      reason: "FORBIDDEN",
+    });
   });
 });

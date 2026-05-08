@@ -652,3 +652,39 @@ Arquivos afetados:
 - `src/app/(auth)/login/client/page.tsx`
 - `src/app/(auth)/login/admin/register/page.tsx`
 - `src/app/(auth)/login/client/register/page.tsx`
+
+## 2026-05-08 - Papel PRODUCER com escopo administrativo restrito
+
+Decisao:
+
+Introduzir role `PRODUCER` com acesso ao painel `/admin` para gerenciamento de cursos/modulos/aulas e sem acesso a usuarios, alunos e matriculas.
+
+Motivo:
+
+Atender ao requisito de cadastro de produtores mantendo segregacao de responsabilidades entre administrador principal e produtores.
+
+Alternativas consideradas:
+
+1. Reutilizar apenas `ADMIN` para produtores.
+2. Criar um painel separado para produtor.
+
+Impacto:
+
+- Fluxo admin passa a aceitar `ADMIN` e `PRODUCER` no login administrativo.
+- Cadastro pela pagina administrativa publica cria usuario `PRODUCER`.
+- Rotas sensiveis de gestao de usuarios/alunos/matriculas continuam exclusivas de `ADMIN`.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260508170000_add_producer_role/migration.sql`
+- `src/server/permissions/rbac.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/app/admin/layout.tsx`
+- `src/app/admin/me/page.tsx`
+- `src/components/admin/admin-shell.tsx`
+- `src/app/admin/users/page.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `src/app/(auth)/login/admin/register/page.tsx`

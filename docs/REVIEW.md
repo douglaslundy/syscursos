@@ -1481,3 +1481,59 @@ px prisma migrate deploy`n
 
 - Aplicar migration `20260508153000_module_cover_image` no banco alvo.
 - Reexecutar testes quando o ambiente local permitir acesso sem erro `EPERM`.
+
+---
+
+### 2026-05-08 - Introducao de role PRODUCER
+
+### Arquivos criados ou alterados
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260508170000_add_producer_role/migration.sql`
+- `src/server/permissions/rbac.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/app/admin/layout.tsx`
+- `src/app/admin/me/page.tsx`
+- `src/components/admin/admin-shell.tsx`
+- `src/app/admin/users/page.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `src/app/(auth)/login/admin/register/page.tsx`
+- `middleware.ts`
+- `src/tests/unit/rbac.test.ts`
+- `src/tests/integration/auth-actions.test.ts`
+- `src/tests/integration/admin-service.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+- `.codex/context/DECISIONS.md`
+
+### O que foi implementado
+
+- Novo papel `PRODUCER` no dominio de usuarios.
+- Login administrativo aceitando `ADMIN` e `PRODUCER`.
+- Cadastro da pagina admin convertido para criacao de `PRODUCER`.
+- Regra de acesso para produtor no `/admin` com bloqueio das rotas de usuarios/alunos/matriculas.
+- Ajuste de menu admin para esconder navegacao restrita quando o usuario e produtor.
+- Services de cursos/modulos/aulas e perfil proprio liberados para `ADMIN` e `PRODUCER`.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- Todos aprovados.
+
+### Riscos encontrados
+
+- Campo de CPF para `PRODUCER` nao esta modelado separadamente no repositorio atual; no fluxo atual, CPF continua formalmente associado ao perfil de cliente/aluno.
+
+### Pendencias
+
+- Aplicar migration `20260508170000_add_producer_role` no banco alvo.

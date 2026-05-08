@@ -37,7 +37,9 @@ export async function middleware(request: NextRequest) {
   const isLoginPath =
     request.nextUrl.pathname === "/login" ||
     request.nextUrl.pathname === "/login/client" ||
-    request.nextUrl.pathname === "/login/admin";
+    request.nextUrl.pathname === "/login/admin" ||
+    request.nextUrl.pathname === "/login/client/register" ||
+    request.nextUrl.pathname === "/login/admin/register";
 
   if (isLoginPath && user?.status === "ACTIVE") {
     return NextResponse.redirect(new URL(getDefaultPathForRole(user.role), request.url));
@@ -56,7 +58,9 @@ function handleMiddlewareFailure(request: NextRequest, response: NextResponse) {
   const isLoginPath =
     request.nextUrl.pathname === "/login" ||
     request.nextUrl.pathname === "/login/client" ||
-    request.nextUrl.pathname === "/login/admin";
+    request.nextUrl.pathname === "/login/admin" ||
+    request.nextUrl.pathname === "/login/client/register" ||
+    request.nextUrl.pathname === "/login/admin/register";
 
   if (isLoginPath) {
     return response;

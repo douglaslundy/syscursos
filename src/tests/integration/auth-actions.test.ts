@@ -60,6 +60,23 @@ describe("loginAction", () => {
     });
   });
 
+  it("redirects an active producer to the admin area", async () => {
+    const { loginAction } = await import("@/server/actions/auth-actions");
+    signInWithPasswordMock.mockResolvedValue({
+      data: { user: { id: "auth-producer", email: "producer@example.com" } },
+      error: null,
+    });
+    findFirstMock.mockResolvedValue({
+      id: "user-producer",
+      role: "PRODUCER",
+      status: "ACTIVE",
+    });
+
+    await expect(loginAction(loginForm("producer@example.com", "admin"))).rejects.toThrow(
+      "REDIRECT:/admin",
+    );
+  });
+
   it("redirects an active student to the student area", async () => {
     const { loginAction } = await import("@/server/actions/auth-actions");
     signInWithPasswordMock.mockResolvedValue({

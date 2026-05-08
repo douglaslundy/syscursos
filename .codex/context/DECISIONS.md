@@ -62,3 +62,15 @@ Evidencias:
 - `src/server/auth/schemas.ts`
 - `src/app/(auth)/login/admin/register/page.tsx`
 - `src/app/(auth)/login/client/register/page.tsx`
+
+## 2026-05-08 - Role PRODUCER com escopo administrativo restrito
+
+Decisao evidente no codigo:
+- `PRODUCER` acessa gestao de cursos/modulos/aulas no `/admin`, sem acesso a usuarios/alunos/matriculas.
+
+Evidencias:
+- `prisma/schema.prisma`
+- `src/server/permissions/rbac.ts`
+- `src/server/services/admin-service.ts`
+- `src/components/admin/admin-shell.tsx`
+- `src/server/actions/auth-actions.ts`

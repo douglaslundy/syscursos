@@ -10,10 +10,10 @@ export default function AdminRegisterPage({ searchParams }: AdminRegisterPagePro
   return (
     <RegisterForm
       audience="admin"
-      title="Cadastro de administrador"
-      description="Solicite seu acesso administrativo para criar e gerenciar seu ambiente."
+      title="Cadastro de produtor"
+      description="Solicite seu acesso de produtor para criar e gerenciar cursos."
       loginHref="/login/admin"
-      loginLabel="Ja tenho conta de administrador"
+      loginLabel="Ja tenho conta de produtor"
       showDocumentField={false}
       error={searchParams?.error}
     />

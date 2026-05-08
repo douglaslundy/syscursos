@@ -18,6 +18,15 @@ type AdminShellProps = Readonly<{
 }>;
 
 export function AdminShell({ user, children }: AdminShellProps) {
+  const visibleNavItems =
+    user.role === "ADMIN"
+      ? navItems
+      : navItems.filter((item) =>
+          item.href !== "/admin/users" &&
+          item.href !== "/admin/students" &&
+          item.href !== "/admin/enrollments",
+        );
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-stroke-subtle bg-surface-elevated">
@@ -27,7 +36,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
             <h1 className="text-xl font-semibold tracking-normal text-copy-primary">SysCursos</h1>
           </div>
           <nav className="flex flex-wrap gap-2">
-            {navItems.map((item) => (
+            {visibleNavItems.map((item) => (
               <Link
                 className="rounded-md border border-transparent px-3 py-2 text-sm text-copy-secondary transition duration-200 hover:border-stroke-subtle hover:bg-surface-hover hover:text-copy-primary"
                 href={item.href}

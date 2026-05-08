@@ -32,7 +32,7 @@ export function getRequiredRoleForPath(pathname: string): UserRole | null {
 }
 
 export function getDefaultPathForRole(role: UserRole): string {
-  return role === "ADMIN" ? "/admin" : "/app";
+  return role === "STUDENT" ? "/app" : "/admin";
 }
 
 export function decideRouteAccess(pathname: string, user: UserAccessContext): RouteAccessDecision {
@@ -63,6 +63,18 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
       return { allowed: true };
     }
 
+    if (requiredRole === "ADMIN" && user.role === "PRODUCER") {
+      if (isProducerRestrictedPath(pathname)) {
+        return {
+          allowed: false,
+          redirectTo: "/admin?error=forbidden",
+          reason: "FORBIDDEN",
+        };
+      }
+
+      return { allowed: true };
+    }
+
     return {
       allowed: false,
       redirectTo: getDefaultPathForRole(user.role),
@@ -71,4 +83,15 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
   }
 
   return { allowed: true };
+}
+
+function isProducerRestrictedPath(pathname: string) {
+  return (
+    pathname === "/admin/users" ||
+    pathname === "/admin/students" ||
+    pathname.startsWith("/admin/students/") ||
+    pathname === "/admin/enrollments" ||
+    pathname.startsWith("/admin/enrollments/") ||
+    pathname.includes("/students")
+  );
 }

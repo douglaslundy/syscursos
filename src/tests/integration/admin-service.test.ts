@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const requireRoleMock = vi.hoisted(() => vi.fn());
+const requireAnyRoleMock = vi.hoisted(() => vi.fn());
 const repositoryMock = vi.hoisted(() => ({
   upsertCourse: vi.fn(),
   upsertModule: vi.fn(),
@@ -12,6 +13,7 @@ const repositoryMock = vi.hoisted(() => ({
 
 vi.mock("@/server/auth/guards", () => ({
   requireRole: requireRoleMock,
+  requireAnyRole: requireAnyRoleMock,
 }));
 
 vi.mock("@/server/repositories/admin-repository", () => repositoryMock);
@@ -19,7 +21,14 @@ vi.mock("@/server/repositories/admin-repository", () => repositoryMock);
 describe("admin service", () => {
   beforeEach(() => {
     requireRoleMock.mockReset();
+    requireAnyRoleMock.mockReset();
     requireRoleMock.mockResolvedValue({
+      id: "admin-id",
+      organizationId: "org-id",
+      role: "ADMIN",
+      status: "ACTIVE",
+    });
+    requireAnyRoleMock.mockResolvedValue({
       id: "admin-id",
       organizationId: "org-id",
       role: "ADMIN",
@@ -45,7 +54,7 @@ describe("admin service", () => {
     repositoryMock.upsertCourse.mockResolvedValue({ id: "course-id", ...input });
 
     await expect(saveCourse(input)).resolves.toMatchObject({ id: "course-id" });
-    expect(requireRoleMock).toHaveBeenCalledWith("ADMIN");
+    expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
     expect(repositoryMock.upsertCourse).toHaveBeenCalledWith("org-id", input);
   });
 
@@ -61,7 +70,7 @@ describe("admin service", () => {
     };
 
     await saveModule(input);
-    expect(requireRoleMock).toHaveBeenCalledWith("ADMIN");
+    expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
     expect(repositoryMock.upsertModule).toHaveBeenCalledWith("org-id", input);
   });
 
@@ -78,7 +87,7 @@ describe("admin service", () => {
     };
 
     await saveLesson(input);
-    expect(requireRoleMock).toHaveBeenCalledWith("ADMIN");
+    expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
     expect(repositoryMock.upsertLesson).toHaveBeenCalledWith("org-id", input);
   });
 
