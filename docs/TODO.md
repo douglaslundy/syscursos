@@ -406,3 +406,12 @@ px prisma migrate deploy no banco configurado.
 - [x] Executar `npm run typecheck`
 - [x] Executar `npm run test`
 - [x] Executar `npm run build`
+
+## Ajustes 2026-05-08 - Performance de dashboard
+
+- [x] Revisar consultas de KPIs para eliminar contagens redundantes
+- [x] Agrupar metricas de consumo por aluno em consulta SQL agregada com joins
+- [x] Preservar filtros de organizacao/produtor/aluno no novo plano de consulta
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [x] Executar `npm run test -- --run src/tests/integration/admin-repository.test.ts src/tests/integration/admin-service.test.ts`

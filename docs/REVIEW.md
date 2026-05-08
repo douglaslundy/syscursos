@@ -1616,3 +1616,38 @@ px prisma migrate deploy`n
 ### Proxima etapa recomendada
 
 - Validar manualmente login e alteracao de e-mail em `Meus dados` para admin, produtor e aluno.
+
+---
+
+### 2026-05-08 - Performance de consultas no dashboard
+
+### Arquivos criados ou alterados
+
+- `src/server/repositories/admin-repository.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Remocao de consultas redundantes no calculo de `pendingLessons` do dashboard.
+- Refatoracao de metricas de consumo por aluno para consulta agregada unica com joins e `GROUP BY`, reduzindo carga de dados e roundtrips.
+- Mantido escopo por organizacao e filtros por produtor/aluno no mesmo SQL.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test -- --run src/tests/integration/admin-repository.test.ts src/tests/integration/admin-service.test.ts`
+
+### Resultado dos testes
+
+- Todos aprovados.
+
+### Riscos encontrados
+
+- Consulta SQL agregada exige cuidado em futuras alteracoes de schema para manter compatibilidade com aliases e filtros.
+
+### Pendencias
+
+- Nao identificadas no escopo desta etapa.

@@ -23,3 +23,10 @@
 
 ## Itens nao identificados no repositorio
 - Modelo de multiplos perfis com mesmo e-mail em contas locais separadas (conflita com unicidade local e Supabase Auth).
+
+## Atualizacao 2026-05-08 - Performance de consultas do dashboard
+- Reduzidas consultas redundantes em `getAdminDashboardStats`:
+  - removidas contagens duplicadas de matriculas e aulas ativas para calcular pendencias.
+  - `pendingLessons` agora reutiliza KPIs ja carregados (`enrollments` e `activeLessons`).
+- Refatorado `getAdminConsumptionMetrics` para agregacao SQL unica com joins (`users`, `enrollments`, `lesson_progress`) e escopo por organizacao/produtor.
+- Objetivo: reduzir roundtrips e volume de dados transferidos no dashboard.
