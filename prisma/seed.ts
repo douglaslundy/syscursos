@@ -3,14 +3,27 @@ import { PrismaClient, UserRole } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  const organization = await prisma.organization.upsert({
+    where: { id: "11111111-1111-1111-1111-111111111111" },
+    update: {
+      name: "SysCursos Tenant Demo",
+    },
+    create: {
+      id: "11111111-1111-1111-1111-111111111111",
+      name: "SysCursos Tenant Demo",
+    },
+  });
+
   const admin = await prisma.user.upsert({
     where: { email: "admin@syscursos.local" },
     update: {
+      organizationId: organization.id,
       name: "Admin SysCursos",
       role: UserRole.ADMIN,
       status: "ACTIVE",
     },
     create: {
+      organizationId: organization.id,
       email: "admin@syscursos.local",
       name: "Admin SysCursos",
       role: UserRole.ADMIN,
@@ -21,11 +34,13 @@ async function main() {
   const studentUser = await prisma.user.upsert({
     where: { email: "aluno@syscursos.local" },
     update: {
+      organizationId: organization.id,
       name: "Aluno Demonstracao",
       role: UserRole.STUDENT,
       status: "ACTIVE",
     },
     create: {
+      organizationId: organization.id,
       email: "aluno@syscursos.local",
       name: "Aluno Demonstracao",
       role: UserRole.STUDENT,
@@ -47,11 +62,13 @@ async function main() {
   const course = await prisma.course.upsert({
     where: { slug: "curso-demonstracao" },
     update: {
+      organizationId: organization.id,
       title: "Curso Demonstracao",
       description: "Curso inicial usado para validar a camada de banco.",
       status: "ACTIVE",
     },
     create: {
+      organizationId: organization.id,
       title: "Curso Demonstracao",
       slug: "curso-demonstracao",
       description: "Curso inicial usado para validar a camada de banco.",

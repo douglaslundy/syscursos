@@ -28,6 +28,12 @@ async function main() {
     },
   );
 
+  const organization = await prisma.organization.upsert({
+    where: { id: "11111111-1111-1111-1111-111111111111" },
+    update: { name: "SysCursos Tenant Demo" },
+    create: { id: "11111111-1111-1111-1111-111111111111", name: "SysCursos Tenant Demo" },
+  });
+
   const targets: ProvisionTarget[] = [
     {
       email: process.env.ADMIN_EMAIL || "admin@syscursos.local",
@@ -46,14 +52,17 @@ async function main() {
 
     const appUser = await prisma.user.upsert({
       where: { email: target.email },
-      update: {
+      create: {
+        organizationId: organization.id,
         authUserId: authUser.id,
+        email: target.email,
+        name: target.role === UserRole.ADMIN ? "Admin SysCursos" : "Aluno Demonstracao",
         role: target.role,
         status: "ACTIVE",
       },
-      create: {
+      update: {
+        organizationId: organization.id,
         authUserId: authUser.id,
-        email: target.email,
         name: target.role === UserRole.ADMIN ? "Admin SysCursos" : "Aluno Demonstracao",
         role: target.role,
         status: "ACTIVE",

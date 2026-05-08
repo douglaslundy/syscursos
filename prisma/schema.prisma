@@ -46,6 +46,7 @@ enum LessonProgressStatus {
 
 model User {
   id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
   authUserId     String?         @unique @map("auth_user_id") @db.Uuid
   email          String          @unique @db.VarChar(255)
   name           String          @db.VarChar(160)
@@ -53,10 +54,22 @@ model User {
   status         UserStatus      @default(ACTIVE)
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   studentProfile StudentProfile?
 
-  @@index([role, status])
+  @@index([organizationId, role, status])
   @@map("users")
+}
+
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @db.VarChar(180)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  users     User[]
+  courses   Course[]
+
+  @@map("organizations")
 }
 
 model StudentProfile {
@@ -76,6 +89,7 @@ model StudentProfile {
 
 model Course {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
   title       String       @db.VarChar(180)
   slug        String       @unique @db.VarChar(200)
   description String?
@@ -83,10 +97,11 @@ model Course {
   status      CourseStatus @default(ACTIVE)
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   modules     Module[]
   enrollments Enrollment[]
 
-  @@index([status])
+  @@index([organizationId, status])
   @@index([title])
   @@map("courses")
 }

@@ -19,7 +19,12 @@ vi.mock("@/server/repositories/admin-repository", () => repositoryMock);
 describe("admin service", () => {
   beforeEach(() => {
     requireRoleMock.mockReset();
-    requireRoleMock.mockResolvedValue({ id: "admin-id", role: "ADMIN", status: "ACTIVE" });
+    requireRoleMock.mockResolvedValue({
+      id: "admin-id",
+      organizationId: "org-id",
+      role: "ADMIN",
+      status: "ACTIVE",
+    });
     repositoryMock.upsertCourse.mockReset();
     repositoryMock.upsertModule.mockReset();
     repositoryMock.upsertLesson.mockReset();
@@ -41,7 +46,7 @@ describe("admin service", () => {
 
     await expect(saveCourse(input)).resolves.toMatchObject({ id: "course-id" });
     expect(requireRoleMock).toHaveBeenCalledWith("ADMIN");
-    expect(repositoryMock.upsertCourse).toHaveBeenCalledWith(input);
+    expect(repositoryMock.upsertCourse).toHaveBeenCalledWith("org-id", input);
   });
 
   it("uses ADMIN authorization for module CRUD writes", async () => {
@@ -89,7 +94,7 @@ describe("admin service", () => {
 
     await saveStudent(input);
     expect(requireRoleMock).toHaveBeenCalledWith("ADMIN");
-    expect(repositoryMock.upsertStudent).toHaveBeenCalledWith(input);
+    expect(repositoryMock.upsertStudent).toHaveBeenCalledWith("org-id", input);
   });
 
   it("uses ADMIN authorization for enrollment and renewal", async () => {
@@ -109,7 +114,7 @@ describe("admin service", () => {
     await saveEnrollment(enrollment);
     await renewEnrollment(renewal);
 
-    expect(repositoryMock.upsertEnrollment).toHaveBeenCalledWith(enrollment);
+    expect(repositoryMock.upsertEnrollment).toHaveBeenCalledWith("org-id", enrollment);
     expect(repositoryMock.renewEnrollment).toHaveBeenCalledWith(renewal);
   });
 });

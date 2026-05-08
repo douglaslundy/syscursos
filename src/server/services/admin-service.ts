@@ -2,32 +2,41 @@ import { requireRole } from "@/server/auth/guards";
 import * as repository from "@/server/repositories/admin-repository";
 import type { PaginationInput } from "@/server/validators/pagination";
 import type {
+  AdminProfileInput,
   CourseInput,
   EnrollmentInput,
   LessonInput,
+  ManagedUserInput,
   ModuleInput,
   RenewEnrollmentInput,
   StudentInput,
 } from "@/server/validators/admin";
 
 export async function getAdminDashboard() {
-  await requireAdmin();
-  return repository.getAdminDashboardStats();
+  const admin = await requireAdmin();
+  const [stats, studentConsumption] = await Promise.all([
+    repository.getAdminDashboardStats(admin.organizationId),
+    repository.getAdminConsumptionMetrics(admin.organizationId),
+  ]);
+  return {
+    ...stats,
+    studentConsumption,
+  };
 }
 
 export async function getCourses(input: PaginationInput) {
-  await requireAdmin();
-  return repository.listCourses(input);
+  const admin = await requireAdmin();
+  return repository.listCourses(admin.organizationId, input);
 }
 
 export async function getCourseOptions() {
-  await requireAdmin();
-  return repository.listCourseOptions();
+  const admin = await requireAdmin();
+  return repository.listCourseOptions(admin.organizationId);
 }
 
 export async function saveCourse(input: CourseInput) {
-  await requireAdmin();
-  return repository.upsertCourse(input);
+  const admin = await requireAdmin();
+  return repository.upsertCourse(admin.organizationId, input);
 }
 
 export async function removeCourse(id: string) {
@@ -36,8 +45,8 @@ export async function removeCourse(id: string) {
 }
 
 export async function getModules(courseId: string, input: PaginationInput) {
-  await requireAdmin();
-  return repository.listModules(courseId, input);
+  const admin = await requireAdmin();
+  return repository.listModules(admin.organizationId, courseId, input);
 }
 
 export async function saveModule(input: ModuleInput) {
@@ -51,8 +60,8 @@ export async function removeModule(id: string) {
 }
 
 export async function getLessons(moduleId: string, input: PaginationInput) {
-  await requireAdmin();
-  return repository.listLessons(moduleId, input);
+  const admin = await requireAdmin();
+  return repository.listLessons(admin.organizationId, moduleId, input);
 }
 
 export async function saveLesson(input: LessonInput) {
@@ -66,18 +75,18 @@ export async function removeLesson(id: string) {
 }
 
 export async function getStudents(input: PaginationInput) {
-  await requireAdmin();
-  return repository.listStudents(input);
+  const admin = await requireAdmin();
+  return repository.listStudents(admin.organizationId, input);
 }
 
 export async function getStudentOptions() {
-  await requireAdmin();
-  return repository.listStudentOptions();
+  const admin = await requireAdmin();
+  return repository.listStudentOptions(admin.organizationId);
 }
 
 export async function saveStudent(input: StudentInput) {
-  await requireAdmin();
-  return repository.upsertStudent(input);
+  const admin = await requireAdmin();
+  return repository.upsertStudent(admin.organizationId, input);
 }
 
 export async function removeStudent(id: string) {
@@ -86,13 +95,13 @@ export async function removeStudent(id: string) {
 }
 
 export async function getEnrollments(input: PaginationInput) {
-  await requireAdmin();
-  return repository.listEnrollments(input);
+  const admin = await requireAdmin();
+  return repository.listEnrollments(admin.organizationId, input);
 }
 
 export async function saveEnrollment(input: EnrollmentInput) {
-  await requireAdmin();
-  return repository.upsertEnrollment(input);
+  const admin = await requireAdmin();
+  return repository.upsertEnrollment(admin.organizationId, input);
 }
 
 export async function renewEnrollment(input: RenewEnrollmentInput) {
@@ -106,13 +115,23 @@ export async function cancelEnrollment(id: string) {
 }
 
 export async function getCoursesByStudent(studentId: string, input: PaginationInput) {
-  await requireAdmin();
-  return repository.listCoursesByStudent(studentId, input);
+  const admin = await requireAdmin();
+  return repository.listCoursesByStudent(admin.organizationId, studentId, input);
 }
 
 export async function getStudentsByCourse(courseId: string, input: PaginationInput) {
-  await requireAdmin();
-  return repository.listStudentsByCourse(courseId, input);
+  const admin = await requireAdmin();
+  return repository.listStudentsByCourse(admin.organizationId, courseId, input);
+}
+
+export async function saveManagedUser(input: ManagedUserInput) {
+  const admin = await requireAdmin();
+  return repository.upsertManagedUser(admin.organizationId, input);
+}
+
+export async function updateOwnAdminProfile(input: AdminProfileInput) {
+  const admin = await requireAdmin();
+  return repository.updateAdminProfile(admin.organizationId, admin.id, input.name);
 }
 
 async function requireAdmin() {

@@ -31,6 +31,7 @@ export const getCurrentUser = cache(async (): Promise<AuthResult> => {
       },
       select: {
         id: true,
+        organizationId: true,
         authUserId: true,
         email: true,
         name: true,
@@ -60,6 +61,7 @@ export const getCurrentUser = cache(async (): Promise<AuthResult> => {
     ok: true,
     user: {
       id: appUser.id,
+      organizationId: appUser.organizationId,
       authUserId: appUser.authUserId,
       email: appUser.email,
       name: appUser.name,

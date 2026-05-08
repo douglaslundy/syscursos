@@ -34,26 +34,29 @@ type PageArgs = {
   query?: string;
 };
 
-export async function getAdminDashboardStats() {
+export async function getAdminDashboardStats(organizationId: string) {
   const [courses, students, enrollments, lessons] = await prisma.$transaction([
-    prisma.course.count(),
-    prisma.studentProfile.count(),
-    prisma.enrollment.count({ where: { status: EnrollmentStatus.ACTIVE } }),
-    prisma.lesson.count(),
+    prisma.course.count({ where: { organizationId } }),
+    prisma.studentProfile.count({ where: { user: { organizationId } } }),
+    prisma.enrollment.count({
+      where: { status: EnrollmentStatus.ACTIVE, course: { organizationId } },
+    }),
+    prisma.lesson.count({ where: { module: { course: { organizationId } } } }),
   ]);
 
   return { courses, students, enrollments, lessons };
 }
 
-export async function listCourses(args: PageArgs) {
+export async function listCourses(organizationId: string, args: PageArgs) {
   const where: Prisma.CourseWhereInput = args.query
     ? {
+        organizationId,
         OR: [
           { title: { contains: args.query, mode: "insensitive" } },
           { slug: { contains: args.query, mode: "insensitive" } },
         ],
       }
-    : {};
+    : { organizationId };
 
   const [items, total] = await prisma.$transaction([
     prisma.course.findMany({
@@ -73,14 +76,15 @@ export async function listCourses(args: PageArgs) {
   return pageResult(items, total, args);
 }
 
-export async function listCourseOptions() {
+export async function listCourseOptions(organizationId: string) {
   return prisma.course.findMany({
+    where: { organizationId },
     orderBy: { title: "asc" },
     select: { id: true, title: true },
   });
 }
 
-export async function upsertCourse(input: CourseInput) {
+export async function upsertCourse(organizationId: string, input: CourseInput) {
   if (input.id) {
     return prisma.course.update({
       where: { id: input.id },
@@ -96,6 +100,7 @@ export async function upsertCourse(input: CourseInput) {
 
   return prisma.course.create({
     data: {
+      organizationId,
       title: input.title,
       slug: input.slug,
       description: input.description,
@@ -109,9 +114,10 @@ export async function deleteCourse(id: string) {
   return prisma.course.delete({ where: { id } });
 }
 
-export async function listModules(courseId: string, args: PageArgs) {
+export async function listModules(organizationId: string, courseId: string, args: PageArgs) {
   const where: Prisma.ModuleWhereInput = {
     courseId,
+    course: { organizationId },
     ...(args.query ? { title: { contains: args.query, mode: "insensitive" } } : {}),
   };
   const [course, items, total] = await prisma.$transaction([
@@ -157,9 +163,10 @@ export async function deleteModule(id: string) {
   return prisma.module.delete({ where: { id } });
 }
 
-export async function listLessons(moduleId: string, args: PageArgs) {
+export async function listLessons(organizationId: string, moduleId: string, args: PageArgs) {
   const where: Prisma.LessonWhereInput = {
     moduleId,
+    module: { course: { organizationId } },
     ...(args.query ? { title: { contains: args.query, mode: "insensitive" } } : {}),
   };
   const [module, items, total] = await prisma.$transaction([
@@ -211,17 +218,18 @@ export async function deleteLesson(id: string) {
   return prisma.lesson.delete({ where: { id } });
 }
 
-export async function listStudents(args: PageArgs) {
+export async function listStudents(organizationId: string, args: PageArgs) {
   const where: Prisma.StudentProfileWhereInput = args.query
     ? {
         user: {
+          organizationId,
           OR: [
             { name: { contains: args.query, mode: "insensitive" } },
             { email: { contains: args.query, mode: "insensitive" } },
           ],
         },
       }
-    : {};
+    : { user: { organizationId } };
 
   const [items, total] = await prisma.$transaction([
     prisma.studentProfile.findMany({
@@ -240,8 +248,9 @@ export async function listStudents(args: PageArgs) {
   return pageResult(items, total, args);
 }
 
-export async function listStudentOptions() {
+export async function listStudentOptions(organizationId: string) {
   return prisma.studentProfile.findMany({
+    where: { user: { organizationId } },
     orderBy: { user: { name: "asc" } },
     select: {
       id: true,
@@ -250,7 +259,7 @@ export async function listStudentOptions() {
   });
 }
 
-export async function upsertStudent(input: StudentInput) {
+export async function upsertStudent(organizationId: string, input: StudentInput) {
   if (input.id && input.studentProfileId) {
     const currentUser = await prisma.user.findUniqueOrThrow({
       where: { id: input.id },
@@ -290,6 +299,7 @@ export async function upsertStudent(input: StudentInput) {
 
   return prisma.user.create({
     data: {
+      organizationId,
       authUserId,
       email: input.email,
       name: input.name,
@@ -321,16 +331,17 @@ export async function deleteStudent(userId: string) {
   return deletedUser;
 }
 
-export async function listEnrollments(args: PageArgs) {
+export async function listEnrollments(organizationId: string, args: PageArgs) {
   const where: Prisma.EnrollmentWhereInput = args.query
     ? {
+        course: { organizationId },
         OR: [
           { course: { title: { contains: args.query, mode: "insensitive" } } },
           { student: { user: { name: { contains: args.query, mode: "insensitive" } } } },
           { student: { user: { email: { contains: args.query, mode: "insensitive" } } } },
         ],
       }
-    : {};
+    : { course: { organizationId } };
 
   const [items, total] = await prisma.$transaction([
     prisma.enrollment.findMany({
@@ -349,7 +360,23 @@ export async function listEnrollments(args: PageArgs) {
   return pageResult(items, total, args);
 }
 
-export async function upsertEnrollment(input: EnrollmentInput) {
+export async function upsertEnrollment(organizationId: string, input: EnrollmentInput) {
+  await prisma.course.findFirstOrThrow({
+    where: {
+      id: input.courseId,
+      organizationId,
+    },
+    select: { id: true },
+  });
+
+  await prisma.studentProfile.findFirstOrThrow({
+    where: {
+      id: input.studentId,
+      user: { organizationId },
+    },
+    select: { id: true },
+  });
+
   if (input.id) {
     return prisma.enrollment.update({
       where: { id: input.id },
@@ -402,39 +429,150 @@ export async function cancelEnrollment(id: string) {
   });
 }
 
-export async function listCoursesByStudent(studentId: string, args: PageArgs) {
+export async function listCoursesByStudent(organizationId: string, studentId: string, args: PageArgs) {
   const [student, items, total] = await prisma.$transaction([
     prisma.studentProfile.findUniqueOrThrow({
-      where: { id: studentId },
+      where: { id: studentId, user: { organizationId } },
       include: { user: true },
     }),
     prisma.enrollment.findMany({
-      where: { studentId },
+      where: { studentId, course: { organizationId } },
       orderBy: { createdAt: "desc" },
       skip: offset(args),
       take: args.pageSize,
       include: { course: true },
     }),
-    prisma.enrollment.count({ where: { studentId } }),
+    prisma.enrollment.count({ where: { studentId, course: { organizationId } } }),
   ]);
 
   return { student, enrollments: pageResult(items, total, args) };
 }
 
-export async function listStudentsByCourse(courseId: string, args: PageArgs) {
+export async function listStudentsByCourse(organizationId: string, courseId: string, args: PageArgs) {
   const [course, items, total] = await prisma.$transaction([
-    prisma.course.findUniqueOrThrow({ where: { id: courseId } }),
+    prisma.course.findFirstOrThrow({ where: { id: courseId, organizationId } }),
     prisma.enrollment.findMany({
-      where: { courseId },
+      where: { courseId, course: { organizationId } },
       orderBy: { createdAt: "desc" },
       skip: offset(args),
       take: args.pageSize,
       include: { student: { include: { user: true } } },
     }),
-    prisma.enrollment.count({ where: { courseId } }),
+    prisma.enrollment.count({ where: { courseId, course: { organizationId } } }),
   ]);
 
   return { course, enrollments: pageResult(items, total, args) };
+}
+
+export async function upsertManagedUser(organizationId: string, input: {
+  id?: string;
+  studentProfileId?: string;
+  role: UserRole;
+  email: string;
+  name: string;
+  password: string | null;
+  document: string | null;
+  phone: string | null;
+  status: UserStatus;
+}) {
+  if (input.id) {
+    const currentUser = await prisma.user.findFirstOrThrow({
+      where: { id: input.id, organizationId },
+      select: { authUserId: true, role: true },
+    });
+
+    const authUserId = await upsertStudentAuthUser({
+      authUserId: currentUser.authUserId,
+      email: input.email,
+      password: input.password,
+      name: input.name,
+      role: input.role,
+    });
+
+    return prisma.user.update({
+      where: { id: input.id },
+      data: {
+        email: input.email,
+        name: input.name,
+        role: input.role,
+        status: input.status,
+        authUserId,
+        studentProfile:
+          input.role === UserRole.STUDENT
+            ? {
+                upsert: {
+                  update: { document: input.document, phone: input.phone },
+                  create: { document: input.document, phone: input.phone },
+                },
+              }
+            : { delete: input.studentProfileId ? true : undefined },
+      },
+    });
+  }
+
+  const authUserId = await upsertStudentAuthUser({
+    authUserId: null,
+    email: input.email,
+    password: input.password,
+    name: input.name,
+    role: input.role,
+  });
+
+  return prisma.user.create({
+    data: {
+      organizationId,
+      authUserId,
+      email: input.email,
+      name: input.name,
+      role: input.role,
+      status: input.status,
+      ...(input.role === UserRole.STUDENT
+        ? {
+            studentProfile: {
+              create: {
+                document: input.document,
+                phone: input.phone,
+              },
+            },
+          }
+        : {}),
+    },
+  });
+}
+
+export async function updateAdminProfile(organizationId: string, userId: string, name: string) {
+  return prisma.user.updateMany({
+    where: { id: userId, organizationId, role: UserRole.ADMIN },
+    data: { name },
+  });
+}
+
+export async function getAdminConsumptionMetrics(organizationId: string) {
+  const students = await prisma.studentProfile.findMany({
+    where: { user: { organizationId } },
+    include: {
+      user: { select: { id: true, name: true, email: true } },
+      enrollments: {
+        where: { course: { organizationId } },
+        include: { course: { select: { id: true, title: true } } },
+      },
+      progress: { where: { status: "COMPLETED" }, select: { lessonId: true } },
+    },
+    orderBy: { user: { name: "asc" } },
+  });
+
+  return students.map((student) => {
+    const activeEnrollments = student.enrollments.filter((enrollment) => enrollment.status === "ACTIVE").length;
+    const completedLessons = student.progress.length;
+    return {
+      studentId: student.id,
+      name: student.user.name,
+      email: student.user.email,
+      activeEnrollments,
+      totalEnrollments: student.enrollments.length,
+      completedLessons,
+    };
+  });
 }
 
 function offset(args: PageArgs) {
@@ -456,6 +594,7 @@ async function upsertStudentAuthUser(input: {
   email: string;
   password: string | null;
   name: string;
+  role?: UserRole;
 }) {
   const supabase = createSupabaseAdminClient();
 
@@ -466,7 +605,7 @@ async function upsertStudentAuthUser(input: {
       email_confirm: true,
       user_metadata: {
         name: input.name,
-        role: UserRole.STUDENT,
+        role: input.role ?? UserRole.STUDENT,
       },
     });
 
@@ -485,7 +624,7 @@ async function upsertStudentAuthUser(input: {
       email_confirm: true,
       user_metadata: {
         name: input.name,
-        role: UserRole.STUDENT,
+        role: input.role ?? UserRole.STUDENT,
       },
     });
 
@@ -502,7 +641,7 @@ async function upsertStudentAuthUser(input: {
     email_confirm: true,
     user_metadata: {
       name: input.name,
-      role: UserRole.STUDENT,
+      role: input.role ?? UserRole.STUDENT,
     },
   });
 

@@ -2,12 +2,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const updateMock = vi.hoisted(() => vi.fn());
 const upsertMock = vi.hoisted(() => vi.fn());
+const findCourseMock = vi.hoisted(() => vi.fn());
+const findStudentMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     enrollment: {
       update: updateMock,
       upsert: upsertMock,
+    },
+    course: {
+      findFirstOrThrow: findCourseMock,
+    },
+    studentProfile: {
+      findFirstOrThrow: findStudentMock,
     },
   },
 }));
@@ -16,6 +24,10 @@ describe("admin repository", () => {
   beforeEach(() => {
     updateMock.mockReset();
     upsertMock.mockReset();
+    findCourseMock.mockReset();
+    findStudentMock.mockReset();
+    findCourseMock.mockResolvedValue({ id: "course-id" });
+    findStudentMock.mockResolvedValue({ id: "student-id" });
   });
 
   it("updates an enrollment by id when editing an existing record", async () => {
@@ -31,7 +43,7 @@ describe("admin repository", () => {
 
     updateMock.mockResolvedValue({ ...input });
 
-    await upsertEnrollment(input);
+    await upsertEnrollment("org-id", input);
 
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: input.id },
