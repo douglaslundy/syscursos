@@ -42,6 +42,9 @@ export async function saveCourseAction(formData: FormData) {
   try {
     input = await parseCourseForm(formData, path);
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
     console.error("Failed to parse or upload course cover.", error);
     redirect(`${path}?status=${adminErrorStatus(error)}`);
   }
@@ -224,6 +227,9 @@ async function runAdminMutation(path: string, successStatus: string, mutation: (
   try {
     await mutation();
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
     console.error("Admin mutation failed.", error);
     redirect(`${path}?status=${adminErrorStatus(error)}`);
   }
@@ -248,12 +254,25 @@ function adminErrorStatus(error: unknown) {
 
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
+    if (message.includes("supabase_service_role_key") || message.includes("missing required environment variable")) {
+      return "storage_error";
+    }
+
     if (message.includes("storage") || message.includes("bucket")) {
       return "storage_error";
     }
   }
 
   return "error";
+}
+
+function isRedirectError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const digest = "digest" in error ? (error as { digest?: unknown }).digest : undefined;
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
 }
 
 function assertValidCourseCover(file: File, errorPath: string) {
