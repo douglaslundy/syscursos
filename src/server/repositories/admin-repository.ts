@@ -145,6 +145,7 @@ export async function upsertModule(organizationId: string, input: ModuleInput) {
       data: {
         title: input.title,
         description: input.description,
+        coverImageUrl: input.coverImageUrl,
         position: input.position,
         status: input.status,
       },
@@ -161,6 +162,7 @@ export async function upsertModule(organizationId: string, input: ModuleInput) {
       courseId: input.courseId,
       title: input.title,
       description: input.description,
+      coverImageUrl: input.coverImageUrl,
       position: input.position,
       status: input.status ?? ModuleStatus.ACTIVE,
     },

@@ -55,6 +55,7 @@ describe("admin service", () => {
       courseId: "8f0896e4-3eb5-45de-8d8f-8d0601f6946b",
       title: "Modulo",
       description: null,
+      coverImageUrl: null,
       position: 1,
       status: "ACTIVE" as const,
     };

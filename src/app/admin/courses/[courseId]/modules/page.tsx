@@ -50,6 +50,7 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
                   id: editingModule.id,
                   title: editingModule.title,
                   description: editingModule.description ?? "",
+                  coverImageUrl: editingModule.coverImageUrl ?? "",
                   position: editingModule.position,
                   status: editingModule.status,
                 }
@@ -77,6 +78,9 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
             </div>
             {module.description ? (
               <p className="mt-3 text-sm text-muted-foreground">{module.description}</p>
+            ) : null}
+            {module.coverImageUrl ? (
+              <p className="mt-2 break-all text-xs text-muted-foreground">Capa: {module.coverImageUrl}</p>
             ) : null}
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
@@ -144,6 +148,7 @@ type ModuleFormProps = {
     id: string;
     title: string;
     description: string;
+    coverImageUrl: string;
     position: number;
     status: string;
   };
@@ -181,6 +186,13 @@ function ModuleForm({ courseId, module }: ModuleFormProps) {
         defaultValue={module?.description}
         name="description"
         placeholder="Descricao"
+      />
+      <input
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
+        defaultValue={module?.coverImageUrl}
+        name="coverImageUrl"
+        placeholder="URL HTTPS da capa do modulo (opcional)"
+        type="url"
       />
     </form>
   );

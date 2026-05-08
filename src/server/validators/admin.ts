@@ -39,6 +39,7 @@ export const moduleSchema = z.object({
   courseId: uuidSchema,
   title: z.string().trim().min(2).max(180),
   description: optionalTextSchema,
+  coverImageUrl: optionalHttpsUrlSchema,
   position: z.coerce.number().int().min(1),
   status: z.nativeEnum(ModuleStatus).default(ModuleStatus.ACTIVE),
 });

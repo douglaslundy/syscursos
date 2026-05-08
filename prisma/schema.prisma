@@ -111,6 +111,7 @@ model Module {
   courseId    String       @map("course_id") @db.Uuid
   title       String       @db.VarChar(180)
   description String?
+  coverImageUrl String?    @map("cover_image_url") @db.VarChar(500)
   position    Int
   status      ModuleStatus @default(ACTIVE)
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
