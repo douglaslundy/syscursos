@@ -20,7 +20,7 @@ describe("rbac route decisions", () => {
   it("redirects unauthenticated users to login with next path", () => {
     expect(decideRouteAccess("/admin", null)).toEqual({
       allowed: false,
-      redirectTo: "/login/client?next=%2Fadmin",
+      redirectTo: "/login/admin?next=%2Fadmin",
       reason: "UNAUTHENTICATED",
     });
   });

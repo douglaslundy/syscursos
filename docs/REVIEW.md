@@ -1565,3 +1565,54 @@ px prisma migrate deploy`n
 ### Observacao tecnica
 
 - Nao foi possivel criar produtor com o mesmo e-mail do admin devido unicidade de e-mail no modelo local e no Supabase Auth. Foi aplicado fallback seguro para `douglaslundy+producer@gmail.com`.
+
+---
+
+### 2026-05-08 - Saneamento final de usuarios e ajuste de entrada admin
+
+### Arquivos criados ou alterados
+
+- `prisma/provision-saas-accounts.ts`
+- `src/server/permissions/rbac.ts`
+- `src/app/page.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `src/tests/unit/rbac.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `.codex/context/CURRENT_STATE.md`
+- `.codex/context/DECISIONS.md`
+
+### O que foi implementado
+
+- Provisionamento consolidado para manter apenas:
+  - admin: `dlsistemas100@gmail.com`
+  - produtor: `douglaslundy@gmail.com`
+  - aluno: `douglaslundy100@gmail.com`
+- Transferencia de cursos ativos para o produtor principal.
+- Consolidacao de perfil de aluno para cadastro unico.
+- Ajuste de labels na landing para linguagem de produtor.
+- Redirect de usuario nao autenticado em rota administrativa para `/login/admin`.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+- `npm run build`
+- `npx tsx prisma/provision-saas-accounts.ts`
+
+### Resultado dos testes
+
+- Todos aprovados.
+
+### Riscos encontrados
+
+- O script de provisionamento afeta dados e credenciais do ambiente atual; deve ser executado apenas no tenant/ambiente esperado.
+
+### Pendencias
+
+- Nao identificadas no escopo desta etapa.
+
+### Proxima etapa recomendada
+
+- Validar manualmente login e alteracao de e-mail em `Meus dados` para admin, produtor e aluno.

@@ -1,13 +1,49 @@
-import { PrismaClient, UserRole, UserStatus } from "@prisma/client";
-import { createClient } from "@supabase/supabase-js";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { CourseStatus, PrismaClient, UserRole, UserStatus } from "@prisma/client";
+import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 
 const prisma = new PrismaClient();
 
-const adminEmail = "douglaslundy@gmail.com";
-const adminPassword = "123456Lu";
-const producerFallbackEmail = "douglaslundy+producer@gmail.com";
+const ADMIN_EMAIL = "dlsistemas100@gmail.com";
+const PRODUCER_EMAIL = "douglaslundy@gmail.com";
+const STUDENT_EMAIL = "douglaslundy100@gmail.com";
+const DEFAULT_PASSWORD = "085452Lundy";
 
-function getSupabaseAdmin() {
+const TARGET_EMAILS = new Set([ADMIN_EMAIL, PRODUCER_EMAIL, STUDENT_EMAIL]);
+
+function loadLocalEnv() {
+  const envPath = resolve(process.cwd(), ".env");
+
+  if (!existsSync(envPath)) {
+    return;
+  }
+
+  const lines = readFileSync(envPath, "utf8").split(/\r?\n/);
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = trimmed.indexOf("=");
+
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const rawValue = trimmed.slice(separatorIndex + 1).trim();
+    const value = rawValue.replace(/^["']|["']$/g, "");
+
+    process.env[key] ??= value;
+  }
+}
+
+function getSupabaseAdmin(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -16,20 +52,45 @@ function getSupabaseAdmin() {
   }
 
   return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
   });
 }
 
-async function upsertAuthUser(email: string, password: string, role: UserRole, name: string) {
-  const supabase = getSupabaseAdmin();
+async function findAuthUserByEmail(supabase: SupabaseClient, email: string): Promise<User | null> {
+  let page = 1;
 
-  const users = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 100 });
 
-  if (users.error) {
-    throw new Error(`Erro ao listar usuarios auth: ${users.error.message}`);
+    if (error) {
+      throw new Error(`Erro ao listar usuarios Auth: ${error.message}`);
+    }
+
+    const found = data.users.find((user) => user.email?.toLowerCase() === email.toLowerCase()) ?? null;
+
+    if (found) {
+      return found;
+    }
+
+    if (data.users.length < 100) {
+      return null;
+    }
+
+    page += 1;
   }
+}
 
-  const existing = users.data.users.find((item) => item.email?.toLowerCase() === email.toLowerCase());
+async function upsertAuthUser(
+  supabase: SupabaseClient,
+  email: string,
+  password: string,
+  role: UserRole,
+  name: string,
+) {
+  const existing = await findAuthUserByEmail(supabase, email);
 
   if (existing) {
     const updated = await supabase.auth.admin.updateUserById(existing.id, {
@@ -38,8 +99,8 @@ async function upsertAuthUser(email: string, password: string, role: UserRole, n
       user_metadata: { role, name },
     });
 
-    if (updated.error) {
-      throw new Error(`Erro ao atualizar usuario auth ${email}: ${updated.error.message}`);
+    if (updated.error || !updated.data.user) {
+      throw new Error(`Erro ao atualizar usuario auth ${email}: ${updated.error?.message ?? "desconhecido"}`);
     }
 
     return updated.data.user.id;
@@ -59,111 +120,200 @@ async function upsertAuthUser(email: string, password: string, role: UserRole, n
   return created.data.user.id;
 }
 
+async function deleteAuthUserById(supabase: SupabaseClient, authUserId: string) {
+  const result = await supabase.auth.admin.deleteUser(authUserId);
+  if (result.error && !result.error.message.toLowerCase().includes("user not found")) {
+    throw new Error(`Erro ao excluir usuario auth ${authUserId}: ${result.error.message}`);
+  }
+}
+
 async function main() {
-  const org = await prisma.organization.upsert({
+  loadLocalEnv();
+  const supabase = getSupabaseAdmin();
+
+  const organization = await prisma.organization.upsert({
     where: { id: "11111111-1111-1111-1111-111111111111" },
-    update: { name: "Douglas SysCursos" },
-    create: { id: "11111111-1111-1111-1111-111111111111", name: "Douglas SysCursos" },
+    update: { name: "SysCursos Default Tenant" },
+    create: { id: "11111111-1111-1111-1111-111111111111", name: "SysCursos Default Tenant" },
   });
 
-  const adminAuthUserId = await upsertAuthUser(adminEmail, adminPassword, UserRole.ADMIN, "Douglas Lundy");
+  const adminAuthId = await upsertAuthUser(
+    supabase,
+    ADMIN_EMAIL,
+    DEFAULT_PASSWORD,
+    UserRole.ADMIN,
+    "Administrador Principal",
+  );
+  const producerAuthId = await upsertAuthUser(
+    supabase,
+    PRODUCER_EMAIL,
+    DEFAULT_PASSWORD,
+    UserRole.PRODUCER,
+    "Produtor Principal",
+  );
+  const studentAuthId = await upsertAuthUser(
+    supabase,
+    STUDENT_EMAIL,
+    DEFAULT_PASSWORD,
+    UserRole.STUDENT,
+    "Aluno Principal",
+  );
 
   const admin = await prisma.user.upsert({
-    where: { email: adminEmail },
+    where: { email: ADMIN_EMAIL },
     update: {
-      organizationId: org.id,
-      authUserId: adminAuthUserId,
-      name: "Douglas Lundy",
+      organizationId: organization.id,
+      authUserId: adminAuthId,
+      name: "Administrador Principal",
       role: UserRole.ADMIN,
       status: UserStatus.ACTIVE,
       accessExpiresAt: null,
     },
     create: {
-      organizationId: org.id,
-      authUserId: adminAuthUserId,
-      email: adminEmail,
-      name: "Douglas Lundy",
+      organizationId: organization.id,
+      authUserId: adminAuthId,
+      email: ADMIN_EMAIL,
+      name: "Administrador Principal",
       role: UserRole.ADMIN,
       status: UserStatus.ACTIVE,
       accessExpiresAt: null,
     },
   });
 
-  let producer = await prisma.user.findFirst({
-    where: { organizationId: org.id, role: UserRole.PRODUCER },
+  const producer = await prisma.user.upsert({
+    where: { email: PRODUCER_EMAIL },
+    update: {
+      organizationId: organization.id,
+      authUserId: producerAuthId,
+      name: "Produtor Principal",
+      role: UserRole.PRODUCER,
+      status: UserStatus.ACTIVE,
+      accessExpiresAt: null,
+    },
+    create: {
+      organizationId: organization.id,
+      authUserId: producerAuthId,
+      email: PRODUCER_EMAIL,
+      name: "Produtor Principal",
+      role: UserRole.PRODUCER,
+      status: UserStatus.ACTIVE,
+      accessExpiresAt: null,
+    },
+  });
+
+  const studentUser = await prisma.user.upsert({
+    where: { email: STUDENT_EMAIL },
+    update: {
+      organizationId: organization.id,
+      authUserId: studentAuthId,
+      name: "Aluno Principal",
+      role: UserRole.STUDENT,
+      status: UserStatus.ACTIVE,
+      accessExpiresAt: null,
+    },
+    create: {
+      organizationId: organization.id,
+      authUserId: studentAuthId,
+      email: STUDENT_EMAIL,
+      name: "Aluno Principal",
+      role: UserRole.STUDENT,
+      status: UserStatus.ACTIVE,
+      accessExpiresAt: null,
+    },
+  });
+
+  const studentProfile = await prisma.studentProfile.upsert({
+    where: { userId: studentUser.id },
+    update: {},
+    create: { userId: studentUser.id },
+  });
+
+  await prisma.course.updateMany({
+    where: { status: CourseStatus.ACTIVE },
+    data: { producerId: producer.id, organizationId: organization.id },
+  });
+
+  const allProfiles = await prisma.studentProfile.findMany({
+    select: { id: true },
+  });
+  const oldProfileIds = allProfiles.filter((profile) => profile.id !== studentProfile.id).map((profile) => profile.id);
+
+  const oldEnrollments = await prisma.enrollment.findMany({
+    where: { studentId: { in: oldProfileIds } },
     orderBy: { createdAt: "asc" },
   });
 
-  if (!producer) {
-    const producerEmail = producerFallbackEmail;
-    const producerAuthUserId = await upsertAuthUser(producerEmail, adminPassword, UserRole.PRODUCER, "Produtor Principal");
-
-    producer = await prisma.user.create({
-      data: {
-        organizationId: org.id,
-        authUserId: producerAuthUserId,
-        email: producerEmail,
-        name: "Produtor Principal",
-        role: UserRole.PRODUCER,
-        status: UserStatus.ACTIVE,
-        accessExpiresAt: null,
+  for (const enrollment of oldEnrollments) {
+    await prisma.enrollment.upsert({
+      where: {
+        studentId_courseId: {
+          studentId: studentProfile.id,
+          courseId: enrollment.courseId,
+        },
+      },
+      update: {
+        status: enrollment.status,
+        startsAt: enrollment.startsAt,
+        expiresAt: enrollment.expiresAt,
+      },
+      create: {
+        studentId: studentProfile.id,
+        courseId: enrollment.courseId,
+        status: enrollment.status,
+        startsAt: enrollment.startsAt,
+        expiresAt: enrollment.expiresAt,
       },
     });
   }
 
-  await prisma.user.updateMany({
-    where: { role: UserRole.PRODUCER },
-    data: { organizationId: admin.organizationId },
+  await prisma.producerStudent.deleteMany({});
+  await prisma.producerStudent.create({
+    data: {
+      producerId: producer.id,
+      studentId: studentProfile.id,
+    },
   });
 
-  const producerIds = (
-    await prisma.user.findMany({
-      where: { organizationId: admin.organizationId, role: UserRole.PRODUCER },
-      select: { id: true },
-    })
-  ).map((item) => item.id);
+  await prisma.studentProfile.deleteMany({
+    where: {
+      userId: {
+        not: studentUser.id,
+      },
+    },
+  });
 
-  const studentProfiles = await prisma.studentProfile.findMany({ select: { id: true } });
+  const existingUsers = await prisma.user.findMany({
+    select: { id: true, email: true, authUserId: true },
+  });
 
-  for (const producerId of producerIds) {
-    for (const student of studentProfiles) {
-      await prisma.producerStudent.upsert({
-        where: {
-          producerId_studentId: {
-            producerId,
-            studentId: student.id,
-          },
+  const removableUsers = existingUsers.filter((user) => !TARGET_EMAILS.has(user.email.toLowerCase()));
+
+  if (removableUsers.length > 0) {
+    await prisma.user.deleteMany({
+      where: {
+        id: {
+          in: removableUsers.map((user) => user.id),
         },
-        update: {},
-        create: {
-          producerId,
-          studentId: student.id,
-        },
-      });
-    }
-
-    await prisma.course.updateMany({
-      where: { organizationId: admin.organizationId, producerId: producerId },
-      data: {},
+      },
     });
   }
 
-  if (studentProfiles.length > 0) {
-    await prisma.course.updateMany({
-      where: { organizationId: admin.organizationId },
-      data: { producerId: producer.id },
-    });
+  const removableAuthIds = removableUsers
+    .map((user) => user.authUserId)
+    .filter((authUserId): authUserId is string => Boolean(authUserId));
+
+  for (const authUserId of removableAuthIds) {
+    await deleteAuthUserById(supabase, authUserId);
   }
 
   console.log("Provisionamento concluido.");
   console.log(`Admin: ${admin.email}`);
-  console.log(`Produtor principal: ${producer.email}`);
-  console.log(`Produtores vinculados ao admin: ${producerIds.length}`);
-  console.log(`Alunos vinculados ao produtor principal: ${studentProfiles.length}`);
+  console.log(`Produtor: ${producer.email}`);
+  console.log(`Aluno: ${studentUser.email}`);
 }
 
 main()
-  .catch((error) => {
+  .catch((error: unknown) => {
     console.error(error);
     process.exitCode = 1;
   })

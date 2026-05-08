@@ -7,16 +7,19 @@
 - `ad55f84 feat(authz): add producer role with restricted admin scope`
 
 ## Escopo desta atualizacao
-- Separacao de responsabilidades SaaS entre ADMIN, PRODUCER e STUDENT.
-- Ownership de cursos por produtor e vinculo produtor-aluno.
-- Controle de ultimo acesso e validade de acesso por usuario.
+- Saneamento de contas para base minima operacional.
+- Ajuste de labels da landing/login para linguagem de produtor.
+- Redirecionamento de `/admin` para login administrativo em usuario nao autenticado.
 
 ## Mudancas principais
-- `users.access_expires_at`, `users.last_login_at`
-- `courses.producer_id`
-- tabela `producer_students`
-- escopo produtor em CRUD de cursos/modulos/aulas/alunos/matriculas
-- ajuste de login/cadastro conforme regras de papel
+- Script `prisma/provision-saas-accounts.ts` consolidando:
+  - 1 admin: `dlsistemas100@gmail.com`
+  - 1 produtor: `douglaslundy@gmail.com`
+  - 1 aluno: `douglaslundy100@gmail.com`
+- Transferencia de cursos ativos para o produtor principal.
+- Consolidacao de perfil de aluno para um unico cadastro.
+- Landing atualizada para `Sou produtor` e `Entrar no painel de produtor`.
+- RBAC atualizado para usar `/login/admin` em rotas administrativas nao autenticadas.
 
 ## Itens nao identificados no repositorio
 - Modelo de multiplos perfis com mesmo e-mail em contas locais separadas (conflita com unicidade local e Supabase Auth).

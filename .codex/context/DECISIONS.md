@@ -29,3 +29,20 @@ Evidencias:
 - `src/server/actions/auth-actions.ts`
 - `src/server/auth/session.ts`
 - `prisma/schema.prisma`
+
+## 2026-05-08 - Entrada administrativa por `/admin` com redirect de autenticacao
+
+Decisao evidente no codigo:
+- Em acesso anonimo a rotas administrativas, o redirect de entrada passa a ser `/login/admin` (e nao `/login/client`).
+
+Evidencias:
+- `src/server/permissions/rbac.ts`
+- `middleware.ts`
+
+## 2026-05-08 - Saneamento operacional para 3 contas base
+
+Decisao evidente no codigo:
+- Provisionamento consolidado para manter somente 1 admin, 1 produtor e 1 aluno, com transferencia de cursos ativos para o produtor principal.
+
+Evidencias:
+- `prisma/provision-saas-accounts.ts`

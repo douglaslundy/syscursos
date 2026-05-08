@@ -12,9 +12,9 @@ export default function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
       alternateHref="/login/client"
       alternateLabel="Entrar como cliente"
       audience="admin"
-      description="Acesse o painel administrativo da plataforma."
+      description="Acesse o painel de produtores da plataforma."
       error={searchParams?.error}
-      title="Login do administrador"
+      title="Login do produtor"
     />
   );
 }

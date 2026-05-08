@@ -41,7 +41,7 @@ export default function HomePage() {
               className="inline-flex min-h-12 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-5 text-sm font-bold text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
               href="/login/admin"
             >
-              Sou administrador
+              Sou produtor
             </Link>
           </div>
           <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -135,7 +135,7 @@ export default function HomePage() {
               className="inline-flex min-h-12 items-center justify-center rounded-md bg-brand-primary px-5 text-sm font-bold text-copy-primary transition hover:bg-brand-primaryHover"
               href="/login/admin"
             >
-              Entrar no painel admin
+              Entrar no painel de produtor
             </Link>
             <Link
               className="inline-flex min-h-12 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-5 text-sm font-bold text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"

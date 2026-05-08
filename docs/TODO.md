@@ -391,3 +391,18 @@ px prisma migrate deploy no banco configurado.
 - [x] Executar `npm run typecheck`
 - [x] Executar `npm run test`
 - [x] Executar `npm run build`
+
+## Ajustes 2026-05-08 - Saneamento de usuarios e entrada admin
+
+- [x] Manter somente 1 administrador (`dlsistemas100@gmail.com`)
+- [x] Manter somente 1 produtor (`douglaslundy@gmail.com`)
+- [x] Manter somente 1 aluno (`douglaslundy100@gmail.com`)
+- [x] Transferir cursos ativos para o produtor principal
+- [x] Consolidar vinculos de aluno para cadastro unico
+- [x] Atualizar landing: `Sou produtor`
+- [x] Atualizar CTA: `Entrar no painel de produtor`
+- [x] Redirecionar acesso anonimo de `/admin` para `/login/admin`
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [x] Executar `npm run test`
+- [x] Executar `npm run build`

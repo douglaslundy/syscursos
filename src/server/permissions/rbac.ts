@@ -43,17 +43,19 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
   }
 
   if (!user) {
+    const loginBase = requiredRole === "ADMIN" ? "/login/admin" : "/login/client";
     return {
       allowed: false,
-      redirectTo: `/login/client?next=${encodeURIComponent(pathname)}`,
+      redirectTo: `${loginBase}?next=${encodeURIComponent(pathname)}`,
       reason: "UNAUTHENTICATED",
     };
   }
 
   if (user.status !== "ACTIVE") {
+    const loginBase = requiredRole === "ADMIN" ? "/login/admin" : "/login/client";
     return {
       allowed: false,
-      redirectTo: "/login/client?error=inactive",
+      redirectTo: `${loginBase}?error=inactive`,
       reason: "INACTIVE",
     };
   }

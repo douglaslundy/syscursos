@@ -726,3 +726,30 @@ Arquivos afetados:
 - `src/app/app/me/page.tsx`
 - `src/components/shared/login-form.tsx`
 - `src/components/admin/feedback.tsx`
+
+## 2026-05-08 - Redirect administrativo dedicado e saneamento de contas base
+
+Decisao:
+
+Direcionar acessos nao autenticados a rotas administrativas para `/login/admin` e padronizar a base com apenas 3 contas operacionais (1 admin, 1 produtor, 1 aluno) via script de provisionamento.
+
+Motivo:
+
+Atender o fluxo solicitado de entrada administrativa em `/admin` sem quebrar o painel e eliminar usuarios residuais/legados do ambiente.
+
+Alternativas consideradas:
+
+1. Manter redirect administrativo para `/login/client`.
+2. Limpar usuarios manualmente por SQL avulso sem script versionado.
+
+Impacto:
+
+O fluxo de autenticacao administrativa fica explicito para o usuario final, e o saneamento de contas fica reexecutavel e auditavel pelo repositorio.
+
+Arquivos afetados:
+
+- `src/server/permissions/rbac.ts`
+- `src/app/page.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `prisma/provision-saas-accounts.ts`
+- `src/tests/unit/rbac.test.ts`
