@@ -1328,3 +1328,77 @@ Executar separacao de login por pagina publica dedicada e ajustar os testes E2E 
 ### Proxima etapa recomendada
 
 Publicar as alteracoes, aplicar migration em producao e executar smoke manual dos fluxos de login/cursos/cadernos.
+
+---
+
+### 2026-05-08 - SaaS por administrador, cadastro de usuarios e meus dados
+
+### Arquivos criados ou alterados
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260508110000_multi_tenant_organizations/migration.sql`
+- `prisma/seed.ts`
+- `prisma/provision-auth-users.ts`
+- `src/server/auth/types.ts`
+- `src/server/auth/session.ts`
+- `src/server/validators/admin.ts`
+- `src/server/validators/student.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/services/student-service.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/server/actions/student-actions.ts`
+- `src/components/admin/admin-shell.tsx`
+- `src/components/student/student-navigation.tsx`
+- `src/app/admin/page.tsx`
+- `src/app/admin/users/page.tsx`
+- `src/app/admin/me/page.tsx`
+- `src/app/app/me/page.tsx`
+- `src/tests/integration/admin-service.test.ts`
+- `src/tests/integration/admin-repository.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+- `.codex/context/DECISIONS.md`
+
+### O que foi implementado
+
+- Estrutura de tenant com `organizations` e vinculo de organizacao em `users` e `courses`.
+- Ajuste de seed/provisionamento para criar e usar tenant padrao.
+- Cadastro de novo usuario pelo admin com escolha de perfil `ADMIN` ou `STUDENT`.
+- Menu e pagina `Meus dados` na area admin para atualizar dados proprios.
+- Menu e pagina `Meus dados` na area aluno para atualizar nome/telefone e manter CPF (`document`) somente leitura.
+- Dashboard admin ampliado com tabela de consumo por aluno, limitada aos alunos da organizacao do admin.
+
+### Testes executados
+
+- `npm run prisma:validate`
+- `npx prisma generate`
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test -- --run src/tests/integration/admin-service.test.ts src/tests/integration/admin-repository.test.ts src/tests/integration/student-service.test.ts`
+- `npm run build`
+
+### Resultado dos testes
+
+- `prisma validate`: aprovado.
+- `prisma generate`: aprovado.
+- `lint`: aprovado.
+- `typecheck`: aprovado.
+- `test` focado: falhou por restricao do ambiente local (`EPERM: lstat C:\Users\User`).
+- `build`: aprovado.
+
+### Riscos encontrados
+
+- Migration de tenant precisa ser aplicada no banco alvo antes de executar o sistema com o novo schema.
+- O filtro de tenant foi priorizado nas rotinas de dashboard e listagens criticas desta etapa; revisar cobertura completa em futuras etapas.
+
+### Pendencias
+
+- Aplicar migration em ambiente Supabase real.
+- Reexecutar testes de integracao quando o ambiente liberar acesso sem erro `EPERM`.
+
+### Proxima etapa recomendada
+
+- Validar fluxo end-to-end com dois administradores em tenants distintos para confirmar isolamento completo de dados.

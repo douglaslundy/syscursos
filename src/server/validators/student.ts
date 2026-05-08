@@ -25,11 +25,17 @@ export const notebookQuerySchema = z.object({
   query: z.string().trim().max(120).optional().default(""),
 });
 
+export const studentProfileSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+  phone: z.string().trim().max(32).optional().transform((value) => (value ? value : null)),
+});
+
 export type StudentCourseParams = z.infer<typeof studentCourseParamsSchema>;
 export type StudentLessonParams = z.infer<typeof studentLessonParamsSchema>;
 export type CompleteLessonInput = z.infer<typeof completeLessonSchema>;
 export type LessonNoteInput = z.infer<typeof lessonNoteSchema>;
 export type NotebookQueryInput = z.infer<typeof notebookQuerySchema>;
+export type StudentProfileInput = z.infer<typeof studentProfileSchema>;
 
 export function sanitizeNoteContent(value: string) {
   return value

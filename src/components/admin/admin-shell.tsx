@@ -5,6 +5,8 @@ import type { AuthenticatedUser } from "@/server/auth/types";
 
 const navItems = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/users", label: "Novo usuario" },
+  { href: "/admin/me", label: "Meus dados" },
   { href: "/admin/courses", label: "Cursos" },
   { href: "/admin/students", label: "Alunos" },
   { href: "/admin/enrollments", label: "Matriculas" },

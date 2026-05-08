@@ -291,3 +291,32 @@ export async function listNotebookNotes(studentId: string, courseId: string, que
     },
   });
 }
+
+export async function getStudentProfile(studentId: string) {
+  return prisma.studentProfile.findUniqueOrThrow({
+    where: { id: studentId },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+  });
+}
+
+export async function updateStudentProfile(studentId: string, input: { name: string; phone: string | null }) {
+  return prisma.studentProfile.update({
+    where: { id: studentId },
+    data: {
+      phone: input.phone,
+      user: {
+        update: {
+          name: input.name,
+        },
+      },
+    },
+  });
+}

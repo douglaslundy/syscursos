@@ -5,7 +5,11 @@ import * as repository from "@/server/repositories/student-repository";
 import { calculateCourseProgress } from "@/server/services/progress-service";
 import { getYouTubeEmbedUrl } from "@/server/services/youtube-service";
 import type { CompleteLessonInput } from "@/server/validators/student";
-import type { LessonNoteInput, NotebookQueryInput } from "@/server/validators/student";
+import type {
+  LessonNoteInput,
+  NotebookQueryInput,
+  StudentProfileInput,
+} from "@/server/validators/student";
 
 export type CourseAccessStatus = "AVAILABLE" | "EXPIRED" | "INACTIVE" | "CANCELED";
 
@@ -213,6 +217,16 @@ export async function getStudentNotebook(input: NotebookQueryInput) {
     groups: groupNotesByModule(notes),
     query: input.query,
   };
+}
+
+export async function getOwnStudentProfile() {
+  const studentId = await requireStudentProfileId();
+  return repository.getStudentProfile(studentId);
+}
+
+export async function updateOwnStudentProfile(input: StudentProfileInput) {
+  const studentId = await requireStudentProfileId();
+  return repository.updateStudentProfile(studentId, input);
 }
 
 async function requireStudentProfileId() {

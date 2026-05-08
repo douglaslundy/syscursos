@@ -16,8 +16,10 @@ import {
   saveCourse,
   saveEnrollment,
   saveLesson,
+  saveManagedUser,
   saveModule,
   saveStudent,
+  updateOwnAdminProfile,
 } from "@/server/services/admin-service";
 import {
   cancelEnrollmentSchema,
@@ -26,8 +28,10 @@ import {
   idSchema,
   lessonSchema,
   moduleSchema,
+  managedUserSchema,
   renewEnrollmentSchema,
   studentSchema,
+  adminProfileSchema,
 } from "@/server/validators/admin";
 
 export async function saveCourseAction(formData: FormData) {
@@ -140,6 +144,24 @@ export async function cancelEnrollmentAction(formData: FormData) {
   const { id } = parseForm(cancelEnrollmentSchema, formData, path);
   await runAdminMutation(path, "canceled", async () => {
     await cancelEnrollmentService(id);
+    revalidatePath(path);
+  });
+}
+
+export async function saveManagedUserAction(formData: FormData) {
+  const path = "/admin/users";
+  const input = parseForm(managedUserSchema, formData, path);
+  await runAdminMutation(path, "saved", async () => {
+    await saveManagedUser(input);
+    revalidatePath(path);
+  });
+}
+
+export async function saveOwnAdminProfileAction(formData: FormData) {
+  const path = "/admin/me";
+  const input = parseForm(adminProfileSchema, formData, path);
+  await runAdminMutation(path, "saved", async () => {
+    await updateOwnAdminProfile(input);
     revalidatePath(path);
   });
 }

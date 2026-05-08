@@ -2,12 +2,12 @@ import Link from "next/link";
 
 export default async function AdminPage() {
   const { getAdminDashboard } = await import("@/server/services/admin-service");
-  const stats = await getAdminDashboard();
+  const dashboard = await getAdminDashboard();
   const cards = [
-    { label: "Cursos", value: stats.courses, href: "/admin/courses" },
-    { label: "Alunos", value: stats.students, href: "/admin/students" },
-    { label: "Matriculas ativas", value: stats.enrollments, href: "/admin/enrollments" },
-    { label: "Aulas", value: stats.lessons, href: "/admin/courses" },
+    { label: "Cursos", value: dashboard.courses, href: "/admin/courses" },
+    { label: "Alunos", value: dashboard.students, href: "/admin/students" },
+    { label: "Matriculas ativas", value: dashboard.enrollments, href: "/admin/enrollments" },
+    { label: "Aulas", value: dashboard.lessons, href: "/admin/courses" },
   ];
 
   return (
@@ -15,6 +15,14 @@ export default async function AdminPage() {
       <div className="mb-6">
         <h2 className="text-2xl font-semibold tracking-normal">Dashboard administrativo</h2>
         <p className="text-sm text-muted-foreground">Resumo operacional da plataforma.</p>
+        <div className="mt-3">
+          <Link
+            className="inline-flex items-center rounded-md border border-stroke-subtle px-3 py-2 text-sm text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+            href="/admin/users"
+          >
+            Cadastrar novo usuario
+          </Link>
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-4">
         {cards.map((card) => (
@@ -27,6 +35,36 @@ export default async function AdminPage() {
             <div className="mt-2 text-3xl font-semibold">{card.value}</div>
           </Link>
         ))}
+      </div>
+      <div className="mt-8 rounded-md border bg-background p-4">
+        <h3 className="text-lg font-semibold">Consumo por aluno</h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Dados dos alunos vinculados ao seu administrador.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-2 pr-3">Aluno</th>
+                <th className="py-2 pr-3">E-mail</th>
+                <th className="py-2 pr-3">Matriculas ativas</th>
+                <th className="py-2 pr-3">Matriculas totais</th>
+                <th className="py-2">Aulas concluidas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dashboard.studentConsumption.map((item) => (
+                <tr className="border-b border-stroke-subtle" key={item.studentId}>
+                  <td className="py-2 pr-3">{item.name}</td>
+                  <td className="py-2 pr-3">{item.email}</td>
+                  <td className="py-2 pr-3">{item.activeEnrollments}</td>
+                  <td className="py-2 pr-3">{item.totalEnrollments}</td>
+                  <td className="py-2">{item.completedLessons}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   );

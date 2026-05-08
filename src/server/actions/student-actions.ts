@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 
 import { completeLesson } from "@/server/services/student-service";
 import { saveLessonNote } from "@/server/services/student-service";
-import { completeLessonSchema, lessonNoteSchema } from "@/server/validators/student";
+import { updateOwnStudentProfile } from "@/server/services/student-service";
+import {
+  completeLessonSchema,
+  lessonNoteSchema,
+  studentProfileSchema,
+} from "@/server/validators/student";
 
 export type SaveLessonNoteResult =
   | {
@@ -53,4 +58,19 @@ export async function saveLessonNoteAction(input: unknown): Promise<SaveLessonNo
     content: note.content,
     updatedAt: note.updatedAt.toISOString(),
   };
+}
+
+export async function saveOwnStudentProfileAction(formData: FormData) {
+  const parsed = studentProfileSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+  });
+
+  if (!parsed.success) {
+    redirect("/app/me?status=invalid");
+  }
+
+  await updateOwnStudentProfile(parsed.data);
+  revalidatePath("/app/me");
+  redirect("/app/me?status=saved");
 }

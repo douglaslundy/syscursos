@@ -3,6 +3,7 @@ import {
   EnrollmentStatus,
   LessonStatus,
   ModuleStatus,
+  UserRole,
   UserStatus,
 } from "@prisma/client";
 import { z } from "zod";
@@ -104,12 +105,45 @@ export const cancelEnrollmentSchema = z.object({
   id: uuidSchema,
 });
 
+export const managedUserSchema = z
+  .object({
+    id: uuidSchema.optional(),
+    studentProfileId: uuidSchema.optional(),
+    role: z.nativeEnum(UserRole),
+    email: z.string().trim().email().max(255),
+    name: z.string().trim().min(2).max(160),
+    password: z
+      .string()
+      .trim()
+      .optional()
+      .transform(emptyToNull)
+      .refine((value) => value === null || value.length >= 8, "A senha deve ter pelo menos 8 caracteres."),
+    document: z.string().trim().max(32).optional().transform(emptyToNull),
+    phone: z.string().trim().max(32).optional().transform(emptyToNull),
+    status: z.nativeEnum(UserStatus).default(UserStatus.ACTIVE),
+  })
+  .superRefine((value, context) => {
+    if (!value.id && !value.password) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Informe uma senha inicial.",
+        path: ["password"],
+      });
+    }
+  });
+
+export const adminProfileSchema = z.object({
+  name: z.string().trim().min(2).max(160),
+});
+
 export type CourseInput = z.infer<typeof courseSchema>;
 export type ModuleInput = z.infer<typeof moduleSchema>;
 export type LessonInput = z.infer<typeof lessonSchema>;
 export type StudentInput = z.infer<typeof studentSchema>;
 export type EnrollmentInput = z.infer<typeof enrollmentSchema>;
 export type RenewEnrollmentInput = z.infer<typeof renewEnrollmentSchema>;
+export type ManagedUserInput = z.infer<typeof managedUserSchema>;
+export type AdminProfileInput = z.infer<typeof adminProfileSchema>;
 
 function emptyToNull(value: string | undefined) {
   return value && value.length > 0 ? value : null;

@@ -7,24 +7,22 @@
 - `a618b04 fix(admin-courses): tratar falha de upload sem application error`
 
 ## Escopo desta atualização
-- Documentação de contexto em `.codex/context/*` (sem alteração de código-fonte da aplicação).
+- Migração de base para SaaS com organização (`tenant`) por administrador.
+- Cadastro de novo usuário com perfis ADMIN/STUDENT na área administrativa.
+- Menu e páginas de `Meus dados` para admin e aluno (CPF não editável pelo aluno).
+- Dashboard admin com KPI de consumo por aluno.
 
 ## Arquivos de contexto atualizados nesta tarefa
-- `.codex/context/PROJECT_BRIEF.md`
-- `.codex/context/ARCHITECTURE.md`
-- `.codex/context/COMMANDS.md`
-- `.codex/context/GLOSSARY.md`
-- `.codex/context/DECISIONS.md`
 - `.codex/context/CURRENT_STATE.md`
+- `.codex/context/DECISIONS.md`
 
 ## Status geral inferido
-- Projeto em desenvolvimento ativo.
-- Stack e módulos principais identificados no código.
-- Testes automatizados configurados (unit, integration, e2e).
+- Build, lint e typecheck aprovados.
+- Testes focados bloqueados por erro de ambiente local (`EPERM` em `C:\Users\User`).
 
 ## Pendências técnicas visíveis
-- Processo CI/CD oficial: não identificado no repositório.
-- Estratégia formal de observabilidade: não identificado no repositório.
+- Aplicar migration `20260508110000_multi_tenant_organizations` no banco real.
+- Reexecutar testes em ambiente sem bloqueio de permissão.
 
-## Riscos atuais percebidos (documentação)
-- Parte do contexto histórico pode divergir de commits anteriores; esta camada registra somente evidências presentes no repositório atual.
+## Riscos atuais percebidos
+- Isolamento de tenant evoluído na base e nos KPIs; revisar cobertura completa de escopo por organização em todas as rotinas administrativas futuras.

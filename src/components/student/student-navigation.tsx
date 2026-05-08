@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Home } from "lucide-react";
+import { FileText, Home, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,6 +18,12 @@ const navigationItems = [
     label: "Cadernos",
     icon: FileText,
     match: (pathname: string) => pathname.startsWith("/app/notebooks"),
+  },
+  {
+    href: "/app/me",
+    label: "Meus dados",
+    icon: User,
+    match: (pathname: string) => pathname.startsWith("/app/me"),
   },
 ] as const;
 
@@ -58,7 +64,7 @@ export function StudentBottomNavigation() {
       aria-label="Navegacao principal"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-stroke-subtle bg-surface-elevated/95 px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.24)] backdrop-blur md:hidden"
     >
-      <div className="mx-auto grid max-w-sm grid-cols-2 gap-2">
+      <div className="mx-auto grid max-w-sm grid-cols-3 gap-2">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.match(pathname);

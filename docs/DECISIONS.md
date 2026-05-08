@@ -569,3 +569,31 @@ Arquivos afetados:
 - `src/server/services/student-service.ts`
 - `src/app/admin/courses/page.tsx`
 - `src/components/student/course-card.tsx`
+
+## 2026-05-08 - Base SaaS multi-admin por organizacao
+
+Decisao:
+
+Introduzir `Organization` e vincular `User` e `Course` por `organizationId`, aplicando escopo de organizacao nas consultas administrativas principais e no dashboard de consumo por aluno.
+
+Motivo:
+
+Permitir que cada administrador gerencie apenas seus cursos e alunos, com suporte a cadastro de novos administradores e clientes no mesmo tenant.
+
+Alternativas consideradas:
+
+- Isolamento apenas via filtros de tela.
+- Isolamento apenas por role sem tenant explicito.
+
+Impacto:
+
+- Estrutura de base pronta para modelo SaaS multi-admin.
+- Necessidade de aplicar migration de tenant no banco real antes de executar novos fluxos.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260508110000_multi_tenant_organizations/migration.sql`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/app/admin/page.tsx`

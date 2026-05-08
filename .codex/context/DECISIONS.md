@@ -32,3 +32,33 @@ Evidência:
 - Hooks com Husky + lint-staged.
 
 Decisões de produto não explicitamente refletidas em código atual: não identificado no repositório.
+## 2026-05-08 - Base de tenancy por organizacao para evolucao SaaS
+
+Decisao:
+
+Introduzir a entidade `Organization` e vincular `User` e `Course` por `organizationId`, usando esse identificador para escopo de operacoes administrativas e metricas de consumo por aluno.
+
+Motivo:
+
+O requisito exige que cada administrador gerencie somente seus alunos e cursos, com suporte a cadastro de outros administradores no mesmo contexto de tenant.
+
+Alternativas consideradas:
+
+- Isolamento apenas por filtros em memoria sem chave de tenant no banco.
+- Isolamento apenas por role sem segmentacao de dados.
+
+Impacto:
+
+- Passa a existir base estrutural para isolamento multi-admin por tenant.
+- Seed e provisionamento foram adaptados para garantir tenant padrao em ambiente local.
+- Novas telas de cadastro de usuario e meus dados usam esse contexto.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260508110000_multi_tenant_organizations/migration.sql`
+- `prisma/seed.ts`
+- `prisma/provision-auth-users.ts`
+- `src/server/auth/session.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/services/admin-service.ts`

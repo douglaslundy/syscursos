@@ -322,3 +322,17 @@
 - [x] Renderizar cadernos com markdown seguro
 - [x] Adicionar capa de curso no cadastro e exibicao do aluno
 - [x] Criar migration para `cover_image_url`
+
+## Ajustes 2026-05-08 - SaaS multi-admin, cadastro e meus dados
+
+- [x] Introduzir estrutura de organizacao (`organizations`) e vinculo de tenant em `users` e `courses`
+- [x] Ajustar seed e provisionamento para tenant padrao
+- [x] Adicionar cadastro de novo usuario (ADMIN/STUDENT) na area administrativa
+- [x] Adicionar menu/pagina `Meus dados` na area administrativa
+- [x] Adicionar menu/pagina `Meus dados` na area do aluno sem edicao de CPF
+- [x] Adicionar KPIs de consumo por aluno no dashboard admin
+- [x] Executar `npm run prisma:validate`
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [ ] Executar testes relevantes (falha de ambiente local EPERM em `C:\Users\User`)
+- [x] Executar `npm run build`
