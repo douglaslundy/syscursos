@@ -14,14 +14,35 @@ import type {
 
 export async function getAdminDashboard() {
   const admin = await requireAdminOrProducer();
+  const filters = {
+    producerId: null,
+    studentId: null,
+  };
   const [stats, studentConsumption] = await Promise.all([
-    repository.getAdminDashboardStats(admin.organizationId, admin.id, admin.role),
-    repository.getAdminConsumptionMetrics(admin.organizationId, admin.id, admin.role),
+    repository.getAdminDashboardStats(admin.organizationId, admin.id, admin.role, filters),
+    repository.getAdminConsumptionMetrics(admin.organizationId, admin.id, admin.role, filters),
   ]);
   return {
     ...stats,
     studentConsumption,
   };
+}
+
+export async function getAdminDashboardByFilters(filters: { producerId?: string | null; studentId?: string | null }) {
+  const admin = await requireAdminOrProducer();
+  const [stats, studentConsumption] = await Promise.all([
+    repository.getAdminDashboardStats(admin.organizationId, admin.id, admin.role, filters),
+    repository.getAdminConsumptionMetrics(admin.organizationId, admin.id, admin.role, filters),
+  ]);
+  return {
+    ...stats,
+    studentConsumption,
+  };
+}
+
+export async function getProducerFilterOptions() {
+  const admin = await requireAdmin();
+  return repository.listProducerOptions(admin.organizationId);
 }
 
 export async function getCourses(input: PaginationInput) {

@@ -35,25 +35,28 @@ type PageArgs = {
 };
 
 type ActorRole = "ADMIN" | "PRODUCER";
+type DashboardFilters = {
+  producerId?: string | null;
+  studentId?: string | null;
+};
 
 export async function getAdminDashboardStats(
   organizationId: string,
   actorUserId: string,
   actorRole: ActorRole,
+  filters?: DashboardFilters,
 ) {
-  const courseWhere = scopedCourseWhere(organizationId, actorUserId, actorRole);
-  const [courses, students, enrollments, lessons, producers] = await prisma.$transaction([
+  const courseWhere = scopedCourseWhereWithFilters(organizationId, actorUserId, actorRole, filters);
+  const studentWhere = scopedStudentWhereWithFilters(organizationId, actorUserId, actorRole, filters);
+  const [courses, students, enrollments, lessons, activeLessons, inactiveLessons, producers] = await prisma.$transaction([
     prisma.course.count({ where: courseWhere }),
-    prisma.studentProfile.count({
-      where:
-        actorRole === UserRole.ADMIN
-          ? { user: { organizationId, role: UserRole.STUDENT } }
-          : { producers: { some: { producerId: actorUserId } } },
-    }),
+    prisma.studentProfile.count({ where: studentWhere }),
     prisma.enrollment.count({
-      where: { status: EnrollmentStatus.ACTIVE, course: courseWhere },
+      where: { status: EnrollmentStatus.ACTIVE, course: courseWhere, student: studentWhere },
     }),
     prisma.lesson.count({ where: { module: { course: courseWhere } } }),
+    prisma.lesson.count({ where: { status: LessonStatus.ACTIVE, module: { course: courseWhere } } }),
+    prisma.lesson.count({ where: { status: LessonStatus.INACTIVE, module: { course: courseWhere } } }),
     prisma.user.count({
       where:
         actorRole === UserRole.ADMIN
@@ -62,7 +65,35 @@ export async function getAdminDashboardStats(
     }),
   ]);
 
-  return { courses, students, enrollments, lessons, producers };
+  const [completedLessons, activeEnrollmentCount, activeLessonByCourses] = await Promise.all([
+    prisma.lessonProgress.count({
+      where: {
+        status: "COMPLETED",
+        student: studentWhere,
+        lesson: { status: LessonStatus.ACTIVE, module: { course: courseWhere } },
+      },
+    }),
+    prisma.enrollment.count({
+      where: { status: EnrollmentStatus.ACTIVE, course: courseWhere, student: studentWhere },
+    }),
+    prisma.lesson.count({
+      where: { status: LessonStatus.ACTIVE, module: { course: courseWhere } },
+    }),
+  ]);
+
+  const pendingLessons = Math.max(0, activeEnrollmentCount * activeLessonByCourses - completedLessons);
+
+  return {
+    courses,
+    students,
+    enrollments,
+    lessons,
+    activeLessons,
+    inactiveLessons,
+    completedLessons,
+    pendingLessons,
+    producers,
+  };
 }
 
 export async function listCourses(
@@ -783,13 +814,14 @@ export async function getAdminConsumptionMetrics(
   organizationId: string,
   actorUserId: string,
   actorRole: ActorRole,
+  filters?: DashboardFilters,
 ) {
   const students = await prisma.studentProfile.findMany({
-    where: scopedStudentWhere(organizationId, actorUserId, actorRole),
+    where: scopedStudentWhereWithFilters(organizationId, actorUserId, actorRole, filters),
     include: {
       user: { select: { id: true, name: true, email: true, lastLoginAt: true } },
       enrollments: {
-        where: { course: scopedCourseWhere(organizationId, actorUserId, actorRole) },
+        where: { course: scopedCourseWhereWithFilters(organizationId, actorUserId, actorRole, filters) },
         include: { course: { select: { id: true, title: true } } },
       },
       progress: { where: { status: "COMPLETED" }, select: { lessonId: true } },
@@ -809,6 +841,22 @@ export async function getAdminConsumptionMetrics(
       totalEnrollments: student.enrollments.length,
       completedLessons,
     };
+  });
+}
+
+export async function listProducerOptions(organizationId: string) {
+  return prisma.user.findMany({
+    where: {
+      organizationId,
+      role: UserRole.PRODUCER,
+      status: UserStatus.ACTIVE,
+    },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
   });
 }
 
@@ -855,6 +903,21 @@ function scopedCourseWhere(organizationId: string, actorUserId: string, actorRol
   return { organizationId, producerId: actorUserId };
 }
 
+function scopedCourseWhereWithFilters(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  filters?: DashboardFilters,
+): Prisma.CourseWhereInput {
+  const producerId = actorRole === UserRole.ADMIN ? filters?.producerId ?? null : actorUserId;
+
+  if (producerId) {
+    return { organizationId, producerId };
+  }
+
+  return scopedCourseWhere(organizationId, actorUserId, actorRole);
+}
+
 function scopedStudentWhere(
   organizationId: string,
   actorUserId: string,
@@ -865,6 +928,30 @@ function scopedStudentWhere(
   }
 
   return { producers: { some: { producerId: actorUserId } } };
+}
+
+function scopedStudentWhereWithFilters(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  filters?: DashboardFilters,
+): Prisma.StudentProfileWhereInput {
+  const producerId = actorRole === UserRole.ADMIN ? filters?.producerId ?? null : actorUserId;
+  const studentId = filters?.studentId ?? null;
+
+  const baseWhere: Prisma.StudentProfileWhereInput = actorRole === UserRole.ADMIN
+    ? producerId
+      ? { producers: { some: { producerId } } }
+      : { user: { organizationId, role: UserRole.STUDENT } }
+    : { producers: { some: { producerId: actorUserId } } };
+
+  if (!studentId) {
+    return baseWhere;
+  }
+
+  return {
+    AND: [baseWhere, { id: studentId }],
+  };
 }
 
 async function upsertStudentAuthUser(input: {

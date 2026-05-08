@@ -1,22 +1,49 @@
 import Link from "next/link";
 
-export default async function AdminPage() {
+type AdminPageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   const { requireAnyRole } = await import("@/server/auth/guards");
-  const { getAdminDashboard } = await import("@/server/services/admin-service");
+  const {
+    getAdminDashboardByFilters,
+    getProducerFilterOptions,
+    getStudentOptions,
+  } = await import("@/server/services/admin-service");
   const user = await requireAnyRole(["ADMIN", "PRODUCER"]);
-  const dashboard = await getAdminDashboard();
+  const producerId = getStringParam(searchParams, "producerId");
+  const studentId = getStringParam(searchParams, "studentId");
+  const [dashboard, producerOptions, studentOptions] = await Promise.all([
+    getAdminDashboardByFilters({
+      producerId: user.role === "ADMIN" ? producerId ?? null : null,
+      studentId: user.role === "PRODUCER" ? studentId ?? null : null,
+    }),
+    user.role === "ADMIN" ? getProducerFilterOptions() : Promise.resolve([]),
+    user.role === "PRODUCER" ? getStudentOptions() : Promise.resolve([]),
+  ]);
+
   const cards =
     user.role === "ADMIN"
       ? [
           { label: "Produtores", value: dashboard.producers, href: "/admin/users" },
           { label: "Alunos", value: dashboard.students, href: "/admin/students" },
           { label: "Matriculas ativas", value: dashboard.enrollments, href: "/admin/enrollments" },
+          { label: "Aulas cadastradas", value: dashboard.lessons, href: "/admin/courses" },
+          { label: "Aulas ativas", value: dashboard.activeLessons, href: "/admin/courses" },
+          { label: "Aulas inativas", value: dashboard.inactiveLessons, href: "/admin/courses" },
+          { label: "Aulas concluidas", value: dashboard.completedLessons, href: "/admin/courses" },
+          { label: "Aulas pendentes", value: dashboard.pendingLessons, href: "/admin/courses" },
         ]
       : [
           { label: "Cursos", value: dashboard.courses, href: "/admin/courses" },
           { label: "Alunos", value: dashboard.students, href: "/admin/students" },
           { label: "Matriculas ativas", value: dashboard.enrollments, href: "/admin/enrollments" },
-          { label: "Aulas", value: dashboard.lessons, href: "/admin/courses" },
+          { label: "Aulas cadastradas", value: dashboard.lessons, href: "/admin/courses" },
+          { label: "Aulas ativas", value: dashboard.activeLessons, href: "/admin/courses" },
+          { label: "Aulas inativas", value: dashboard.inactiveLessons, href: "/admin/courses" },
+          { label: "Aulas concluidas", value: dashboard.completedLessons, href: "/admin/courses" },
+          { label: "Aulas pendentes", value: dashboard.pendingLessons, href: "/admin/courses" },
         ];
 
   return (
@@ -40,8 +67,45 @@ export default async function AdminPage() {
             </Link>
           </div>
         ) : null}
+        <div className="mt-4">
+          <form className="flex flex-wrap items-center gap-2" method="get">
+            {user.role === "ADMIN" ? (
+              <select
+                className="rounded-md border px-3 py-2 text-sm outline-none"
+                defaultValue={producerId ?? "all"}
+                name="producerId"
+              >
+                <option value="all">Todos os produtores</option>
+                {producerOptions.map((producer) => (
+                  <option key={producer.id} value={producer.id}>
+                    {producer.name} ({producer.email})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <select
+                className="rounded-md border px-3 py-2 text-sm outline-none"
+                defaultValue={studentId ?? "all"}
+                name="studentId"
+              >
+                <option value="all">Todos os alunos</option>
+                {studentOptions.map((student) => (
+                  <option key={student.id} value={student.id}>
+                    {student.user.name} ({student.user.email})
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              className="rounded-md border border-stroke-subtle px-3 py-2 text-sm text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+              type="submit"
+            >
+              Filtrar
+            </button>
+          </form>
+        </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         {cards.map((card) => (
           <Link
             className="rounded-md border bg-background p-4 hover:bg-muted/60"
@@ -81,7 +145,11 @@ export default async function AdminPage() {
                   <td className="py-2 pr-3">{item.totalEnrollments}</td>
                   <td className="py-2">{item.completedLessons}</td>
                   <td className="py-2">
-                    {item.lastLoginAt ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(item.lastLoginAt) : "Nunca"}
+                    {item.lastLoginAt
+                      ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
+                          item.lastLoginAt,
+                        )
+                      : "Nunca"}
                   </td>
                 </tr>
               ))}
@@ -91,4 +159,16 @@ export default async function AdminPage() {
       </div>
     </section>
   );
+}
+
+function getStringParam(
+  searchParams: Record<string, string | string[] | undefined> | undefined,
+  key: string,
+) {
+  const value = searchParams?.[key];
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  return value === "all" ? undefined : value;
 }
