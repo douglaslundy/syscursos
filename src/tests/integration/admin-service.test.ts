@@ -42,8 +42,14 @@ describe("admin service", () => {
     repositoryMock.renewEnrollment.mockReset();
   });
 
-  it("uses ADMIN authorization for course CRUD writes", async () => {
+  it("uses PRODUCER authorization for course CRUD writes", async () => {
     const { saveCourse } = await import("@/server/services/admin-service");
+    requireRoleMock.mockResolvedValue({
+      id: "producer-id",
+      organizationId: "org-id",
+      role: "PRODUCER",
+      status: "ACTIVE",
+    });
     const input = {
       title: "Curso",
       slug: "curso",
@@ -54,12 +60,18 @@ describe("admin service", () => {
     repositoryMock.upsertCourse.mockResolvedValue({ id: "course-id", ...input });
 
     await expect(saveCourse(input)).resolves.toMatchObject({ id: "course-id" });
-    expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
-    expect(repositoryMock.upsertCourse).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", input);
+    expect(requireRoleMock).toHaveBeenCalledWith("PRODUCER");
+    expect(repositoryMock.upsertCourse).toHaveBeenCalledWith("org-id", "producer-id", "PRODUCER", input);
   });
 
-  it("uses ADMIN authorization for module CRUD writes", async () => {
+  it("uses PRODUCER authorization for module CRUD writes", async () => {
     const { saveModule } = await import("@/server/services/admin-service");
+    requireRoleMock.mockResolvedValue({
+      id: "producer-id",
+      organizationId: "org-id",
+      role: "PRODUCER",
+      status: "ACTIVE",
+    });
     const input = {
       courseId: "8f0896e4-3eb5-45de-8d8f-8d0601f6946b",
       title: "Modulo",
@@ -70,12 +82,18 @@ describe("admin service", () => {
     };
 
     await saveModule(input);
-    expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
-    expect(repositoryMock.upsertModule).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", input);
+    expect(requireRoleMock).toHaveBeenCalledWith("PRODUCER");
+    expect(repositoryMock.upsertModule).toHaveBeenCalledWith("org-id", "producer-id", "PRODUCER", input);
   });
 
-  it("uses ADMIN authorization for lesson CRUD writes", async () => {
+  it("uses PRODUCER authorization for lesson CRUD writes", async () => {
     const { saveLesson } = await import("@/server/services/admin-service");
+    requireRoleMock.mockResolvedValue({
+      id: "producer-id",
+      organizationId: "org-id",
+      role: "PRODUCER",
+      status: "ACTIVE",
+    });
     const input = {
       moduleId: "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633",
       title: "Aula",
@@ -87,8 +105,8 @@ describe("admin service", () => {
     };
 
     await saveLesson(input);
-    expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
-    expect(repositoryMock.upsertLesson).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", input);
+    expect(requireRoleMock).toHaveBeenCalledWith("PRODUCER");
+    expect(repositoryMock.upsertLesson).toHaveBeenCalledWith("org-id", "producer-id", "PRODUCER", input);
   });
 
   it("uses ADMIN authorization for student CRUD writes", async () => {

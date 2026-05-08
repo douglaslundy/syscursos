@@ -83,11 +83,12 @@ export async function loginAction(formData: FormData) {
   }
 
   if (audience === "client") {
-    if (appUser.role === "STUDENT") {
-      redirect("/app");
+    if (appUser.role !== "STUDENT") {
+      await supabase.auth.signOut();
+      redirect("/login/client?error=forbidden");
     }
 
-    redirect("/admin");
+    redirect("/app");
   }
 
   redirect(getDefaultPathForRole(appUser.role));

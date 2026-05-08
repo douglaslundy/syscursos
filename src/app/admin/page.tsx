@@ -1,13 +1,18 @@
 import Link from "next/link";
 
 export default async function AdminPage() {
+  const { requireAnyRole } = await import("@/server/auth/guards");
   const { getAdminDashboard } = await import("@/server/services/admin-service");
+  const user = await requireAnyRole(["ADMIN", "PRODUCER"]);
   const dashboard = await getAdminDashboard();
   const cards = [
     { label: "Cursos", value: dashboard.courses, href: "/admin/courses" },
     { label: "Alunos", value: dashboard.students, href: "/admin/students" },
     { label: "Matriculas ativas", value: dashboard.enrollments, href: "/admin/enrollments" },
     { label: "Aulas", value: dashboard.lessons, href: "/admin/courses" },
+    ...(user.role === "ADMIN"
+      ? [{ label: "Produtores", value: dashboard.producers, href: "/admin/users" }]
+      : []),
   ];
 
   return (
@@ -24,7 +29,7 @@ export default async function AdminPage() {
           </Link>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-5">
         {cards.map((card) => (
           <Link
             className="rounded-md border bg-background p-4 hover:bg-muted/60"

@@ -30,7 +30,9 @@ describe("rbac route decisions", () => {
       allowed: true,
     });
     expect(decideRouteAccess("/app", { role: "ADMIN", status: "ACTIVE" })).toEqual({
-      allowed: true,
+      allowed: false,
+      redirectTo: "/admin",
+      reason: "FORBIDDEN",
     });
   });
 

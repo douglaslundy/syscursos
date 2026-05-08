@@ -25,53 +25,53 @@ export async function getAdminDashboard() {
 }
 
 export async function getCourses(input: PaginationInput) {
-  const admin = await requireAdminOrProducer();
-  return repository.listCourses(admin.organizationId, admin.id, admin.role, input);
+  const producer = await requireProducer();
+  return repository.listCourses(producer.organizationId, producer.id, producer.role, input);
 }
 
 export async function getCourseOptions() {
-  const admin = await requireAdminOrProducer();
-  return repository.listCourseOptions(admin.organizationId, admin.id, admin.role);
+  const producer = await requireProducer();
+  return repository.listCourseOptions(producer.organizationId, producer.id, producer.role);
 }
 
 export async function saveCourse(input: CourseInput) {
-  const admin = await requireAdminOrProducer();
-  return repository.upsertCourse(admin.organizationId, admin.id, admin.role, input);
+  const producer = await requireProducer();
+  return repository.upsertCourse(producer.organizationId, producer.id, producer.role, input);
 }
 
 export async function removeCourse(id: string) {
-  const admin = await requireAdminOrProducer();
-  return repository.deleteCourse(admin.organizationId, admin.id, admin.role, id);
+  const producer = await requireProducer();
+  return repository.deleteCourse(producer.organizationId, producer.id, producer.role, id);
 }
 
 export async function getModules(courseId: string, input: PaginationInput) {
-  const admin = await requireAdminOrProducer();
-  return repository.listModules(admin.organizationId, admin.id, admin.role, courseId, input);
+  const producer = await requireProducer();
+  return repository.listModules(producer.organizationId, producer.id, producer.role, courseId, input);
 }
 
 export async function saveModule(input: ModuleInput) {
-  const admin = await requireAdminOrProducer();
-  return repository.upsertModule(admin.organizationId, admin.id, admin.role, input);
+  const producer = await requireProducer();
+  return repository.upsertModule(producer.organizationId, producer.id, producer.role, input);
 }
 
 export async function removeModule(id: string) {
-  const admin = await requireAdminOrProducer();
-  return repository.deleteModule(admin.organizationId, admin.id, admin.role, id);
+  const producer = await requireProducer();
+  return repository.deleteModule(producer.organizationId, producer.id, producer.role, id);
 }
 
 export async function getLessons(moduleId: string, input: PaginationInput) {
-  const admin = await requireAdminOrProducer();
-  return repository.listLessons(admin.organizationId, admin.id, admin.role, moduleId, input);
+  const producer = await requireProducer();
+  return repository.listLessons(producer.organizationId, producer.id, producer.role, moduleId, input);
 }
 
 export async function saveLesson(input: LessonInput) {
-  const admin = await requireAdminOrProducer();
-  return repository.upsertLesson(admin.organizationId, admin.id, admin.role, input);
+  const producer = await requireProducer();
+  return repository.upsertLesson(producer.organizationId, producer.id, producer.role, input);
 }
 
 export async function removeLesson(id: string) {
-  const admin = await requireAdminOrProducer();
-  return repository.deleteLesson(admin.organizationId, admin.id, admin.role, id);
+  const producer = await requireProducer();
+  return repository.deleteLesson(producer.organizationId, producer.id, producer.role, id);
 }
 
 export async function getStudents(input: PaginationInput) {
@@ -151,4 +151,8 @@ async function requireAdminOrProducer() {
   return requireAnyRole(["ADMIN", "PRODUCER"]) as Promise<
     Awaited<ReturnType<typeof requireRole>> & { role: "ADMIN" | "PRODUCER" }
   >;
+}
+
+async function requireProducer() {
+  return requireRole("PRODUCER") as Promise<Awaited<ReturnType<typeof requireRole>> & { role: "PRODUCER" }>;
 }

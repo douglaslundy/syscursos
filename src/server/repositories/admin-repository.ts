@@ -42,7 +42,7 @@ export async function getAdminDashboardStats(
   actorRole: ActorRole,
 ) {
   const courseWhere = scopedCourseWhere(organizationId, actorUserId, actorRole);
-  const [courses, students, enrollments, lessons] = await prisma.$transaction([
+  const [courses, students, enrollments, lessons, producers] = await prisma.$transaction([
     prisma.course.count({ where: courseWhere }),
     prisma.studentProfile.count({
       where:
@@ -54,9 +54,15 @@ export async function getAdminDashboardStats(
       where: { status: EnrollmentStatus.ACTIVE, course: courseWhere },
     }),
     prisma.lesson.count({ where: { module: { course: courseWhere } } }),
+    prisma.user.count({
+      where:
+        actorRole === UserRole.ADMIN
+          ? { organizationId, role: UserRole.PRODUCER, status: UserStatus.ACTIVE }
+          : { id: actorUserId, role: UserRole.PRODUCER, status: UserStatus.ACTIVE },
+    }),
   ]);
 
-  return { courses, students, enrollments, lessons };
+  return { courses, students, enrollments, lessons, producers };
 }
 
 export async function listCourses(

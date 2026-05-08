@@ -61,10 +61,6 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
   }
 
   if (user.role !== requiredRole) {
-    if (requiredRole === "STUDENT" && (user.role === "ADMIN" || user.role === "PRODUCER")) {
-      return { allowed: true };
-    }
-
     if (requiredRole === "ADMIN" && user.role === "PRODUCER") {
       if (isProducerRestrictedPath(pathname)) {
         return {
@@ -110,10 +106,6 @@ function isAdminRestrictedPath(pathname: string) {
   return (
     pathname === "/admin/courses" ||
     pathname.startsWith("/admin/courses/") ||
-    pathname.startsWith("/admin/modules/") ||
-    pathname === "/admin/students" ||
-    pathname.startsWith("/admin/students/") ||
-    pathname === "/admin/enrollments" ||
-    pathname.startsWith("/admin/enrollments/")
+    pathname.startsWith("/admin/modules/")
   );
 }
