@@ -118,7 +118,7 @@ describe("loginAction", () => {
     expect(signOutMock).toHaveBeenCalledOnce();
   });
 
-  it("allows client-area login for admin and redirects to app", async () => {
+  it("redirects admin to admin area even when using client login", async () => {
     const { loginAction } = await import("@/server/actions/auth-actions");
     signInWithPasswordMock.mockResolvedValue({
       data: { user: { id: "auth-admin", email: "admin@example.com" } },
@@ -132,7 +132,7 @@ describe("loginAction", () => {
     });
 
     await expect(loginAction(loginForm("admin@example.com", "client"))).rejects.toThrow(
-      "REDIRECT:/app",
+      "REDIRECT:/admin",
     );
     expect(signOutMock).not.toHaveBeenCalled();
   });

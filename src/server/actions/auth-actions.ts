@@ -83,7 +83,11 @@ export async function loginAction(formData: FormData) {
   }
 
   if (audience === "client") {
-    redirect("/app");
+    if (appUser.role === "STUDENT") {
+      redirect("/app");
+    }
+
+    redirect("/admin");
   }
 
   redirect(getDefaultPathForRole(appUser.role));
