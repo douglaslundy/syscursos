@@ -18,11 +18,29 @@ type EnrollmentsPageProps = {
 
 export default async function EnrollmentsPage({ searchParams }: EnrollmentsPageProps) {
   const pagination = getPagination(searchParams);
-  const [enrollments, students, courses] = await Promise.all([
-    getEnrollments(pagination),
-    getStudentOptions(),
-    getCourseOptions(),
-  ]);
+  let enrollments;
+  let students;
+  let courses;
+
+  try {
+    // Load sequentially to reduce concurrent DB connections on constrained pools.
+    enrollments = await getEnrollments(pagination);
+    students = await getStudentOptions();
+    courses = await getCourseOptions();
+  } catch (error) {
+    console.error("Failed to load enrollments admin page.", error);
+    return (
+      <section>
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold tracking-normal">Matriculas</h2>
+          <p className="text-sm text-muted-foreground">
+            Vincule alunos a cursos e gerencie validade de acesso.
+          </p>
+        </div>
+        <Feedback status="error" />
+      </section>
+    );
+  }
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const editId = getStringParam(searchParams, "editId");
   const editingEnrollment = enrollments.items.find((enrollment) => enrollment.id === editId);
