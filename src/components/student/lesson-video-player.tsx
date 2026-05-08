@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 
 import { completeLessonAction } from "@/server/actions/student-actions";
 
@@ -50,6 +50,20 @@ export function LessonVideoPlayer({
   const iframeId = useId().replace(/:/g, "");
   const formRef = useRef<HTMLFormElement | null>(null);
   const hasSubmittedRef = useRef(false);
+  const playerUrl = useMemo(() => {
+    if (!embedUrl) {
+      return null;
+    }
+
+    try {
+      const url = new URL(embedUrl);
+      url.searchParams.set("enablejsapi", "1");
+      url.searchParams.set("origin", window.location.origin);
+      return url.toString();
+    } catch {
+      return embedUrl;
+    }
+  }, [embedUrl]);
 
   useEffect(() => {
     if (!embedUrl || isCompleted) {
@@ -103,7 +117,7 @@ export function LessonVideoPlayer({
     };
   }, [embedUrl, iframeId, isCompleted]);
 
-  if (!embedUrl) {
+  if (!playerUrl) {
     return (
       <div className="flex aspect-video items-center justify-center bg-surface px-4 text-center text-sm text-copy-muted">
         Link do YouTube invalido.
@@ -119,7 +133,7 @@ export function LessonVideoPlayer({
         className="aspect-video w-full"
         id={iframeId}
         referrerPolicy="strict-origin-when-cross-origin"
-        src={embedUrl}
+        src={playerUrl}
         title={title}
       />
       <form action={completeLessonAction} className="hidden" ref={formRef}>

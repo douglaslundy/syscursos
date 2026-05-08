@@ -18,13 +18,13 @@ describe("youtube service", () => {
       null,
     );
     expect(getYouTubeEmbedUrl("https://example.com/video", "dQw4w9WgXcQ")).toBe(
-      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1",
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1&enablejsapi=1",
     );
   });
 
   it("falls back to the URL when a stored video id is invalid", () => {
     expect(getYouTubeEmbedUrl("https://youtu.be/dQw4w9WgXcQ", "invalid-id")).toBe(
-      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1",
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1&enablejsapi=1",
     );
   });
 

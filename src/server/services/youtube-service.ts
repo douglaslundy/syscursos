@@ -5,7 +5,7 @@ export function getYouTubeEmbedUrl(youtubeUrl: string, youtubeVideoId: string | 
     return null;
   }
 
-  return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1`;
+  return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`;
 }
 
 export function extractYouTubeVideoId(youtubeUrl: string) {
