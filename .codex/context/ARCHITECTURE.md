@@ -1,53 +1,58 @@
 # Architecture
 
-## Visão geral
-Aplicação monolítica Next.js (App Router) com renderização server-side e uso de Server Actions para operações de backend. O domínio é organizado em camadas no diretório `src/server`.
+## Visao geral
+Aplicacao monolitica Next.js (App Router) com renderizacao server-side e Server Actions para mutacoes.
 
-Fluxo principal identificado:
+Fluxo tecnico identificado:
 1. UI em `src/app/*` e `src/components/*`.
-2. Chamadas para actions em `src/server/actions/*`.
-3. Orquestração de regras em `src/server/services/*`.
-4. Acesso a dados em `src/server/repositories/*`.
-5. Persistência PostgreSQL via Prisma (`src/lib/db/prisma.ts`).
+2. Mutacoes por Server Actions em `src/server/actions/*`.
+3. Regras de negocio em `src/server/services/*`.
+4. Persistencia em `src/server/repositories/*`.
+5. Banco via Prisma em `src/lib/db/prisma.ts`.
 
-## Camadas e módulos
-- `src/app`: rotas, layouts e páginas (admin, aluno e autenticação).
-- `src/components`: componentes de interface por domínio (`admin`, `student`, `shared`, `ui`).
-- `src/server/actions`: ponto de entrada do backend acionado pela UI.
-- `src/server/services`: regras de negócio e orquestrações.
-- `src/server/repositories`: consultas e mutações de dados.
-- `src/server/validators`: validação de payloads e parâmetros.
-- `src/server/auth` e `src/server/permissions`: sessão, guards e RBAC.
-- `src/lib/supabase`: clientes e middleware de autenticação.
+## Camadas
+- `src/app`: rotas, layouts, paginas.
+- `src/components`: componentes visuais (admin/student/shared/ui).
+- `src/server/actions`: entrada de mutacoes acionadas pela UI.
+- `src/server/services`: regras, autorizacao e orquestracao.
+- `src/server/repositories`: queries/mutacoes no Prisma.
+- `src/server/validators`: validacao com Zod.
+- `src/server/auth` e `src/server/permissions`: sessao, guards e RBAC.
+- `src/lib/supabase`: clientes Supabase (server/middleware/admin).
 
-## Banco de dados
-Modelo relacional com Prisma para:
-- usuários e perfis de aluno;
-- cursos, módulos e aulas;
-- matrículas;
-- progresso e anotações por aula.
+## Dados e tenancy
+- Banco PostgreSQL com Prisma.
+- Modelo multi-tenant por `Organization`.
+- `User` e `Course` vinculados por `organizationId`.
+- Operacoes administrativas passam `organizationId` para restringir escopo.
 
-Evidência: `prisma/schema.prisma`.
+Evidencias:
+- `prisma/schema.prisma`
+- `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
 
-## Autenticação e autorização
-- Integração com Supabase para sessão/auth.
-- Guardas de autorização no backend e RBAC por papéis.
-- Middleware de sessão na aplicação.
+## Autenticacao e autorizacao
+- Sessao via Supabase Auth.
+- Middleware para bloquear rotas por contexto de usuario.
+- Guards server-side com redirecionamento para login em erro/autorizacao.
+- Regras de rota por papel: `/admin` e `/app`.
 
-Evidências:
-- `src/lib/supabase/middleware.ts`
+Evidencias:
+- `middleware.ts`
+- `src/server/auth/session.ts`
 - `src/server/auth/guards.ts`
 - `src/server/permissions/rbac.ts`
 
-## Testes e qualidade
-- Unitários e integração com Vitest.
-- E2E com Playwright.
-- Qualidade estática com ESLint + TypeScript.
-- Hooks git com Husky/lint-staged.
+## Qualidade e testes
+- Lint: `next lint`
+- Typecheck: `tsc --noEmit`
+- Testes: Vitest (unit/integration), Playwright (e2e)
+- Build: `prisma generate && next build`
 
-Evidência: `package.json`, `src/tests/*`, `.husky/*`.
+Evidencia:
+- `package.json`
 
-## Pontos não identificados no repositório
-- Arquitetura de microserviços/eventos (não identificado no repositório).
-- Mensageria assíncrona dedicada (não identificado no repositório).
-- Cache distribuído explícito (não identificado no repositório).
+## Itens nao identificados no repositorio
+- Arquitetura de microservicos
+- Mensageria/event bus
+- Cache distribuido dedicado

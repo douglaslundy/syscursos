@@ -3,28 +3,34 @@
 ## Branch
 - `main`
 
-## Último commit identificado
-- `a618b04 fix(admin-courses): tratar falha de upload sem application error`
+## Ultimo commit identificado
+- `52e60ba test(e2e): update public landing assertions`
 
-## Escopo desta atualização
-- Migração de base para SaaS com organização (`tenant`) por administrador.
-- Cadastro de novo usuário com perfis ADMIN/STUDENT na área administrativa.
-- Menu e páginas de `Meus dados` para admin e aluno (CPF não editável pelo aluno).
-- Dashboard admin com KPI de consumo por aluno.
+## Escopo desta atualizacao
+- Preenchimento da camada de contexto em `.codex/context/*` a partir de evidencias do repositorio.
+- Nenhuma alteracao em codigo-fonte da aplicacao.
 
 ## Arquivos de contexto atualizados nesta tarefa
-- `.codex/context/CURRENT_STATE.md`
+- `.codex/context/PROJECT_BRIEF.md`
+- `.codex/context/ARCHITECTURE.md`
+- `.codex/context/COMMANDS.md`
+- `.codex/context/GLOSSARY.md`
 - `.codex/context/DECISIONS.md`
+- `.codex/context/CURRENT_STATE.md`
+
+## Arquivos modificados no workspace (git status)
+- `.codex/context/PROJECT_BRIEF.md`
+- `.codex/context/ARCHITECTURE.md`
+- `.codex/context/COMMANDS.md`
+- `.codex/context/GLOSSARY.md`
+- `.codex/context/DECISIONS.md`
+- `.codex/context/CURRENT_STATE.md`
 
 ## Status geral inferido
-- Build, lint e typecheck aprovados.
-- Testes focados bloqueados por erro de ambiente local (`EPERM` em `C:\Users\User`).
+- Projeto com stack Next.js + Prisma + Supabase + Vitest/Playwright.
+- Estrutura em camadas (actions, services, repositories, validators) identificada no codigo.
 
-## Pendências técnicas visíveis
-- Aplicar migration `20260508110000_multi_tenant_organizations` no banco real.
-- Reexecutar testes em ambiente sem bloqueio de permissão.
-
-## Riscos atuais percebidos
-- Isolamento de tenant evoluído na base e nos KPIs; revisar cobertura completa de escopo por organização em todas as rotinas administrativas futuras.
-
-- 2026-05-08: migration 20260508110000_multi_tenant_organizations aplicada com sucesso via prisma migrate deploy.
+## Itens nao identificados no repositorio
+- SLO/SLA formal.
+- Processo oficial de release/versionamento.
+- Observabilidade centralizada formalizada.

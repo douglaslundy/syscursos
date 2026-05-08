@@ -1,66 +1,42 @@
-# Decisões Evidentes no Código
+# Decisions
 
-## 1) Stack principal em Next.js + TypeScript
-Evidência:
-- Dependências e scripts em `package.json` (`next`, `react`, `typescript`).
+## 2026-05-08 - Arquitetura em camadas com Server Actions
 
-## 2) Persistência com Prisma sobre PostgreSQL
-Evidência:
-- `prisma/schema.prisma` com `provider = "postgresql"` e Prisma Client.
+Decisao evidente no codigo:
+- Mutacoes entram por `src/server/actions/*`, delegam para `services` e persistem via `repositories`.
 
-## 3) Autenticação integrada ao Supabase
-Evidência:
-- Dependências `@supabase/ssr` e `@supabase/supabase-js`.
-- Arquivos em `src/lib/supabase/*` e middleware de sessão.
-
-## 4) Backend organizado por camadas (actions/services/repositories/validators)
-Evidência:
-- Estrutura `src/server/actions`, `src/server/services`, `src/server/repositories`, `src/server/validators`.
-
-## 5) Separação explícita de áreas por rotas
-Evidência:
-- Rotas em `src/app/admin/*` e `src/app/app/*`.
-
-## 6) Estratégia de testes em níveis
-Evidência:
-- Scripts `test:unit`, `test:integration`, `test:e2e` no `package.json`.
-- Estrutura `src/tests/unit`, `src/tests/integration`, `src/tests/e2e`.
-
-## 7) Pipeline local de qualidade
-Evidência:
-- Scripts de lint/typecheck/build/test em `package.json`.
-- Hooks com Husky + lint-staged.
-
-Decisões de produto não explicitamente refletidas em código atual: não identificado no repositório.
-## 2026-05-08 - Base de tenancy por organizacao para evolucao SaaS
-
-Decisao:
-
-Introduzir a entidade `Organization` e vincular `User` e `Course` por `organizationId`, usando esse identificador para escopo de operacoes administrativas e metricas de consumo por aluno.
-
-Motivo:
-
-O requisito exige que cada administrador gerencie somente seus alunos e cursos, com suporte a cadastro de outros administradores no mesmo contexto de tenant.
-
-Alternativas consideradas:
-
-- Isolamento apenas por filtros em memoria sem chave de tenant no banco.
-- Isolamento apenas por role sem segmentacao de dados.
-
-Impacto:
-
-- Passa a existir base estrutural para isolamento multi-admin por tenant.
-- Seed e provisionamento foram adaptados para garantir tenant padrao em ambiente local.
-- Novas telas de cadastro de usuario e meus dados usam esse contexto.
-
-Arquivos afetados:
-
-- `prisma/schema.prisma`
-- `prisma/migrations/20260508110000_multi_tenant_organizations/migration.sql`
-- `prisma/seed.ts`
-- `prisma/provision-auth-users.ts`
-- `src/server/auth/session.ts`
-- `src/server/repositories/admin-repository.ts`
+Evidencias:
+- `src/server/actions/admin-actions.ts`
 - `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
 
-- 2026-05-08: hardening final de escopo tenant aplicado nas mutacoes administrativas (delete/update/cancel/renew).
+## 2026-05-08 - Autenticacao Supabase com autorizacao server-side
+
+Decisao evidente no codigo:
+- Sessao resolvida via Supabase e autorizacao reforcada por middleware + guards server-side.
+
+Evidencias:
+- `middleware.ts`
+- `src/server/auth/session.ts`
+- `src/server/auth/guards.ts`
+- `src/server/permissions/rbac.ts`
+
+## 2026-05-08 - Isolamento multi-tenant por organizacao
+
+Decisao evidente no codigo:
+- Modelo com `Organization` e escopo administrativo por `organizationId`.
+
+Evidencias:
+- `prisma/schema.prisma`
+- `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
+
+## 2026-05-08 - Validacao de entrada com Zod
+
+Decisao evidente no codigo:
+- Validadores em `src/server/validators/*` usados nas actions.
+
+Evidencias:
+- `src/server/validators/admin.ts`
+- `src/server/validators/student.ts`
+- `src/server/actions/admin-actions.ts`

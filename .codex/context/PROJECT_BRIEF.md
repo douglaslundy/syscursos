@@ -1,51 +1,52 @@
 # Project Brief
 
-## Objetivo do produto
-Plataforma web de cursos (LMS) com área administrativa e área do aluno, incluindo gestão de cursos/módulos/aulas, matrículas, progresso e cadernos de anotações.
+## Objetivo identificado
+Plataforma SaaS de cursos online (LMS) com area administrativa e area do aluno.
 
-Evidências:
-- Rotas administrativas em `src/app/admin/*`
-- Rotas do aluno em `src/app/app/*`
-- Modelos Prisma em `prisma/schema.prisma`
+Evidencias:
+- Rotas admin em `src/app/admin/*`
+- Rotas aluno em `src/app/app/*`
+- Entidades de dominio em `prisma/schema.prisma`
 
 ## Stack identificada
-- Frontend/App: Next.js 14 (App Router) + React 18 + TypeScript
-- Estilo: Tailwind CSS
-- Backend na aplicação: Server Actions + camadas de serviço/repositório/validação
-- Banco: PostgreSQL via Prisma ORM
-- Autenticação/Sessão: Supabase (`@supabase/ssr`, `@supabase/supabase-js`)
-- Testes: Vitest (unitário/integração) e Playwright (E2E)
-- Qualidade: ESLint, Prettier, Husky + lint-staged
+- Next.js 14 (App Router) + React 18 + TypeScript
+- Tailwind CSS
+- Prisma ORM + PostgreSQL
+- Supabase Auth (`@supabase/ssr` e `@supabase/supabase-js`)
+- Vitest (unit/integration) e Playwright (e2e)
+- ESLint + Prettier + Husky + lint-staged
 
-Evidências:
+Evidencias:
 - `package.json`
 - `prisma/schema.prisma`
 - `src/lib/supabase/*`
 - `src/tests/*`
 
-## Domínios funcionais identificados
-- Usuários e papéis (`User`, `UserRole`)
+## Dominios funcionais identificados
+- Organizacoes/tenants (`Organization`)
+- Usuarios e papeis (`User`, `UserRole`)
 - Perfil de aluno (`StudentProfile`)
-- Cursos, módulos e aulas (`Course`, `Module`, `Lesson`)
-- Matrículas (`Enrollment`)
-- Progresso por aula (`LessonProgress`)
-- Cadernos/anotações (`LessonNote`)
+- Cursos, modulos e aulas (`Course`, `Module`, `Lesson`)
+- Matriculas (`Enrollment`)
+- Progresso de aula (`LessonProgress`)
+- Anotacoes por aula (`LessonNote`)
 
-Evidência:
+Evidencia:
 - `prisma/schema.prisma`
 
-## Regras/restrições aparentes
-- Autorização não confiada ao frontend; presença de guards/RBAC no servidor.
-- Separação de áreas por rotas: admin e aluno.
-- Validações de entrada com schemas (Zod).
+## Regras aparentes no repositorio
+- Segregacao de acesso por papel (`ADMIN` e `STUDENT`) com middleware e guards server-side.
+- Autorizacao critica no servidor (nao confiar apenas no frontend).
+- Isolamento por tenant via `organizationId` nas operacoes administrativas.
+- Fluxo administrativo e do aluno separados por rotas.
 
-Evidências:
+Evidencias:
+- `middleware.ts`
 - `src/server/auth/guards.ts`
 - `src/server/permissions/rbac.ts`
-- `src/server/validators/*`
+- `src/server/services/admin-service.ts`
 
-## Itens não identificados no repositório
-- SLA/SLO
-- Requisitos de LGPD formalizados
-- Estratégia oficial de observabilidade centralizada
-- Processo formal de release/versionamento semântico
+## Itens nao identificados no repositorio
+- SLO/SLA formal
+- Processo oficial de release/versionamento
+- Estrategia de observabilidade centralizada
