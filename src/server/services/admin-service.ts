@@ -15,8 +15,8 @@ import type {
 export async function getAdminDashboard() {
   const admin = await requireAdminOrProducer();
   const [stats, studentConsumption] = await Promise.all([
-    repository.getAdminDashboardStats(admin.organizationId),
-    repository.getAdminConsumptionMetrics(admin.organizationId),
+    repository.getAdminDashboardStats(admin.organizationId, admin.id, admin.role),
+    repository.getAdminConsumptionMetrics(admin.organizationId, admin.id, admin.role),
   ]);
   return {
     ...stats,
@@ -26,118 +26,129 @@ export async function getAdminDashboard() {
 
 export async function getCourses(input: PaginationInput) {
   const admin = await requireAdminOrProducer();
-  return repository.listCourses(admin.organizationId, input);
+  return repository.listCourses(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function getCourseOptions() {
   const admin = await requireAdminOrProducer();
-  return repository.listCourseOptions(admin.organizationId);
+  return repository.listCourseOptions(admin.organizationId, admin.id, admin.role);
 }
 
 export async function saveCourse(input: CourseInput) {
   const admin = await requireAdminOrProducer();
-  return repository.upsertCourse(admin.organizationId, input);
+  return repository.upsertCourse(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function removeCourse(id: string) {
   const admin = await requireAdminOrProducer();
-  return repository.deleteCourse(admin.organizationId, id);
+  return repository.deleteCourse(admin.organizationId, admin.id, admin.role, id);
 }
 
 export async function getModules(courseId: string, input: PaginationInput) {
   const admin = await requireAdminOrProducer();
-  return repository.listModules(admin.organizationId, courseId, input);
+  return repository.listModules(admin.organizationId, admin.id, admin.role, courseId, input);
 }
 
 export async function saveModule(input: ModuleInput) {
   const admin = await requireAdminOrProducer();
-  return repository.upsertModule(admin.organizationId, input);
+  return repository.upsertModule(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function removeModule(id: string) {
   const admin = await requireAdminOrProducer();
-  return repository.deleteModule(admin.organizationId, id);
+  return repository.deleteModule(admin.organizationId, admin.id, admin.role, id);
 }
 
 export async function getLessons(moduleId: string, input: PaginationInput) {
   const admin = await requireAdminOrProducer();
-  return repository.listLessons(admin.organizationId, moduleId, input);
+  return repository.listLessons(admin.organizationId, admin.id, admin.role, moduleId, input);
 }
 
 export async function saveLesson(input: LessonInput) {
   const admin = await requireAdminOrProducer();
-  return repository.upsertLesson(admin.organizationId, input);
+  return repository.upsertLesson(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function removeLesson(id: string) {
   const admin = await requireAdminOrProducer();
-  return repository.deleteLesson(admin.organizationId, id);
+  return repository.deleteLesson(admin.organizationId, admin.id, admin.role, id);
 }
 
 export async function getStudents(input: PaginationInput) {
   const admin = await requireAdmin();
-  return repository.listStudents(admin.organizationId, input);
+  return repository.listStudents(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function getStudentOptions() {
-  const admin = await requireAdmin();
-  return repository.listStudentOptions(admin.organizationId);
+  const admin = await requireAdminOrProducer();
+  return repository.listStudentOptions(admin.organizationId, admin.id, admin.role);
 }
 
 export async function saveStudent(input: StudentInput) {
-  const admin = await requireAdmin();
-  return repository.upsertStudent(admin.organizationId, input);
+  const admin = await requireAdminOrProducer();
+  return repository.upsertStudent(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function removeStudent(id: string) {
-  const admin = await requireAdmin();
-  return repository.deleteStudent(admin.organizationId, id);
+  const admin = await requireAdminOrProducer();
+  return repository.deleteStudent(admin.organizationId, admin.id, admin.role, id);
 }
 
 export async function getEnrollments(input: PaginationInput) {
-  const admin = await requireAdmin();
-  return repository.listEnrollments(admin.organizationId, input);
+  const admin = await requireAdminOrProducer();
+  return repository.listEnrollments(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function saveEnrollment(input: EnrollmentInput) {
-  const admin = await requireAdmin();
-  return repository.upsertEnrollment(admin.organizationId, input);
+  const admin = await requireAdminOrProducer();
+  return repository.upsertEnrollment(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function renewEnrollment(input: RenewEnrollmentInput) {
-  const admin = await requireAdmin();
-  return repository.renewEnrollment(admin.organizationId, input);
+  const admin = await requireAdminOrProducer();
+  return repository.renewEnrollment(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function cancelEnrollment(id: string) {
-  const admin = await requireAdmin();
-  return repository.cancelEnrollment(admin.organizationId, id);
+  const admin = await requireAdminOrProducer();
+  return repository.cancelEnrollment(admin.organizationId, admin.id, admin.role, id);
 }
 
 export async function getCoursesByStudent(studentId: string, input: PaginationInput) {
-  const admin = await requireAdmin();
-  return repository.listCoursesByStudent(admin.organizationId, studentId, input);
+  const admin = await requireAdminOrProducer();
+  return repository.listCoursesByStudent(admin.organizationId, admin.id, admin.role, studentId, input);
 }
 
 export async function getStudentsByCourse(courseId: string, input: PaginationInput) {
-  const admin = await requireAdmin();
-  return repository.listStudentsByCourse(admin.organizationId, courseId, input);
+  const admin = await requireAdminOrProducer();
+  return repository.listStudentsByCourse(admin.organizationId, admin.id, admin.role, courseId, input);
 }
 
 export async function saveManagedUser(input: ManagedUserInput) {
   const admin = await requireAdmin();
-  return repository.upsertManagedUser(admin.organizationId, input);
+  if (input.role !== "PRODUCER") {
+    throw new Error("Somente produtores podem ser cadastrados neste modulo.");
+  }
+  return repository.upsertManagedUser(admin.organizationId, admin.id, admin.role, input);
 }
 
 export async function updateOwnAdminProfile(input: AdminProfileInput) {
   const admin = await requireAdminOrProducer();
-  return repository.updateAdminProfile(admin.organizationId, admin.id, input.name);
+  return repository.updateAdminProfile(
+    admin.organizationId,
+    admin.id,
+    input.name,
+    admin.role,
+    input.password,
+  );
 }
 
 async function requireAdmin() {
-  return requireRole("ADMIN");
+  return requireRole("ADMIN") as Promise<Awaited<ReturnType<typeof requireRole>> & { role: "ADMIN" }>;
 }
 
 async function requireAdminOrProducer() {
-  return requireAnyRole(["ADMIN", "PRODUCER"]);
+  return requireAnyRole(["ADMIN", "PRODUCER"]) as Promise<
+    Awaited<ReturnType<typeof requireRole>> & { role: "ADMIN" | "PRODUCER" }
+  >;
 }

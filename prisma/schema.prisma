@@ -53,10 +53,14 @@ model User {
   name           String          @db.VarChar(160)
   role           UserRole
   status         UserStatus      @default(ACTIVE)
+  accessExpiresAt DateTime?      @map("access_expires_at") @db.Timestamptz(6)
+  lastLoginAt    DateTime?       @map("last_login_at") @db.Timestamptz(6)
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   studentProfile StudentProfile?
+  producedCourses Course[]       @relation("CourseProducer")
+  producerStudents ProducerStudent[] @relation("ProducerStudentProducer")
 
   @@index([organizationId, role, status])
   @@map("users")
@@ -84,6 +88,7 @@ model StudentProfile {
   enrollments Enrollment[]
   notes       LessonNote[]
   progress    LessonProgress[]
+  producers   ProducerStudent[]  @relation("ProducerStudentStudent")
 
   @@map("student_profiles")
 }
@@ -91,6 +96,7 @@ model StudentProfile {
 model Course {
   id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId String    @map("organization_id") @db.Uuid
+  producerId  String       @map("producer_id") @db.Uuid
   title       String       @db.VarChar(180)
   slug        String       @unique @db.VarChar(200)
   description String?
@@ -99,12 +105,26 @@ model Course {
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  producer    User         @relation("CourseProducer", fields: [producerId], references: [id], onDelete: Restrict)
   modules     Module[]
   enrollments Enrollment[]
 
-  @@index([organizationId, status])
+  @@index([organizationId, producerId, status])
   @@index([title])
   @@map("courses")
+}
+
+model ProducerStudent {
+  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  producerId  String         @map("producer_id") @db.Uuid
+  studentId   String         @map("student_id") @db.Uuid
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  producer    User           @relation("ProducerStudentProducer", fields: [producerId], references: [id], onDelete: Cascade)
+  student     StudentProfile @relation("ProducerStudentStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([producerId, studentId])
+  @@index([studentId])
+  @@map("producer_students")
 }
 
 model Module {

@@ -15,15 +15,13 @@ export default function AdminUsersPage({ searchParams }: UsersPageProps) {
       <div className="mb-6">
         <h2 className="text-2xl font-semibold tracking-normal">Novo usuario</h2>
         <p className="text-sm text-muted-foreground">
-          Cadastre produtores e clientes (alunos) dentro do seu ambiente.
+          Cadastre e gerencie produtores dentro do seu ambiente.
         </p>
       </div>
       <Feedback status={status} />
       <form action={saveManagedUserAction} className="grid gap-3 rounded-md border bg-background p-4 md:grid-cols-2">
-        <select className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue={UserRole.STUDENT} name="role">
-          <option value={UserRole.STUDENT}>Cliente (aluno)</option>
-          <option value={UserRole.PRODUCER}>Produtor</option>
-        </select>
+        <input name="role" type="hidden" value={UserRole.PRODUCER} />
+        <input className="rounded-md border px-3 py-2 text-sm outline-none" disabled value="Produtor" />
         <input className="rounded-md border px-3 py-2 text-sm outline-none" name="name" placeholder="Nome" required />
         <input
           className="rounded-md border px-3 py-2 text-sm outline-none"
@@ -40,8 +38,9 @@ export default function AdminUsersPage({ searchParams }: UsersPageProps) {
           required
           type="password"
         />
-        <input className="rounded-md border px-3 py-2 text-sm outline-none" name="document" placeholder="CPF (somente cliente)" />
-        <input className="rounded-md border px-3 py-2 text-sm outline-none" name="phone" placeholder="Telefone (somente cliente)" />
+        <input className="rounded-md border px-3 py-2 text-sm outline-none" name="accessExpiresAt" type="date" />
+        <input className="rounded-md border px-3 py-2 text-sm outline-none" name="document" placeholder="CPF (nao aplicavel)" />
+        <input className="rounded-md border px-3 py-2 text-sm outline-none" name="phone" placeholder="Telefone (nao aplicavel)" />
         <select className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue="ACTIVE" name="status">
           <option value="ACTIVE">Ativo</option>
           <option value="INACTIVE">Inativo</option>

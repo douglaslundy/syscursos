@@ -28,6 +28,25 @@ export const notebookQuerySchema = z.object({
 export const studentProfileSchema = z.object({
   name: z.string().trim().min(2).max(160),
   phone: z.string().trim().max(32).optional().transform((value) => (value ? value : null)),
+  password: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value ? value : null))
+    .refine((value) => value === null || value.length >= 8, "A senha deve ter pelo menos 8 caracteres."),
+  confirmPassword: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value ? value : null)),
+}).superRefine((value, context) => {
+  if ((value.password ?? null) !== (value.confirmPassword ?? null)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "As senhas informadas devem ser iguais.",
+      path: ["confirmPassword"],
+    });
+  }
 });
 
 export type StudentCourseParams = z.infer<typeof studentCourseParamsSchema>;

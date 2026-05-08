@@ -106,10 +106,18 @@ export async function deleteLessonAction(formData: FormData) {
 export async function saveStudentAction(formData: FormData) {
   const path = "/admin/students";
   const input = parseForm(studentSchema, formData, path);
-  await runAdminMutation(path, "saved", async () => {
-    await saveStudent(input);
+  try {
+    const result = await saveStudent(input);
     revalidatePath(path);
-  });
+    if (typeof result === "object" && result && "linkedExisting" in result && result.linkedExisting) {
+      redirect(`${path}?status=linked_existing`);
+    }
+  } catch (error) {
+    console.error("Admin mutation failed.", error);
+    redirect(`${path}?status=${adminErrorStatus(error)}`);
+  }
+
+  redirect(`${path}?status=saved`);
 }
 
 export async function deleteStudentAction(formData: FormData) {

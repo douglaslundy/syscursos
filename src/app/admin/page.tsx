@@ -50,6 +50,7 @@ export default async function AdminPage() {
                 <th className="py-2 pr-3">Matriculas ativas</th>
                 <th className="py-2 pr-3">Matriculas totais</th>
                 <th className="py-2">Aulas concluidas</th>
+                <th className="py-2">Ultimo acesso</th>
               </tr>
             </thead>
             <tbody>
@@ -60,6 +61,9 @@ export default async function AdminPage() {
                   <td className="py-2 pr-3">{item.activeEnrollments}</td>
                   <td className="py-2 pr-3">{item.totalEnrollments}</td>
                   <td className="py-2">{item.completedLessons}</td>
+                  <td className="py-2">
+                    {item.lastLoginAt ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(item.lastLoginAt) : "Nunca"}
+                  </td>
                 </tr>
               ))}
             </tbody>

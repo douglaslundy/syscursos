@@ -25,6 +25,20 @@ export default async function StudentMePage({ searchParams }: StudentMePageProps
         <input className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue={profile.user.name} name="name" required />
         <input className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue={profile.phone ?? ""} name="phone" placeholder="Telefone" />
         <input className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue={profile.document ?? ""} disabled placeholder="CPF" />
+        <input
+          className="rounded-md border px-3 py-2 text-sm outline-none"
+          minLength={8}
+          name="password"
+          placeholder="Nova senha (opcional)"
+          type="password"
+        />
+        <input
+          className="rounded-md border px-3 py-2 text-sm outline-none"
+          minLength={8}
+          name="confirmPassword"
+          placeholder="Repita a nova senha"
+          type="password"
+        />
         <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" type="submit">
           Salvar
         </button>

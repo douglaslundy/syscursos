@@ -688,3 +688,41 @@ Arquivos afetados:
 - `src/app/admin/users/page.tsx`
 - `src/app/(auth)/login/admin/page.tsx`
 - `src/app/(auth)/login/admin/register/page.tsx`
+
+## 2026-05-08 - Responsabilidades SaaS por papel com ownership de produtor
+
+Decisao:
+
+Separar responsabilidades por papel no mesmo tenant: `ADMIN` gerencia produtores; `PRODUCER` gerencia cursos/modulos/aulas/alunos/matriculas sob seu ownership; `STUDENT` gerencia dados pessoais e senha.
+
+Motivo:
+
+Atender aos requisitos de separacao SaaS com isolamento operacional por produtor e sem cadastro publico de administrador.
+
+Alternativas consideradas:
+
+1. Manter escopo apenas por organizacao.
+2. Criar nova aplicacao/painel separado por papel.
+
+Impacto:
+
+- Novo ownership de cursos por produtor.
+- Novo vinculo N:N produtor-aluno.
+- Fluxo de cadastro de aluno passa a vincular aluno existente sem reset de senha.
+- Ultimo acesso fica registrado em `users.last_login_at`.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260508190000_saas_responsibilities/migration.sql`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/server/permissions/rbac.ts`
+- `src/server/actions/student-actions.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/app/admin/*`
+- `src/app/app/me/page.tsx`
+- `src/components/shared/login-form.tsx`
+- `src/components/admin/feedback.tsx`

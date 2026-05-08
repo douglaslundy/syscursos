@@ -20,6 +20,13 @@ export default async function AdminMePage({ searchParams }: AdminMePageProps) {
       <form action={saveOwnAdminProfileAction} className="grid max-w-2xl gap-3 rounded-md border bg-background p-4">
         <input className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue={user.email} disabled type="email" />
         <input className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue={user.name} name="name" required />
+        <input
+          className="rounded-md border px-3 py-2 text-sm outline-none"
+          minLength={8}
+          name="password"
+          placeholder="Nova senha (opcional)"
+          type="password"
+        />
         <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" type="submit">
           Salvar
         </button>

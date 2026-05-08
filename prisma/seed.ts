@@ -48,6 +48,23 @@ async function main() {
     },
   });
 
+  const producer = await prisma.user.upsert({
+    where: { email: "produtor@syscursos.local" },
+    update: {
+      organizationId: organization.id,
+      name: "Produtor Demonstracao",
+      role: UserRole.PRODUCER,
+      status: "ACTIVE",
+    },
+    create: {
+      organizationId: organization.id,
+      email: "produtor@syscursos.local",
+      name: "Produtor Demonstracao",
+      role: UserRole.PRODUCER,
+      status: "ACTIVE",
+    },
+  });
+
   const student = await prisma.studentProfile.upsert({
     where: { userId: studentUser.id },
     update: {
@@ -63,12 +80,14 @@ async function main() {
     where: { slug: "curso-demonstracao" },
     update: {
       organizationId: organization.id,
+      producerId: producer.id,
       title: "Curso Demonstracao",
       description: "Curso inicial usado para validar a camada de banco.",
       status: "ACTIVE",
     },
     create: {
       organizationId: organization.id,
+      producerId: producer.id,
       title: "Curso Demonstracao",
       slug: "curso-demonstracao",
       description: "Curso inicial usado para validar a camada de banco.",
@@ -138,6 +157,20 @@ async function main() {
       startsAt: new Date("2026-05-04T00:00:00.000Z"),
       expiresAt: new Date("2027-05-04T00:00:00.000Z"),
       status: "ACTIVE",
+    },
+  });
+
+  await prisma.producerStudent.upsert({
+    where: {
+      producerId_studentId: {
+        producerId: producer.id,
+        studentId: student.id,
+      },
+    },
+    update: {},
+    create: {
+      producerId: producer.id,
+      studentId: student.id,
     },
   });
 

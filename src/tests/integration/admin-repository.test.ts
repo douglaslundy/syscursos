@@ -43,7 +43,7 @@ describe("admin repository", () => {
 
     updateMock.mockResolvedValue({ count: 1 });
 
-    await upsertEnrollment("org-id", input);
+    await upsertEnrollment("org-id", "admin-id", "ADMIN", input);
 
     expect(updateMock).toHaveBeenCalledWith({
       where: { id: input.id, course: { organizationId: "org-id" } },

@@ -3,6 +3,7 @@ const messages: Record<string, string> = {
   deleted: "Registro removido com sucesso.",
   renewed: "Matricula renovada com sucesso.",
   canceled: "Matricula cancelada com sucesso.",
+  linked_existing: "Aluno ja possuia cadastro na plataforma e foi vinculado a sua lista.",
   invalid: "Revise os dados informados e tente novamente.",
   conflict: "Ja existe um registro com estes dados.",
   auth_error: "Nao foi possivel configurar o acesso do usuario. Verifique as variaveis do Supabase.",

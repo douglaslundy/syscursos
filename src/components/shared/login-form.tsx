@@ -8,10 +8,10 @@ type LoginFormProps = {
   audience: LoginAudience;
   title: string;
   description: string;
-  alternateHref: string;
-  alternateLabel: string;
-  registerHref: string;
-  registerLabel: string;
+  alternateHref?: string;
+  alternateLabel?: string;
+  registerHref?: string;
+  registerLabel?: string;
   error?: string;
 };
 
@@ -76,18 +76,22 @@ export function LoginForm({
           Entrar
         </button>
 
-        <Link
-          className="block text-center text-sm text-muted-foreground transition hover:text-foreground"
-          href={alternateHref}
-        >
-          {alternateLabel}
-        </Link>
-        <Link
-          className="block text-center text-sm text-muted-foreground transition hover:text-foreground"
-          href={registerHref}
-        >
-          {registerLabel}
-        </Link>
+        {alternateHref && alternateLabel ? (
+          <Link
+            className="block text-center text-sm text-muted-foreground transition hover:text-foreground"
+            href={alternateHref}
+          >
+            {alternateLabel}
+          </Link>
+        ) : null}
+        {registerHref && registerLabel ? (
+          <Link
+            className="block text-center text-sm text-muted-foreground transition hover:text-foreground"
+            href={registerHref}
+          >
+            {registerLabel}
+          </Link>
+        ) : null}
       </form>
     </main>
   );

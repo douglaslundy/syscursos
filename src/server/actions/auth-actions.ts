@@ -37,7 +37,12 @@ export async function loginAction(formData: FormData) {
     redirect(`${loginPath}?error=invalid_credentials`);
   }
 
-  let appUser: { id: string; role: UserRole; status: UserStatus } | null;
+  let appUser: {
+    id: string;
+    role: UserRole;
+    status: UserStatus;
+    accessExpiresAt: Date | null;
+  } | null;
 
   try {
     appUser = await prisma.user.findFirst({
@@ -48,6 +53,7 @@ export async function loginAction(formData: FormData) {
         id: true,
         role: true,
         status: true,
+        accessExpiresAt: true,
       },
     });
   } catch (error) {
@@ -60,6 +66,16 @@ export async function loginAction(formData: FormData) {
     await supabase.auth.signOut();
     redirect(`${loginPath}?error=forbidden`);
   }
+
+  if (appUser.accessExpiresAt && appUser.accessExpiresAt <= new Date()) {
+    await supabase.auth.signOut();
+    redirect(`${loginPath}?error=inactive`);
+  }
+
+  await prisma.user.updateMany({
+    where: { id: appUser.id },
+    data: { lastLoginAt: new Date() },
+  });
 
   if (audience === "admin" && appUser.role !== "ADMIN" && appUser.role !== "PRODUCER") {
     await supabase.auth.signOut();
@@ -83,6 +99,10 @@ export async function registerAction(formData: FormData) {
   const audience = parseAudience(formData.get("audience"));
   const role = audience === "admin" ? UserRole.PRODUCER : UserRole.STUDENT;
   const registerPath = audience === "admin" ? "/login/admin/register" : "/login/client/register";
+
+  if (audience === "admin") {
+    redirect("/login/admin?error=forbidden");
+  }
 
   const parsed = registerSchema.safeParse({
     name: formData.get("name"),
@@ -152,7 +172,7 @@ export async function registerAction(formData: FormData) {
   });
 
   if (signIn.error) {
-    redirect(`${audience === "admin" ? "/login/admin" : "/login/client"}?error=invalid_credentials`);
+    redirect("/login/client?error=invalid_credentials");
   }
 
   redirect(getDefaultPathForRole(role));

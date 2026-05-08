@@ -18,14 +18,17 @@ type AdminShellProps = Readonly<{
 }>;
 
 export function AdminShell({ user, children }: AdminShellProps) {
-  const visibleNavItems =
-    user.role === "ADMIN"
-      ? navItems
-      : navItems.filter((item) =>
-          item.href !== "/admin/users" &&
-          item.href !== "/admin/students" &&
-          item.href !== "/admin/enrollments",
-        );
+  const visibleNavItems = navItems.filter((item) => {
+    if (user.role === "ADMIN") {
+      return item.href === "/admin" || item.href === "/admin/users" || item.href === "/admin/me";
+    }
+
+    if (user.role === "PRODUCER") {
+      return item.href !== "/admin/users";
+    }
+
+    return false;
+  });
 
   return (
     <div className="min-h-screen bg-background">

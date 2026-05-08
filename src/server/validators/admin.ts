@@ -122,6 +122,11 @@ export const managedUserSchema = z
     document: z.string().trim().max(32).optional().transform(emptyToNull),
     phone: z.string().trim().max(32).optional().transform(emptyToNull),
     status: z.nativeEnum(UserStatus).default(UserStatus.ACTIVE),
+    accessExpiresAt: z
+      .string()
+      .trim()
+      .optional()
+      .transform((value) => (value ? new Date(`${value}T00:00:00.000Z`) : null)),
   })
   .superRefine((value, context) => {
     if (!value.id && !value.password) {
@@ -135,6 +140,12 @@ export const managedUserSchema = z
 
 export const adminProfileSchema = z.object({
   name: z.string().trim().min(2).max(160),
+  password: z
+    .string()
+    .trim()
+    .optional()
+    .transform(emptyToNull)
+    .refine((value) => value === null || value.length >= 8, "A senha deve ter pelo menos 8 caracteres."),
 });
 
 export type CourseInput = z.infer<typeof courseSchema>;

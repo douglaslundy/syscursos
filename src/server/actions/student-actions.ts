@@ -64,6 +64,8 @@ export async function saveOwnStudentProfileAction(formData: FormData) {
   const parsed = studentProfileSchema.safeParse({
     name: formData.get("name"),
     phone: formData.get("phone"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
   });
 
   if (!parsed.success) {

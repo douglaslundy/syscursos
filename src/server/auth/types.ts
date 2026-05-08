@@ -8,6 +8,8 @@ export type AuthenticatedUser = {
   name: string;
   role: UserRole;
   status: UserStatus;
+  accessExpiresAt: Date | null;
+  lastLoginAt: Date | null;
   studentProfileId: string | null;
 };
 

@@ -7,6 +7,7 @@ import {
 } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const courseAccessInclude = {
   course: {
@@ -307,7 +308,27 @@ export async function getStudentProfile(studentId: string) {
   });
 }
 
-export async function updateStudentProfile(studentId: string, input: { name: string; phone: string | null }) {
+export async function updateStudentProfile(
+  studentId: string,
+  input: { name: string; phone: string | null; password?: string | null },
+) {
+  const profile = await prisma.studentProfile.findUniqueOrThrow({
+    where: { id: studentId },
+    include: { user: { select: { authUserId: true, email: true } } },
+  });
+
+  if (input.password && profile.user.authUserId) {
+    const supabase = createSupabaseAdminClient();
+    const { error } = await supabase.auth.admin.updateUserById(profile.user.authUserId, {
+      password: input.password,
+      email_confirm: true,
+    });
+
+    if (error) {
+      throw new Error(`Nao foi possivel atualizar senha do aluno: ${error.message}`);
+    }
+  }
+
   return prisma.studentProfile.update({
     where: { id: studentId },
     data: {

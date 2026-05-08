@@ -37,6 +37,8 @@ export const getCurrentUser = cache(async (): Promise<AuthResult> => {
         name: true,
         role: true,
         status: true,
+        accessExpiresAt: true,
+        lastLoginAt: true,
         studentProfile: {
           select: {
             id: true,
@@ -57,6 +59,10 @@ export const getCurrentUser = cache(async (): Promise<AuthResult> => {
     return { ok: false, reason: "INACTIVE" };
   }
 
+  if (appUser.accessExpiresAt && appUser.accessExpiresAt <= new Date()) {
+    return { ok: false, reason: "INACTIVE" };
+  }
+
   return {
     ok: true,
     user: {
@@ -67,6 +73,8 @@ export const getCurrentUser = cache(async (): Promise<AuthResult> => {
       name: appUser.name,
       role: appUser.role,
       status: appUser.status,
+      accessExpiresAt: appUser.accessExpiresAt,
+      lastLoginAt: appUser.lastLoginAt,
       studentProfileId: appUser.studentProfile?.id ?? null,
     },
   };

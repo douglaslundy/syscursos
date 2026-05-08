@@ -368,3 +368,26 @@ px prisma migrate deploy no banco configurado.
 - [x] Executar `npm run typecheck`
 - [x] Executar `npm run test`
 - [x] Executar `npm run build`
+
+## Ajustes 2026-05-08 - Responsabilidades SaaS admin/produtor/aluno
+
+- [x] Remover botao "Entrar como administrador" do login de clientes
+- [x] Bloquear cadastro publico na rota admin/register
+- [x] Adicionar `access_expires_at` e `last_login_at` em usuarios
+- [x] Adicionar ownership de curso por produtor (`courses.producer_id`)
+- [x] Adicionar vinculo produtor-aluno (`producer_students`)
+- [x] Escopar consultas/mutacoes admin por papel e ownership (ADMIN/PRODUCER)
+- [x] Impedir cadastro de admin por fluxo publico e por modulo de usuarios
+- [x] Permitir apenas admin cadastrar produtores
+- [x] Permitir produtor cadastrar/vincular alunos sem alterar senha em cadastro preexistente
+- [x] Exibir feedback de vinculo para aluno preexistente
+- [x] Adicionar troca de senha no "Meus dados" do aluno com confirmacao
+- [x] Adicionar troca de senha no "Meus dados" admin/produtor
+- [x] Exibir ultimo acesso no dashboard administrativo
+- [x] Aplicar migration `20260508190000_saas_responsibilities`
+- [x] Provisionar admin `douglaslundy@gmail.com` e produtor principal no tenant
+- [x] Vincular alunos existentes ao produtor principal
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [x] Executar `npm run test`
+- [x] Executar `npm run build`

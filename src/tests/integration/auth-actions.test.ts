@@ -9,6 +9,7 @@ const redirectMock = vi.hoisted(() =>
 const signInWithPasswordMock = vi.hoisted(() => vi.fn());
 const signOutMock = vi.hoisted(() => vi.fn());
 const findFirstMock = vi.hoisted(() => vi.fn());
+const updateManyMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
@@ -27,6 +28,7 @@ vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     user: {
       findFirst: findFirstMock,
+      updateMany: updateManyMock,
     },
   },
 }));
@@ -37,6 +39,8 @@ describe("loginAction", () => {
     signInWithPasswordMock.mockReset();
     signOutMock.mockReset();
     findFirstMock.mockReset();
+    updateManyMock.mockReset();
+    updateManyMock.mockResolvedValue({ count: 1 });
   });
 
   it("redirects an active admin to the admin area", async () => {
@@ -49,6 +53,7 @@ describe("loginAction", () => {
       id: "user-admin",
       role: "ADMIN",
       status: "ACTIVE",
+      accessExpiresAt: null,
     });
 
     await expect(loginAction(loginForm("admin@example.com", "admin"))).rejects.toThrow(
@@ -70,6 +75,7 @@ describe("loginAction", () => {
       id: "user-producer",
       role: "PRODUCER",
       status: "ACTIVE",
+      accessExpiresAt: null,
     });
 
     await expect(loginAction(loginForm("producer@example.com", "admin"))).rejects.toThrow(
@@ -87,6 +93,7 @@ describe("loginAction", () => {
       id: "user-student",
       role: "STUDENT",
       status: "ACTIVE",
+      accessExpiresAt: null,
     });
 
     await expect(loginAction(loginForm("student@example.com"))).rejects.toThrow("REDIRECT:/app");
@@ -102,6 +109,7 @@ describe("loginAction", () => {
       id: "user-student",
       role: "STUDENT",
       status: "ACTIVE",
+      accessExpiresAt: null,
     });
 
     await expect(loginAction(loginForm("student@example.com", "admin"))).rejects.toThrow(
@@ -120,6 +128,7 @@ describe("loginAction", () => {
       id: "user-admin",
       role: "ADMIN",
       status: "ACTIVE",
+      accessExpiresAt: null,
     });
 
     await expect(loginAction(loginForm("admin@example.com", "client"))).rejects.toThrow(
@@ -138,6 +147,7 @@ describe("loginAction", () => {
       id: "user-inactive",
       role: "STUDENT",
       status: "INACTIVE",
+      accessExpiresAt: null,
     });
 
     await expect(loginAction(loginForm("inactive@example.com"))).rejects.toThrow(

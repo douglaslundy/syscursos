@@ -55,7 +55,7 @@ describe("admin service", () => {
 
     await expect(saveCourse(input)).resolves.toMatchObject({ id: "course-id" });
     expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
-    expect(repositoryMock.upsertCourse).toHaveBeenCalledWith("org-id", input);
+    expect(repositoryMock.upsertCourse).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", input);
   });
 
   it("uses ADMIN authorization for module CRUD writes", async () => {
@@ -71,7 +71,7 @@ describe("admin service", () => {
 
     await saveModule(input);
     expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
-    expect(repositoryMock.upsertModule).toHaveBeenCalledWith("org-id", input);
+    expect(repositoryMock.upsertModule).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", input);
   });
 
   it("uses ADMIN authorization for lesson CRUD writes", async () => {
@@ -88,7 +88,7 @@ describe("admin service", () => {
 
     await saveLesson(input);
     expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
-    expect(repositoryMock.upsertLesson).toHaveBeenCalledWith("org-id", input);
+    expect(repositoryMock.upsertLesson).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", input);
   });
 
   it("uses ADMIN authorization for student CRUD writes", async () => {
@@ -103,8 +103,8 @@ describe("admin service", () => {
     };
 
     await saveStudent(input);
-    expect(requireRoleMock).toHaveBeenCalledWith("ADMIN");
-    expect(repositoryMock.upsertStudent).toHaveBeenCalledWith("org-id", input);
+    expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
+    expect(repositoryMock.upsertStudent).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", input);
   });
 
   it("uses ADMIN authorization for enrollment and renewal", async () => {
@@ -124,7 +124,7 @@ describe("admin service", () => {
     await saveEnrollment(enrollment);
     await renewEnrollment(renewal);
 
-    expect(repositoryMock.upsertEnrollment).toHaveBeenCalledWith("org-id", enrollment);
-    expect(repositoryMock.renewEnrollment).toHaveBeenCalledWith("org-id", renewal);
+    expect(repositoryMock.upsertEnrollment).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", enrollment);
+    expect(repositoryMock.renewEnrollment).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", renewal);
   });
 });

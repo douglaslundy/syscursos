@@ -1537,3 +1537,31 @@ px prisma migrate deploy`n
 ### Pendencias
 
 - Aplicar migration `20260508170000_add_producer_role` no banco alvo.
+
+---
+
+### 2026-05-08 - Separacao SaaS por papel, ownership e provisionamento inicial
+
+### O que foi implementado
+
+- Login cliente sem CTA para login administrativo.
+- Cadastro publico admin bloqueado.
+- Ownership de curso por produtor e vinculo produtor-aluno.
+- Cadastro de aluno por produtor com reaproveitamento de credencial existente sem alterar senha.
+- Dashboard admin com ultimo acesso.
+- Meus dados aluno com troca de senha + confirmacao.
+- Meus dados admin/produtor com troca de senha opcional.
+- Provisionamento aplicado para admin solicitado e produtor principal no tenant.
+
+### Testes executados
+
+- `npm run lint` (aprovado)
+- `npm run typecheck` (aprovado)
+- `npm run test` (aprovado)
+- `npm run build` (aprovado)
+- `npx prisma migrate deploy` (aprovado)
+- `npx tsx prisma/provision-saas-accounts.ts` (aprovado)
+
+### Observacao tecnica
+
+- Nao foi possivel criar produtor com o mesmo e-mail do admin devido unicidade de e-mail no modelo local e no Supabase Auth. Foi aplicado fallback seguro para `douglaslundy+producer@gmail.com`.

@@ -59,7 +59,7 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
   }
 
   if (user.role !== requiredRole) {
-    if (requiredRole === "STUDENT" && user.role === "ADMIN") {
+    if (requiredRole === "STUDENT" && (user.role === "ADMIN" || user.role === "PRODUCER")) {
       return { allowed: true };
     }
 
@@ -82,6 +82,14 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
     };
   }
 
+  if (requiredRole === "ADMIN" && user.role === "ADMIN" && isAdminRestrictedPath(pathname)) {
+    return {
+      allowed: false,
+      redirectTo: "/admin",
+      reason: "FORBIDDEN",
+    };
+  }
+
   return { allowed: true };
 }
 
@@ -93,5 +101,17 @@ function isProducerRestrictedPath(pathname: string) {
     pathname === "/admin/enrollments" ||
     pathname.startsWith("/admin/enrollments/") ||
     pathname.includes("/students")
+  );
+}
+
+function isAdminRestrictedPath(pathname: string) {
+  return (
+    pathname === "/admin/courses" ||
+    pathname.startsWith("/admin/courses/") ||
+    pathname.startsWith("/admin/modules/") ||
+    pathname === "/admin/students" ||
+    pathname.startsWith("/admin/students/") ||
+    pathname === "/admin/enrollments" ||
+    pathname.startsWith("/admin/enrollments/")
   );
 }
