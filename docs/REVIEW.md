@@ -1402,3 +1402,25 @@ Publicar as alteracoes, aplicar migration em producao e executar smoke manual do
 ### Proxima etapa recomendada
 
 - Validar fluxo end-to-end com dois administradores em tenants distintos para confirmar isolamento completo de dados.
+
+### 2026-05-08 - Hardening final de tenant e aplicacao de migration
+
+### O que foi implementado
+
+- Escopo de organizacao aplicado nas mutacoes administrativas restantes (curso/modulo/aula/aluno/matricula).
+- Atualizacao de testes de servico/repositorio para assinatura tenant-aware.
+- Migration de tenancy aplicada com sucesso via 
+px prisma migrate deploy.
+
+### Testes executados
+
+- 
+pm run lint`n- 
+pm run typecheck`n- 
+pm run test`n- 
+pm run build`n- 
+px prisma migrate deploy`n
+### Resultado dos testes
+
+- Todos aprovados.
+

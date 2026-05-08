@@ -62,3 +62,5 @@ Arquivos afetados:
 - `src/server/auth/session.ts`
 - `src/server/repositories/admin-repository.ts`
 - `src/server/services/admin-service.ts`
+
+- 2026-05-08: hardening final de escopo tenant aplicado nas mutacoes administrativas (delete/update/cancel/renew).

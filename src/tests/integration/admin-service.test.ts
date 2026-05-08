@@ -61,7 +61,7 @@ describe("admin service", () => {
 
     await saveModule(input);
     expect(requireRoleMock).toHaveBeenCalledWith("ADMIN");
-    expect(repositoryMock.upsertModule).toHaveBeenCalledWith(input);
+    expect(repositoryMock.upsertModule).toHaveBeenCalledWith("org-id", input);
   });
 
   it("uses ADMIN authorization for lesson CRUD writes", async () => {
@@ -78,7 +78,7 @@ describe("admin service", () => {
 
     await saveLesson(input);
     expect(requireRoleMock).toHaveBeenCalledWith("ADMIN");
-    expect(repositoryMock.upsertLesson).toHaveBeenCalledWith(input);
+    expect(repositoryMock.upsertLesson).toHaveBeenCalledWith("org-id", input);
   });
 
   it("uses ADMIN authorization for student CRUD writes", async () => {
@@ -115,6 +115,6 @@ describe("admin service", () => {
     await renewEnrollment(renewal);
 
     expect(repositoryMock.upsertEnrollment).toHaveBeenCalledWith("org-id", enrollment);
-    expect(repositoryMock.renewEnrollment).toHaveBeenCalledWith(renewal);
+    expect(repositoryMock.renewEnrollment).toHaveBeenCalledWith("org-id", renewal);
   });
 });

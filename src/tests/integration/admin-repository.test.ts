@@ -8,7 +8,7 @@ const findStudentMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     enrollment: {
-      update: updateMock,
+      updateMany: updateMock,
       upsert: upsertMock,
     },
     course: {
@@ -41,12 +41,12 @@ describe("admin repository", () => {
       status: "CANCELED" as const,
     };
 
-    updateMock.mockResolvedValue({ ...input });
+    updateMock.mockResolvedValue({ count: 1 });
 
     await upsertEnrollment("org-id", input);
 
     expect(updateMock).toHaveBeenCalledWith({
-      where: { id: input.id },
+      where: { id: input.id, course: { organizationId: "org-id" } },
       data: {
         studentId: input.studentId,
         courseId: input.courseId,

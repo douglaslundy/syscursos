@@ -40,8 +40,8 @@ export async function saveCourse(input: CourseInput) {
 }
 
 export async function removeCourse(id: string) {
-  await requireAdmin();
-  return repository.deleteCourse(id);
+  const admin = await requireAdmin();
+  return repository.deleteCourse(admin.organizationId, id);
 }
 
 export async function getModules(courseId: string, input: PaginationInput) {
@@ -50,13 +50,13 @@ export async function getModules(courseId: string, input: PaginationInput) {
 }
 
 export async function saveModule(input: ModuleInput) {
-  await requireAdmin();
-  return repository.upsertModule(input);
+  const admin = await requireAdmin();
+  return repository.upsertModule(admin.organizationId, input);
 }
 
 export async function removeModule(id: string) {
-  await requireAdmin();
-  return repository.deleteModule(id);
+  const admin = await requireAdmin();
+  return repository.deleteModule(admin.organizationId, id);
 }
 
 export async function getLessons(moduleId: string, input: PaginationInput) {
@@ -65,13 +65,13 @@ export async function getLessons(moduleId: string, input: PaginationInput) {
 }
 
 export async function saveLesson(input: LessonInput) {
-  await requireAdmin();
-  return repository.upsertLesson(input);
+  const admin = await requireAdmin();
+  return repository.upsertLesson(admin.organizationId, input);
 }
 
 export async function removeLesson(id: string) {
-  await requireAdmin();
-  return repository.deleteLesson(id);
+  const admin = await requireAdmin();
+  return repository.deleteLesson(admin.organizationId, id);
 }
 
 export async function getStudents(input: PaginationInput) {
@@ -90,8 +90,8 @@ export async function saveStudent(input: StudentInput) {
 }
 
 export async function removeStudent(id: string) {
-  await requireAdmin();
-  return repository.deleteStudent(id);
+  const admin = await requireAdmin();
+  return repository.deleteStudent(admin.organizationId, id);
 }
 
 export async function getEnrollments(input: PaginationInput) {
@@ -105,13 +105,13 @@ export async function saveEnrollment(input: EnrollmentInput) {
 }
 
 export async function renewEnrollment(input: RenewEnrollmentInput) {
-  await requireAdmin();
-  return repository.renewEnrollment(input);
+  const admin = await requireAdmin();
+  return repository.renewEnrollment(admin.organizationId, input);
 }
 
 export async function cancelEnrollment(id: string) {
-  await requireAdmin();
-  return repository.cancelEnrollment(id);
+  const admin = await requireAdmin();
+  return repository.cancelEnrollment(admin.organizationId, id);
 }
 
 export async function getCoursesByStudent(studentId: string, input: PaginationInput) {

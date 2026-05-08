@@ -336,3 +336,7 @@
 - [x] Executar `npm run typecheck`
 - [ ] Executar testes relevantes (falha de ambiente local EPERM em `C:\Users\User`)
 - [x] Executar `npm run build`
+
+- [x] Endurecer escopo tenant nas mutacoes admin (delete/update/cancel/renew).
+- [x] Executar 
+px prisma migrate deploy no banco configurado.

@@ -26,3 +26,5 @@
 
 ## Riscos atuais percebidos
 - Isolamento de tenant evoluído na base e nos KPIs; revisar cobertura completa de escopo por organização em todas as rotinas administrativas futuras.
+
+- 2026-05-08: migration 20260508110000_multi_tenant_organizations aplicada com sucesso via prisma migrate deploy.
