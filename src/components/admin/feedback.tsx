@@ -7,6 +7,7 @@ const messages: Record<string, string> = {
   invalid: "Revise os dados informados e tente novamente.",
   conflict: "Ja existe um registro com estes dados.",
   auth_error: "Nao foi possivel configurar o acesso do usuario. Verifique as variaveis do Supabase.",
+  storage_error: "Nao foi possivel enviar a capa. Verifique o bucket/permissoes de storage no Supabase.",
   error: "Nao foi possivel concluir a operacao. Tente novamente.",
 };
 
@@ -27,7 +28,7 @@ export function Feedback({ status }: FeedbackProps) {
 }
 
 function feedbackClassName(status: string) {
-  const isError = ["invalid", "conflict", "auth_error", "error"].includes(status);
+  const isError = ["invalid", "conflict", "auth_error", "storage_error", "error"].includes(status);
 
   return isError
     ? "mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"

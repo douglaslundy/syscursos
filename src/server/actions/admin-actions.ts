@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -245,6 +246,13 @@ function adminErrorStatus(error: unknown) {
     return "auth_error";
   }
 
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    if (message.includes("storage") || message.includes("bucket")) {
+      return "storage_error";
+    }
+  }
+
   return "error";
 }
 
@@ -260,6 +268,7 @@ function assertValidCourseCover(file: File, errorPath: string) {
 async function uploadCourseCover(file: File) {
   const supabase = createSupabaseAdminClient();
   const bucket = process.env.SUPABASE_COURSE_COVER_BUCKET ?? "course-covers";
+  await ensureCourseCoverBucket(supabase, bucket);
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "bin";
   const sanitizedExtension = extension.replace(/[^a-z0-9]/g, "") || "bin";
   const path = `courses/${Date.now()}-${crypto.randomUUID()}.${sanitizedExtension}`;
@@ -276,4 +285,26 @@ async function uploadCourseCover(file: File) {
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(path);
   return data.publicUrl;
+}
+
+async function ensureCourseCoverBucket(supabase: SupabaseClient, bucket: string) {
+  const current = await supabase.storage.getBucket(bucket);
+
+  if (!current.error && current.data) {
+    return;
+  }
+
+  if (current.error && !current.error.message.toLowerCase().includes("not found")) {
+    throw new Error(`Erro ao consultar bucket de capas: ${current.error.message}`);
+  }
+
+  const created = await supabase.storage.createBucket(bucket, {
+    public: true,
+    fileSizeLimit: "5MB",
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+  });
+
+  if (created.error && !created.error.message.toLowerCase().includes("already exists")) {
+    throw new Error(`Erro ao criar bucket de capas: ${created.error.message}`);
+  }
 }
