@@ -3,6 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 
 import { CourseBlocked } from "@/components/student/course-blocked";
 import { LessonTrailSidebar } from "@/components/student/lesson-trail-sidebar";
+import { LessonVideoPlayer } from "@/components/student/lesson-video-player";
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
 import { completeLessonAction } from "@/server/actions/student-actions";
 import { getStudentLesson } from "@/server/services/student-service";
@@ -63,20 +64,13 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
-          {data.embedUrl ? (
-            <iframe
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="aspect-video w-full"
-              referrerPolicy="strict-origin-when-cross-origin"
-              src={data.embedUrl}
-              title={data.lesson.title}
-            />
-          ) : (
-            <div className="flex aspect-video items-center justify-center bg-surface px-4 text-center text-sm text-copy-muted">
-              Link do YouTube invalido.
-            </div>
-          )}
+          <LessonVideoPlayer
+            courseId={courseId}
+            embedUrl={data.embedUrl}
+            isCompleted={data.isCompleted}
+            lessonId={lessonId}
+            title={data.lesson.title}
+          />
         </div>
         <LessonTrailSidebar
           completedLessonIds={Array.from(data.navigation?.completedLessonIds ?? new Set<string>())}

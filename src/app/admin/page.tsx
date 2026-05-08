@@ -5,31 +5,43 @@ export default async function AdminPage() {
   const { getAdminDashboard } = await import("@/server/services/admin-service");
   const user = await requireAnyRole(["ADMIN", "PRODUCER"]);
   const dashboard = await getAdminDashboard();
-  const cards = [
-    { label: "Cursos", value: dashboard.courses, href: "/admin/courses" },
-    { label: "Alunos", value: dashboard.students, href: "/admin/students" },
-    { label: "Matriculas ativas", value: dashboard.enrollments, href: "/admin/enrollments" },
-    { label: "Aulas", value: dashboard.lessons, href: "/admin/courses" },
-    ...(user.role === "ADMIN"
-      ? [{ label: "Produtores", value: dashboard.producers, href: "/admin/users" }]
-      : []),
-  ];
+  const cards =
+    user.role === "ADMIN"
+      ? [
+          { label: "Produtores", value: dashboard.producers, href: "/admin/users" },
+          { label: "Alunos", value: dashboard.students, href: "/admin/students" },
+          { label: "Matriculas ativas", value: dashboard.enrollments, href: "/admin/enrollments" },
+        ]
+      : [
+          { label: "Cursos", value: dashboard.courses, href: "/admin/courses" },
+          { label: "Alunos", value: dashboard.students, href: "/admin/students" },
+          { label: "Matriculas ativas", value: dashboard.enrollments, href: "/admin/enrollments" },
+          { label: "Aulas", value: dashboard.lessons, href: "/admin/courses" },
+        ];
 
   return (
     <section>
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold tracking-normal">Dashboard administrativo</h2>
-        <p className="text-sm text-muted-foreground">Resumo operacional da plataforma.</p>
-        <div className="mt-3">
-          <Link
-            className="inline-flex items-center rounded-md border border-stroke-subtle px-3 py-2 text-sm text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
-            href="/admin/users"
-          >
-            Cadastrar novo usuario
-          </Link>
-        </div>
+        <h2 className="text-2xl font-semibold tracking-normal">
+          {user.role === "ADMIN" ? "Dashboard do administrador" : "Dashboard do produtor"}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {user.role === "ADMIN"
+            ? "Gestao de produtores e visao consolidada da operacao."
+            : "Gestao dos seus cursos, aulas, alunos e matriculas."}
+        </p>
+        {user.role === "ADMIN" ? (
+          <div className="mt-3">
+            <Link
+              className="inline-flex items-center rounded-md border border-stroke-subtle px-3 py-2 text-sm text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+              href="/admin/users"
+            >
+              Cadastrar novo produtor
+            </Link>
+          </div>
+        ) : null}
       </div>
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-4">
         {cards.map((card) => (
           <Link
             className="rounded-md border bg-background p-4 hover:bg-muted/60"
@@ -44,7 +56,9 @@ export default async function AdminPage() {
       <div className="mt-8 rounded-md border bg-background p-4">
         <h3 className="text-lg font-semibold">Consumo por aluno</h3>
         <p className="mb-4 text-sm text-muted-foreground">
-          Dados dos alunos vinculados ao seu administrador.
+          {user.role === "ADMIN"
+            ? "Dados consolidados dos alunos vinculados aos produtores."
+            : "Dados dos alunos vinculados ao seu produtor."}
         </p>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
