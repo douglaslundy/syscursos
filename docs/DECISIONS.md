@@ -597,3 +597,58 @@ Arquivos afetados:
 - `src/server/repositories/admin-repository.ts`
 - `src/server/services/admin-service.ts`
 - `src/app/admin/page.tsx`
+
+## 2026-05-08 - Capa de modulo por URL HTTPS
+
+Decisao:
+
+Adicionar `cover_image_url` em `modules` e tratar capa de modulo como URL HTTPS em vez de upload binario nesta etapa.
+
+Motivo:
+
+Implementacao incremental e testavel, reaproveitando validacao ja adotada para capa de curso sem ampliar escopo para novos fluxos de storage.
+
+Alternativas consideradas:
+
+Upload de arquivo com bucket dedicado para modulos nesta mesma etapa.
+
+Impacto:
+
+Modulo passa a aceitar, persistir e exibir capa por URL sem alterar fluxo de aulas, cursos ou area do aluno.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260508153000_module_cover_image/migration.sql`
+- `src/server/validators/admin.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+
+## 2026-05-08 - Cadastro publico por audiencia de login
+
+Decisao:
+
+Criar cadastro publico separado por audiencia (`admin` e `client`) com `registerAction` unica, definindo role pelo contexto da pagina de origem.
+
+Motivo:
+
+Atender requisito de solicitacao de cadastro nas duas telas de login sem duplicar camada de autenticacao.
+
+Alternativas consideradas:
+
+Cadastro unico sem separar audiencia; cadastro apenas administrativo com aprovacao manual.
+
+Impacto:
+
+Novos usuarios conseguem se cadastrar e entrar no sistema pela area correspondente. Cada cadastro cria uma `organization` propria para manter isolamento SaaS por tenant.
+
+Arquivos afetados:
+
+- `src/server/auth/schemas.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/components/shared/login-form.tsx`
+- `src/components/shared/register-form.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `src/app/(auth)/login/client/page.tsx`
+- `src/app/(auth)/login/admin/register/page.tsx`
+- `src/app/(auth)/login/client/register/page.tsx`

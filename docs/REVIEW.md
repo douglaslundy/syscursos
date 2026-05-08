@@ -1424,3 +1424,60 @@ px prisma migrate deploy`n
 
 - Todos aprovados.
 
+
+---
+
+### 2026-05-08 - Capa por modulo e cadastro publico por perfil
+
+### Arquivos criados ou alterados
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260508153000_module_cover_image/migration.sql`
+- `src/server/validators/admin.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+- `src/server/auth/schemas.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/components/shared/login-form.tsx`
+- `src/components/shared/register-form.tsx`
+- `src/app/(auth)/login/admin/page.tsx`
+- `src/app/(auth)/login/client/page.tsx`
+- `src/app/(auth)/login/admin/register/page.tsx`
+- `src/app/(auth)/login/client/register/page.tsx`
+- `src/tests/integration/admin-service.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`
+- `.codex/context/CURRENT_STATE.md`
+- `.codex/context/DECISIONS.md`
+
+### O que foi implementado
+
+- Cadastro de capa por modulo com campo `coverImageUrl` (URL HTTPS) no schema, validacao, repositorio e UI administrativa de modulos.
+- Criado fluxo de solicitacao de cadastro publico por pagina:
+  - admin: `/login/admin/register`
+  - cliente: `/login/client/register`
+- `registerAction` cria usuario no Supabase Auth, cria tenant (`organizations`) e cria usuario interno com role conforme a pagina de origem.
+- Cadastro de cliente cria `studentProfile` com suporte a CPF (`document`).
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test -- --run src/tests/integration/auth-actions.test.ts src/tests/integration/admin-service.test.ts src/tests/unit/login-schema.test.ts`
+
+### Resultado dos testes
+
+- `lint`: aprovado.
+- `typecheck`: aprovado.
+- Teste focado: falhou por restricao de ambiente local (`EPERM: lstat C:\Users\User`).
+
+### Riscos encontrados
+
+- Cadastro publico de administrador fica aberto para qualquer e-mail nesta iteracao.
+- Nao foi identificado no repositorio um papel separado de "produtor"; o fluxo continua com roles `ADMIN` e `STUDENT`.
+
+### Pendencias
+
+- Aplicar migration `20260508153000_module_cover_image` no banco alvo.
+- Reexecutar testes quando o ambiente local permitir acesso sem erro `EPERM`.

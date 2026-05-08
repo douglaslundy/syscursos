@@ -340,3 +340,16 @@
 - [x] Endurecer escopo tenant nas mutacoes admin (delete/update/cancel/renew).
 - [x] Executar 
 px prisma migrate deploy no banco configurado.
+
+## Ajustes 2026-05-08 - Capa por modulo e cadastro publico por perfil
+
+- [x] Adicionar `cover_image_url` em modulos com migration dedicada
+- [x] Validar `coverImageUrl` HTTPS no cadastro/edicao de modulos
+- [x] Exibir e permitir editar capa no formulario de modulos do admin
+- [x] Criar cadastro publico separado em `/login/admin/register` e `/login/client/register`
+- [x] Criar `registerAction` com provisionamento em Supabase Auth + usuario interno
+- [x] Criar organizacao no cadastro publico para manter isolamento SaaS por tenant
+- [x] Atualizar links das paginas de login para solicitacao de cadastro
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [ ] Executar testes relevantes (falha de ambiente local EPERM em `C:\Users\User`)

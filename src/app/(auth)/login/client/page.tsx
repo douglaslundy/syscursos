@@ -11,6 +11,8 @@ export default function ClientLoginPage({ searchParams }: ClientLoginPageProps) 
     <LoginForm
       alternateHref="/login/admin"
       alternateLabel="Entrar como administrador"
+      registerHref="/login/client/register"
+      registerLabel="Solicitar cadastro de cliente"
       audience="client"
       description="Acesse seus cursos, aulas e cadernos."
       error={searchParams?.error}

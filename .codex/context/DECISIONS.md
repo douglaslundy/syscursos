@@ -40,3 +40,25 @@ Evidencias:
 - `src/server/validators/admin.ts`
 - `src/server/validators/student.ts`
 - `src/server/actions/admin-actions.ts`
+
+## 2026-05-08 - Capa de modulo por URL HTTPS
+
+Decisao evidente no codigo:
+- `Module` recebeu `coverImageUrl` validado como URL HTTPS no fluxo administrativo.
+
+Evidencias:
+- `prisma/schema.prisma`
+- `src/server/validators/admin.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+
+## 2026-05-08 - Cadastro publico separado por audiencia
+
+Decisao evidente no codigo:
+- Cadastro publico separado para `admin` e `client`, com role determinada pela pagina de cadastro.
+
+Evidencias:
+- `src/server/actions/auth-actions.ts`
+- `src/server/auth/schemas.ts`
+- `src/app/(auth)/login/admin/register/page.tsx`
+- `src/app/(auth)/login/client/register/page.tsx`

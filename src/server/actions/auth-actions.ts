@@ -1,11 +1,12 @@
 "use server";
 
-import type { UserRole, UserStatus } from "@prisma/client";
+import { UserRole, UserStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/db/prisma";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { loginSchema } from "@/server/auth/schemas";
+import { loginSchema, registerSchema } from "@/server/auth/schemas";
 import { getDefaultPathForRole } from "@/server/permissions/rbac";
 
 export async function loginAction(formData: FormData) {
@@ -76,6 +77,85 @@ export async function logoutAction() {
   const supabase = createSupabaseServerClient();
   await supabase.auth.signOut();
   redirect("/login/client");
+}
+
+export async function registerAction(formData: FormData) {
+  const audience = parseAudience(formData.get("audience"));
+  const role = audience === "admin" ? UserRole.ADMIN : UserRole.STUDENT;
+  const registerPath = audience === "admin" ? "/login/admin/register" : "/login/client/register";
+
+  const parsed = registerSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+    document: formData.get("document"),
+  });
+
+  if (!parsed.success) {
+    redirect(`${registerPath}?error=invalid_input`);
+  }
+
+  const supabaseAdmin = createSupabaseAdminClient();
+  const authResult = await supabaseAdmin.auth.admin.createUser({
+    email: parsed.data.email,
+    password: parsed.data.password,
+    email_confirm: true,
+    user_metadata: {
+      name: parsed.data.name,
+      role,
+    },
+  });
+
+  if (authResult.error || !authResult.data.user?.id) {
+    redirect(`${registerPath}?error=conflict`);
+  }
+
+  const authUserId = authResult.data.user.id;
+
+  try {
+    const organization = await prisma.organization.create({
+      data: {
+        name: `Organizacao ${parsed.data.name}`,
+      },
+      select: { id: true },
+    });
+
+    await prisma.user.create({
+      data: {
+        organizationId: organization.id,
+        authUserId,
+        email: parsed.data.email,
+        name: parsed.data.name,
+        role,
+        status: UserStatus.ACTIVE,
+        ...(role === UserRole.STUDENT
+          ? {
+              studentProfile: {
+                create: {
+                  document: parsed.data.document,
+                },
+              },
+            }
+          : {}),
+      },
+    });
+  } catch (error) {
+    await supabaseAdmin.auth.admin.deleteUser(authUserId);
+    console.error("Failed to persist newly registered user.", error);
+    redirect(`${registerPath}?error=server`);
+  }
+
+  const supabase = createSupabaseServerClient();
+  const signIn = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+
+  if (signIn.error) {
+    redirect(`${audience === "admin" ? "/login/admin" : "/login/client"}?error=invalid_credentials`);
+  }
+
+  redirect(getDefaultPathForRole(role));
 }
 
 function parseAudience(value: FormDataEntryValue | null) {
