@@ -1,30 +1,42 @@
 # Commands
 
+## Ambiente
+- Node: `20.x`
+- NPM: `>=9.0.0`
+
+Evidencia:
+- `package.json` (`engines`)
+
 ## Desenvolvimento
-- `npm run dev`: sobe ambiente local Next.js.
-- `npm run start`: executa build ja gerada.
+- `npm run dev`: inicia aplicacao Next em modo desenvolvimento
+- `npm run build`: gera Prisma Client e executa build (`prisma generate && next build`)
+- `npm run start`: inicia aplicacao em modo producao
 
 ## Qualidade
-- `npm run lint`: executa ESLint.
-- `npm run typecheck`: executa checagem de tipos TypeScript.
+- `npm run lint`: lint com Next ESLint
+- `npm run typecheck`: checagem de tipos (`tsc --noEmit`)
 
 ## Testes
-- `npm run test`: suite completa Vitest.
-- `npm run test:unit`: testes unitarios Vitest.
-- `npm run test:integration`: testes de integracao Vitest.
-- `npm run test:e2e`: testes E2E Playwright.
-- `npm run test:watch`: modo watch do Vitest.
+- `npm run test`: suite completa Vitest
+- `npm run test:unit`: testes unitarios
+- `npm run test:integration`: testes de integracao
+- `npm run test:e2e`: testes E2E com Playwright
+- `npm run test:watch`: Vitest em watch mode
 
-## Build
-- `npm run build`: gera Prisma Client e build Next.js.
+## Prisma / Banco
+- `npm run prisma:validate`: valida schema Prisma
+- `npm run prisma:migrate`: cria/aplica migration no fluxo `prisma migrate dev`
+- `npm run prisma:seed`: executa seed (`tsx prisma/seed.ts`)
 
-## Banco/Prisma
-- `npm run prisma:validate`: valida schema Prisma.
-- `npm run prisma:migrate`: cria/aplica migration em dev.
-- `npm run prisma:seed`: executa seed.
+## Provisionamento / Auth
+- `npm run auth:provision`: executa `prisma/provision-auth-users.ts`
+- Script adicional identificado: `prisma/provision-saas-accounts.ts` (sem alias em `package.json`)
 
-## Auth/Supabase
-- `npm run auth:provision`: provisiona usuarios auth via script.
+## Automacoes de install/commit
+- `postinstall`: `prisma generate`
+- `prepare`: `husky`
+- `lint-staged`: ESLint em `*.{ts,tsx,js,jsx}` e Prettier em `*.{json,md,css}`
 
-## Observacao
-Comandos acima foram extraidos de `package.json`.
+## Comandos nao identificados no repositorio
+- Script oficial de reset completo de banco
+- Script oficial de deploy automatizado de migrations em producao

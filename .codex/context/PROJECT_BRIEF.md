@@ -1,20 +1,19 @@
 # Project Brief
 
 ## Objetivo identificado
-Plataforma SaaS de cursos online (LMS) com area administrativa e area do aluno.
+Plataforma web de cursos (LMS) com separacao de acesso por perfil e areas distintas para autenticacao, painel administrativo/produtor e area do aluno.
 
 Evidencias:
-- Rotas admin em `src/app/admin/*`
-- Rotas aluno em `src/app/app/*`
-- Entidades de dominio em `prisma/schema.prisma`
+- Rotas em `src/app/admin/*`, `src/app/app/*` e `src/app/(auth)/login/*`
+- Modelo de dominio em `prisma/schema.prisma`
 
 ## Stack identificada
 - Next.js 14 (App Router) + React 18 + TypeScript
 - Tailwind CSS
 - Prisma ORM + PostgreSQL
 - Supabase Auth (`@supabase/ssr` e `@supabase/supabase-js`)
+- Zod para validacao de entradas
 - Vitest (unit/integration) e Playwright (e2e)
-- ESLint + Prettier + Husky + lint-staged
 
 Evidencias:
 - `package.json`
@@ -22,31 +21,26 @@ Evidencias:
 - `src/lib/supabase/*`
 - `src/tests/*`
 
-## Dominios funcionais identificados
-- Organizacoes/tenants (`Organization`)
-- Usuarios e papeis (`User`, `UserRole`)
-- Perfil de aluno (`StudentProfile`)
-- Cursos, modulos e aulas (`Course`, `Module`, `Lesson`)
-- Matriculas (`Enrollment`)
-- Progresso de aula (`LessonProgress`)
-- Anotacoes por aula (`LessonNote`)
-
-Evidencia:
-- `prisma/schema.prisma`
+## Modulos principais identificados
+- Autenticacao/login/cadastro: `src/server/actions/auth-actions.ts`, `src/app/(auth)/login/*`
+- Painel admin/produtor (dashboard, cursos, modulos, aulas, alunos, matriculas, usuarios): `src/app/admin/*`, `src/server/services/admin-service.ts`
+- Area do aluno (meus cursos, aula, cadernos, meus dados): `src/app/app/*`, `src/server/services/student-service.ts`
+- Camada de dados/admin e aluno: `src/server/repositories/admin-repository.ts`, `src/server/repositories/student-repository.ts`
 
 ## Regras aparentes no repositorio
-- Segregacao de acesso por papel (`ADMIN` e `STUDENT`) com middleware e guards server-side.
-- Autorizacao critica no servidor (nao confiar apenas no frontend).
-- Isolamento por tenant via `organizationId` nas operacoes administrativas.
-- Fluxo administrativo e do aluno separados por rotas.
+- Controle de acesso por papeis `ADMIN`, `PRODUCER`, `STUDENT`.
+- Rotas protegidas por middleware e guards server-side.
+- Escopo de dados por organizacao (`organizationId`) e ownership por produtor em cursos/alunos.
+- Regras de acesso de aluno condicionadas a matricula e estado de curso/conteudo.
 
 Evidencias:
 - `middleware.ts`
-- `src/server/auth/guards.ts`
 - `src/server/permissions/rbac.ts`
+- `src/server/auth/guards.ts`
 - `src/server/services/admin-service.ts`
+- `src/server/services/student-service.ts`
 
 ## Itens nao identificados no repositorio
-- SLO/SLA formal
-- Processo oficial de release/versionamento
-- Estrategia de observabilidade centralizada
+- SLA/SLO formal
+- Processo formal de release/versionamento
+- Observabilidade centralizada (APM, tracing, metrics)

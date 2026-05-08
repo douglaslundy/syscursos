@@ -1,58 +1,63 @@
 # Architecture
 
 ## Visao geral
-Aplicacao monolitica Next.js (App Router) com renderizacao server-side e Server Actions para mutacoes.
+Aplicacao monolitica em Next.js (App Router), com renderizacao server-side e mutacoes via Server Actions.
 
-Fluxo tecnico identificado:
-1. UI em `src/app/*` e `src/components/*`.
-2. Mutacoes por Server Actions em `src/server/actions/*`.
-3. Regras de negocio em `src/server/services/*`.
-4. Persistencia em `src/server/repositories/*`.
-5. Banco via Prisma em `src/lib/db/prisma.ts`.
+Fluxo principal identificado:
+1. Rotas e paginas em `src/app/*`
+2. Acoes server em `src/server/actions/*`
+3. Regras de negocio em `src/server/services/*`
+4. Persistencia em `src/server/repositories/*`
+5. Acesso a banco via Prisma em `src/lib/db/prisma.ts`
 
-## Camadas
-- `src/app`: rotas, layouts, paginas.
-- `src/components`: componentes visuais (admin/student/shared/ui).
-- `src/server/actions`: entrada de mutacoes acionadas pela UI.
-- `src/server/services`: regras, autorizacao e orquestracao.
-- `src/server/repositories`: queries/mutacoes no Prisma.
-- `src/server/validators`: validacao com Zod.
-- `src/server/auth` e `src/server/permissions`: sessao, guards e RBAC.
-- `src/lib/supabase`: clientes Supabase (server/middleware/admin).
+## Camadas identificadas
+- `src/app`: rotas, layouts, paginas e handlers
+- `src/components`: componentes de UI (admin, student, shared)
+- `src/server/actions`: entrada de mutacoes disparadas por formulario
+- `src/server/services`: regras de negocio e autorizacao
+- `src/server/repositories`: queries/mutacoes no banco
+- `src/server/validators`: schemas Zod
+- `src/server/auth` e `src/server/permissions`: sessao, guards, RBAC
+- `src/lib/supabase`: clientes Supabase server/middleware/admin
+- `src/lib/db`: singleton Prisma Client
 
-## Dados e tenancy
-- Banco PostgreSQL com Prisma.
-- Modelo multi-tenant por `Organization`.
-- `User` e `Course` vinculados por `organizationId`.
-- Operacoes administrativas passam `organizationId` para restringir escopo.
+## Dados e modelo
+- Banco PostgreSQL com Prisma
+- Estrutura multi-tenant por `Organization`
+- `User` ligado a `Organization` e com papeis `ADMIN`, `PRODUCER`, `STUDENT`
+- `Course` ligado a `Organization` e a um `producerId`
+- Vinculo produtor-aluno por `ProducerStudent`
+- Conteudo em hierarquia `Course -> Module -> Lesson`
+- Acesso do aluno por `Enrollment`; progresso por `LessonProgress`; anotacoes por `LessonNote`
 
-Evidencias:
+Evidencia:
 - `prisma/schema.prisma`
-- `src/server/services/admin-service.ts`
-- `src/server/repositories/admin-repository.ts`
 
 ## Autenticacao e autorizacao
-- Sessao via Supabase Auth.
-- Middleware para bloquear rotas por contexto de usuario.
-- Guards server-side com redirecionamento para login em erro/autorizacao.
-- Regras de rota por papel: `/admin` e `/app`.
+- Sessao via Supabase Auth
+- Middleware em `middleware.ts` para proteger `/admin`, `/app` e fluxos de login
+- RBAC por rota em `src/server/permissions/rbac.ts`
+- Guards server-side (`requireRole` / `requireAnyRole`) em `src/server/auth/guards.ts`
+
+## Padrao de acesso a dados
+- Listagens administrativas com paginacao via repository (`PageResult`)
+- Queries com escopo por organizacao e papel do ator
+- Uso pontual de SQL agregada (`$queryRaw`) para metricas de dashboard
 
 Evidencias:
-- `middleware.ts`
-- `src/server/auth/session.ts`
-- `src/server/auth/guards.ts`
-- `src/server/permissions/rbac.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
 
-## Qualidade e testes
+## Testes e qualidade
 - Lint: `next lint`
 - Typecheck: `tsc --noEmit`
-- Testes: Vitest (unit/integration), Playwright (e2e)
-- Build: `prisma generate && next build`
+- Unit/integration: Vitest
+- E2E: Playwright
 
 Evidencia:
 - `package.json`
 
 ## Itens nao identificados no repositorio
-- Arquitetura de microservicos
-- Mensageria/event bus
+- Microservicos
+- Filas/event bus
 - Cache distribuido dedicado
