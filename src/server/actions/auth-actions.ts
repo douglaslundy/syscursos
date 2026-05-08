@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loginSchema, registerSchema } from "@/server/auth/schemas";
+import { withDbRetry } from "@/server/db/retry";
 import { getDefaultPathForRole } from "@/server/permissions/rbac";
 
 export async function loginAction(formData: FormData) {
@@ -45,17 +46,19 @@ export async function loginAction(formData: FormData) {
   } | null;
 
   try {
-    appUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ authUserId: data.user.id }, { email: data.user.email }],
-      },
-      select: {
-        id: true,
-        role: true,
-        status: true,
-        accessExpiresAt: true,
-      },
-    });
+    appUser = await withDbRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          OR: [{ authUserId: data.user.id }, { email: data.user.email }],
+        },
+        select: {
+          id: true,
+          role: true,
+          status: true,
+          accessExpiresAt: true,
+        },
+      }),
+    );
   } catch (error) {
     console.error("Failed to load application user during login.", error);
     await supabase.auth.signOut();
@@ -72,10 +75,18 @@ export async function loginAction(formData: FormData) {
     redirect(`${loginPath}?error=inactive`);
   }
 
-  await prisma.user.updateMany({
-    where: { id: appUser.id },
-    data: { lastLoginAt: new Date() },
-  });
+  try {
+    await withDbRetry(() =>
+      prisma.user.updateMany({
+        where: { id: appUser.id },
+        data: { lastLoginAt: new Date() },
+      }),
+    );
+  } catch (error) {
+    console.error("Failed to update last login timestamp.", error);
+    await supabase.auth.signOut();
+    redirect(`${loginPath}?error=server`);
+  }
 
   if (audience === "admin" && appUser.role !== "ADMIN" && appUser.role !== "PRODUCER") {
     await supabase.auth.signOut();

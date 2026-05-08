@@ -2,6 +2,7 @@ import { cache } from "react";
 
 import { prisma } from "@/lib/db/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { withDbRetry } from "@/server/db/retry";
 import type { AuthenticatedUser, AuthResult } from "@/server/auth/types";
 
 export const getCurrentUser = cache(async (): Promise<AuthResult> => {
@@ -25,27 +26,29 @@ export const getCurrentUser = cache(async (): Promise<AuthResult> => {
   let appUser;
 
   try {
-    appUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ authUserId: supabaseUser.id }, { email: supabaseUser.email ?? "" }],
-      },
-      select: {
-        id: true,
-        organizationId: true,
-        authUserId: true,
-        email: true,
-        name: true,
-        role: true,
-        status: true,
-        accessExpiresAt: true,
-        lastLoginAt: true,
-        studentProfile: {
-          select: {
-            id: true,
+    appUser = await withDbRetry(() =>
+      prisma.user.findFirst({
+        where: {
+          OR: [{ authUserId: supabaseUser.id }, { email: supabaseUser.email ?? "" }],
+        },
+        select: {
+          id: true,
+          organizationId: true,
+          authUserId: true,
+          email: true,
+          name: true,
+          role: true,
+          status: true,
+          accessExpiresAt: true,
+          lastLoginAt: true,
+          studentProfile: {
+            select: {
+              id: true,
+            },
           },
         },
-      },
-    });
+      }),
+    );
   } catch (error) {
     console.error("Failed to load application user session.", error);
     return { ok: false, reason: "SERVER_ERROR" };
