@@ -194,6 +194,12 @@ function ModuleForm({ courseId, module }: ModuleFormProps) {
         placeholder="URL HTTPS da capa do modulo (opcional)"
         type="url"
       />
+      <input
+        accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
+        name="coverImageFile"
+        type="file"
+      />
     </form>
   );
 }

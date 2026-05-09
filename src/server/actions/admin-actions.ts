@@ -65,7 +65,16 @@ export async function deleteCourseAction(formData: FormData) {
 }
 
 export async function saveModuleAction(formData: FormData) {
-  const input = parseForm(moduleSchema, formData, "/admin/courses");
+  let input: z.output<typeof moduleSchema>;
+  try {
+    input = await parseModuleForm(formData, "/admin/courses");
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+    console.error("Failed to parse or upload module cover.", error);
+    redirect("/admin/courses?status=invalid");
+  }
   const path = `/admin/courses/${input.courseId}/modules`;
   await runAdminMutation(path, "saved", async () => {
     await saveModule(input);
@@ -213,6 +222,26 @@ async function parseCourseForm(formData: FormData, errorPath: string) {
   return parsed.data;
 }
 
+async function parseModuleForm(formData: FormData, errorPath: string) {
+  const draft = Object.fromEntries(formData.entries());
+  const coverFile = formData.get("coverImageFile");
+  delete draft.coverImageFile;
+
+  if (coverFile instanceof File && coverFile.size > 0) {
+    assertValidImageCover(coverFile, errorPath);
+    draft.coverImageUrl = await uploadImageCover(coverFile, "modules");
+  }
+
+  const parsed = moduleSchema.safeParse(draft);
+
+  if (!parsed.success) {
+    console.error("Invalid admin module input.", parsed.error.flatten());
+    redirect(`${errorPath}?status=invalid`);
+  }
+
+  return parsed.data;
+}
+
 function requiredString(formData: FormData, key: string, errorPath: string) {
   const value = formData.get(key);
 
@@ -276,7 +305,17 @@ function isRedirectError(error: unknown) {
 }
 
 function assertValidCourseCover(file: File, errorPath: string) {
-  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+  assertValidImageCover(file, errorPath);
+}
+
+function assertValidImageCover(file: File, errorPath: string) {
+  const allowedTypes = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/avif",
+  ]);
   const maxBytes = 5 * 1024 * 1024;
 
   if (!allowedTypes.has(file.type) || file.size > maxBytes) {
@@ -285,12 +324,16 @@ function assertValidCourseCover(file: File, errorPath: string) {
 }
 
 async function uploadCourseCover(file: File) {
+  return uploadImageCover(file, "courses");
+}
+
+async function uploadImageCover(file: File, folder: "courses" | "modules") {
   const supabase = createSupabaseAdminClient();
   const bucket = process.env.SUPABASE_COURSE_COVER_BUCKET ?? "course-covers";
   await ensureCourseCoverBucket(supabase, bucket);
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "bin";
   const sanitizedExtension = extension.replace(/[^a-z0-9]/g, "") || "bin";
-  const path = `courses/${Date.now()}-${crypto.randomUUID()}.${sanitizedExtension}`;
+  const path = `${folder}/${Date.now()}-${crypto.randomUUID()}.${sanitizedExtension}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
 
   const upload = await supabase.storage.from(bucket).upload(path, bytes, {
@@ -320,7 +363,7 @@ async function ensureCourseCoverBucket(supabase: SupabaseClient, bucket: string)
   const created = await supabase.storage.createBucket(bucket, {
     public: true,
     fileSizeLimit: "5MB",
-    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"],
   });
 
   if (created.error && !created.error.message.toLowerCase().includes("already exists")) {
