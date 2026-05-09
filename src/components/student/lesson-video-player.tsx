@@ -66,7 +66,7 @@ export function LessonVideoPlayer({
   }, [embedUrl]);
 
   useEffect(() => {
-    if (!embedUrl || isCompleted) {
+    if (!embedUrl) {
       return;
     }
 
@@ -115,7 +115,7 @@ export function LessonVideoPlayer({
     return () => {
       player?.destroy();
     };
-  }, [embedUrl, iframeId, isCompleted]);
+  }, [embedUrl, iframeId]);
 
   if (!playerUrl) {
     return (
