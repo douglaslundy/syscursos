@@ -139,6 +139,7 @@ export function LessonVideoPlayer({
       <form action={completeLessonAction} className="hidden" ref={formRef}>
         <input name="courseId" type="hidden" value={courseId} />
         <input name="lessonId" type="hidden" value={lessonId} />
+        <input name="isCompleted" type="hidden" value="true" />
       </form>
     </>
   );

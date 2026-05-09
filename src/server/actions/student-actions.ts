@@ -33,7 +33,8 @@ export async function completeLessonAction(formData: FormData) {
     throw new Error("Entrada de progresso invalida.");
   }
 
-  const shouldComplete = formData.get("isCompleted") === "true";
+  const isCompletedRaw = formData.get("isCompleted");
+  const shouldComplete = isCompletedRaw === null ? true : isCompletedRaw === "true";
   await toggleLessonCompletion(parsed.data, shouldComplete);
   revalidatePath(`/app/courses/${parsed.data.courseId}`);
   revalidatePath(`/app/courses/${parsed.data.courseId}/lessons/${parsed.data.lessonId}`);
