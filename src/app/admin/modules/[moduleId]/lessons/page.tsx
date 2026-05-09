@@ -48,6 +48,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
         </div>
         <LessonForm
           key={`${module.id}-${editingLesson?.id ?? "new"}-${formReset}`}
+          formResetToken={formReset}
           lesson={
             editingLesson
               ? {
@@ -144,6 +145,7 @@ function adminEditHref(
 type LessonFormProps = {
   moduleId: string;
   suggestedPosition: number;
+  formResetToken: string;
   lesson?: {
     id: string;
     title: string;
@@ -155,24 +157,28 @@ type LessonFormProps = {
   };
 };
 
-function LessonForm({ moduleId, lesson, suggestedPosition }: LessonFormProps) {
+function LessonForm({ moduleId, lesson, suggestedPosition, formResetToken }: LessonFormProps) {
+  const baseKey = `${moduleId}-${lesson?.id ?? "new"}-${formResetToken}`;
   return (
     <form
       action={saveLessonAction}
       autoComplete="off"
       className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]"
+      key={baseKey}
     >
       <input name="moduleId" type="hidden" value={moduleId} />
       {lesson ? <input name="id" type="hidden" value={lesson.id} /> : null}
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={lesson?.title ?? ""}
+        key={`${baseKey}-title`}
         name="title"
         placeholder="Titulo"
       />
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={lesson?.position ?? suggestedPosition}
+        key={`${baseKey}-position`}
         min={1}
         name="position"
         type="number"
@@ -180,6 +186,7 @@ function LessonForm({ moduleId, lesson, suggestedPosition }: LessonFormProps) {
       <select
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={lesson?.status ?? "ACTIVE"}
+        key={`${baseKey}-status`}
         name="status"
       >
         <option value="ACTIVE">Ativo</option>
@@ -189,18 +196,21 @@ function LessonForm({ moduleId, lesson, suggestedPosition }: LessonFormProps) {
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
         defaultValue={lesson?.youtubeUrl ?? ""}
+        key={`${baseKey}-youtubeUrl`}
         name="youtubeUrl"
         placeholder="https://www.youtube.com/watch?v=..."
       />
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={lesson?.youtubeVideoId ?? ""}
+        key={`${baseKey}-youtubeVideoId`}
         name="youtubeVideoId"
         placeholder="Video ID"
       />
       <textarea
         className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
         defaultValue={lesson?.description ?? ""}
+        key={`${baseKey}-description`}
         name="description"
         placeholder="Descricao"
       />
