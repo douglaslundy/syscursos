@@ -4,11 +4,13 @@
 - `main`
 
 ## Ultimos commits identificados
-- `a1900a1 perf(dashboard): reduce query volume with aggregated joins`
-- `5953a54 fix(admin): preserve redirect errors and classify storage config failures`
-- `67aaef3 fix(storage): ensure course cover bucket exists before upload`
-- `6cc69fc feat(dashboard): add lesson KPIs and role-based filters`
-- `96f81a4 fix(auth): add transient db retry for login and session lookup`
+- `7a3a5e4 feat(student): permitir desmarcar aula concluída`
+- `8bc96db feat(lessons): sugerir posição automática por total do módulo`
+- `0c99303 fix(lessons): limpar formulário ao trocar contexto de módulo`
+- `80afd6a feat(modules): exibir capa na listagem de módulos`
+- `602e8bf feat(modules): aceitar upload de capa por arquivo`
+- `495ab86 feat(producer): liberar cadastro de alunos no painel`
+- `2d322f7 fix(auth): preservar login por contexto admin/client`
 
 ## Estado do workspace no momento da leitura
 - `git status --short`: sem arquivos modificados antes desta atualizacao de contexto.
@@ -35,6 +37,13 @@
   - `ADMIN` e `PRODUCER` direcionados para `/admin`
   - `PRODUCER` com restricoes de rotas administrativas especificas
 - Escopo de dados por tenant (`organization_id`) e ownership por produtor (`producer_id`, `producer_students`).
+- Upload de capa por arquivo habilitado para cursos e modulos com storage Supabase.
+
+## Validacoes executadas nesta rodada
+- `npm.cmd run lint`: falhou (`next` nao encontrado no ambiente atual).
+- `npm.cmd run typecheck`: falhou (`tsc` nao encontrado no ambiente atual).
+- `npm.cmd run test`: falhou (`vitest` nao encontrado no ambiente atual).
+- `npm.cmd run build`: falhou (`prisma`/`next` nao encontrados no ambiente atual).
 
 ## Itens nao identificados no repositorio
 - Procedimento operacional oficial de deploy de migration em producao.
