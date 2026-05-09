@@ -9,7 +9,6 @@ type LessonVideoPlayerProps = {
   title: string;
   courseId: string;
   lessonId: string;
-  isCompleted: boolean;
 };
 
 type YouTubePlayerEvent = {
@@ -45,7 +44,6 @@ export function LessonVideoPlayer({
   title,
   courseId,
   lessonId,
-  isCompleted,
 }: LessonVideoPlayerProps) {
   const iframeId = useId().replace(/:/g, "");
   const formRef = useRef<HTMLFormElement | null>(null);

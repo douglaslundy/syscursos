@@ -74,7 +74,6 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
           <LessonVideoPlayer
             courseId={courseId}
             embedUrl={data.embedUrl}
-            isCompleted={data.isCompleted}
             lessonId={lessonId}
             title={data.lesson.title}
           />
