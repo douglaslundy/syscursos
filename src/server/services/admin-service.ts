@@ -96,7 +96,7 @@ export async function removeLesson(id: string) {
 }
 
 export async function getStudents(input: PaginationInput) {
-  const admin = await requireAdmin();
+  const admin = await requireAdminOrProducer();
   return repository.listStudents(admin.organizationId, admin.id, admin.role, input);
 }
 

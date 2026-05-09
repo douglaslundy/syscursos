@@ -94,11 +94,9 @@ export function decideRouteAccess(pathname: string, user: UserAccessContext): Ro
 function isProducerRestrictedPath(pathname: string) {
   return (
     pathname === "/admin/users" ||
-    pathname === "/admin/students" ||
-    pathname.startsWith("/admin/students/") ||
     pathname === "/admin/enrollments" ||
     pathname.startsWith("/admin/enrollments/") ||
-    pathname.includes("/students")
+    (pathname.startsWith("/admin/courses/") && pathname.endsWith("/students"))
   );
 }
 

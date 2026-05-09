@@ -66,6 +66,9 @@ describe("rbac route decisions", () => {
       allowed: true,
     });
     expect(decideRouteAccess("/admin/students", { role: "PRODUCER", status: "ACTIVE" })).toEqual({
+      allowed: true,
+    });
+    expect(decideRouteAccess("/admin/courses/abc/students", { role: "PRODUCER", status: "ACTIVE" })).toEqual({
       allowed: false,
       redirectTo: "/admin?error=forbidden",
       reason: "FORBIDDEN",
