@@ -80,7 +80,14 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
               <p className="mt-3 text-sm text-muted-foreground">{module.description}</p>
             ) : null}
             {module.coverImageUrl ? (
-              <p className="mt-2 break-all text-xs text-muted-foreground">Capa: {module.coverImageUrl}</p>
+              <div className="mt-2 space-y-2">
+                <img
+                  alt={`Capa do modulo ${module.title}`}
+                  className="h-24 w-full rounded-md border border-stroke-subtle object-cover md:w-56"
+                  src={module.coverImageUrl}
+                />
+                <p className="break-all text-xs text-muted-foreground">Capa: {module.coverImageUrl}</p>
+              </div>
             ) : null}
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
