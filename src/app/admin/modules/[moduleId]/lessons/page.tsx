@@ -47,7 +47,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
           ) : null}
         </div>
         <LessonForm
-          key={`${editingLesson?.id ?? "new"}-${formReset}`}
+          key={`${module.id}-${editingLesson?.id ?? "new"}-${formReset}`}
           lesson={
             editingLesson
               ? {
