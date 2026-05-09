@@ -66,7 +66,8 @@ function handleMiddlewareFailure(request: NextRequest, response: NextResponse) {
     return response;
   }
 
-  return NextResponse.redirect(new URL("/login/client?error=server", request.url));
+  const loginPath = request.nextUrl.pathname.startsWith("/admin") ? "/login/admin" : "/login/client";
+  return NextResponse.redirect(new URL(`${loginPath}?error=server`, request.url));
 }
 
 async function resolveAccessContext(

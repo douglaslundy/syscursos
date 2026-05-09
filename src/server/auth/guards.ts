@@ -10,13 +10,14 @@ export async function requireRole(role: UserRole) {
 
 export async function requireAnyRole(roles: UserRole[]) {
   const result = await getCurrentUser();
+  const loginPath = resolveLoginPath(roles);
 
   if (!result.ok) {
     if (result.reason === "SERVER_ERROR") {
-      redirect("/login/client?error=server");
+      redirect(`${loginPath}?error=server`);
     }
 
-    redirect("/login/client");
+    redirect(loginPath);
   }
 
   if (!roles.includes(result.user.role)) {
@@ -24,4 +25,9 @@ export async function requireAnyRole(roles: UserRole[]) {
   }
 
   return result.user;
+}
+
+function resolveLoginPath(roles: UserRole[]) {
+  const adminOnly = roles.every((role) => role === "ADMIN" || role === "PRODUCER");
+  return adminOnly ? "/login/admin" : "/login/client";
 }
