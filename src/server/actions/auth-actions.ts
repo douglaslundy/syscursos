@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db/prisma";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loginSchema, registerSchema } from "@/server/auth/schemas";
+import { getCurrentUser } from "@/server/auth/session";
 import { withDbRetry } from "@/server/db/retry";
 import { getDefaultPathForRole } from "@/server/permissions/rbac";
 
@@ -106,9 +107,13 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function logoutAction() {
+  const currentUser = await getCurrentUser();
+  const loginPath = currentUser.ok && (currentUser.user.role === "ADMIN" || currentUser.user.role === "PRODUCER")
+    ? "/login/admin"
+    : "/login/client";
   const supabase = createSupabaseServerClient();
   await supabase.auth.signOut();
-  redirect("/login/client");
+  redirect(loginPath);
 }
 
 export async function registerAction(formData: FormData) {
