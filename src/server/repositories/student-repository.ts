@@ -186,6 +186,48 @@ export async function markLessonCompleted(studentId: string, lessonId: string) {
   });
 }
 
+export async function toggleLessonCompleted(studentId: string, lessonId: string, isCompleted: boolean) {
+  if (isCompleted) {
+    return prisma.lessonProgress.upsert({
+      where: {
+        studentId_lessonId: {
+          studentId,
+          lessonId,
+        },
+      },
+      update: {
+        status: LessonProgressStatus.COMPLETED,
+        completedAt: new Date(),
+      },
+      create: {
+        studentId,
+        lessonId,
+        status: LessonProgressStatus.COMPLETED,
+        completedAt: new Date(),
+      },
+    });
+  }
+
+  return prisma.lessonProgress.upsert({
+    where: {
+      studentId_lessonId: {
+        studentId,
+        lessonId,
+      },
+    },
+    update: {
+      status: LessonProgressStatus.NOT_STARTED,
+      completedAt: null,
+    },
+    create: {
+      studentId,
+      lessonId,
+      status: LessonProgressStatus.NOT_STARTED,
+      completedAt: null,
+    },
+  });
+}
+
 export async function findLessonNote(studentId: string, lessonId: string) {
   return prisma.lessonNote.findUnique({
     where: {

@@ -156,6 +156,10 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
 }
 
 export async function completeLesson(input: CompleteLessonInput) {
+  return toggleLessonCompletion(input, true);
+}
+
+export async function toggleLessonCompletion(input: CompleteLessonInput, isCompleted: boolean) {
   const studentId = await requireStudentProfileId();
   const enrollment = await repository.findEnrollmentForCourse(studentId, input.courseId);
 
@@ -169,7 +173,7 @@ export async function completeLesson(input: CompleteLessonInput) {
     notFound();
   }
 
-  return repository.markLessonCompleted(studentId, input.lessonId);
+  return repository.toggleLessonCompleted(studentId, input.lessonId, isCompleted);
 }
 
 export async function saveLessonNote(input: LessonNoteInput) {

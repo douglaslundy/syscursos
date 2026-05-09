@@ -21,7 +21,7 @@ const repositoryMock = vi.hoisted(() => ({
   getActiveLessonForStudent: vi.fn(),
   findLessonProgress: vi.fn(),
   findLessonNote: vi.fn(),
-  markLessonCompleted: vi.fn(),
+  toggleLessonCompleted: vi.fn(),
   upsertLessonNote: vi.fn(),
   listNotebookCourseOptions: vi.fn(),
   listNotebookNotes: vi.fn(),
@@ -155,7 +155,7 @@ describe("student service", () => {
       activeEnrollment("course-id", "Curso"),
     );
     repositoryMock.getActiveLessonForStudent.mockResolvedValue(activeLesson());
-    repositoryMock.markLessonCompleted.mockResolvedValue({ status: "COMPLETED" });
+    repositoryMock.toggleLessonCompleted.mockResolvedValue({ status: "COMPLETED" });
 
     await expect(
       completeLesson({
@@ -163,9 +163,10 @@ describe("student service", () => {
         lessonId: "lesson-id",
       }),
     ).resolves.toMatchObject({ status: "COMPLETED" });
-    expect(repositoryMock.markLessonCompleted).toHaveBeenCalledWith(
+    expect(repositoryMock.toggleLessonCompleted).toHaveBeenCalledWith(
       "student-profile-id",
       "lesson-id",
+      true,
     );
   });
 

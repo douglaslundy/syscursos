@@ -62,6 +62,13 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
         </div>
       ) : null}
 
+      {searchParams?.status === "uncompleted" ? (
+        <div className="mt-5 flex items-center gap-2 rounded-md border border-stroke-subtle bg-surface px-4 py-3 text-sm text-copy-primary">
+          <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
+          Marcacao de conclusao removida.
+        </div>
+      ) : null}
+
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
           <LessonVideoPlayer
@@ -116,12 +123,12 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
       <form action={completeLessonAction} className="mt-3">
         <input name="courseId" type="hidden" value={courseId} />
         <input name="lessonId" type="hidden" value={lessonId} />
+        <input name="isCompleted" type="hidden" value={data.isCompleted ? "false" : "true"} />
         <button
           className="inline-flex min-h-11 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={data.isCompleted}
           type="submit"
         >
-          {data.isCompleted ? "Aula concluida" : "Marcar como concluida"}
+          {data.isCompleted ? "Desmarcar aula concluida" : "Marcar como concluida"}
         </button>
       </form>
 

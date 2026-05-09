@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { completeLesson } from "@/server/services/student-service";
+import { toggleLessonCompletion } from "@/server/services/student-service";
 import { saveLessonNote } from "@/server/services/student-service";
 import { updateOwnStudentProfile } from "@/server/services/student-service";
 import {
@@ -33,10 +33,12 @@ export async function completeLessonAction(formData: FormData) {
     throw new Error("Entrada de progresso invalida.");
   }
 
-  await completeLesson(parsed.data);
+  const shouldComplete = formData.get("isCompleted") === "true";
+  await toggleLessonCompletion(parsed.data, shouldComplete);
   revalidatePath(`/app/courses/${parsed.data.courseId}`);
   revalidatePath(`/app/courses/${parsed.data.courseId}/lessons/${parsed.data.lessonId}`);
-  redirect(`/app/courses/${parsed.data.courseId}/lessons/${parsed.data.lessonId}?status=completed`);
+  const status = shouldComplete ? "completed" : "uncompleted";
+  redirect(`/app/courses/${parsed.data.courseId}/lessons/${parsed.data.lessonId}?status=${status}`);
 }
 
 export async function saveLessonNoteAction(input: unknown): Promise<SaveLessonNoteResult> {
