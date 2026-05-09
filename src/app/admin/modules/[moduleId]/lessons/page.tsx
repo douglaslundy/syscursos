@@ -62,6 +62,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
               : undefined
           }
           moduleId={module.id}
+          suggestedPosition={lessons.total + 1}
         />
       </div>
       <SearchForm query={pagination.query} />
@@ -142,6 +143,7 @@ function adminEditHref(
 
 type LessonFormProps = {
   moduleId: string;
+  suggestedPosition: number;
   lesson?: {
     id: string;
     title: string;
@@ -153,7 +155,7 @@ type LessonFormProps = {
   };
 };
 
-function LessonForm({ moduleId, lesson }: LessonFormProps) {
+function LessonForm({ moduleId, lesson, suggestedPosition }: LessonFormProps) {
   return (
     <form action={saveLessonAction} className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]">
       <input name="moduleId" type="hidden" value={moduleId} />
@@ -166,7 +168,7 @@ function LessonForm({ moduleId, lesson }: LessonFormProps) {
       />
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={lesson?.position ?? 1}
+        defaultValue={lesson?.position ?? suggestedPosition}
         min={1}
         name="position"
         type="number"
