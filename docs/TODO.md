@@ -415,3 +415,27 @@ px prisma migrate deploy no banco configurado.
 - [x] Executar `npm run lint`
 - [x] Executar `npm run typecheck`
 - [x] Executar `npm run test -- --run src/tests/integration/admin-repository.test.ts src/tests/integration/admin-service.test.ts`
+
+## Ajuste 2026-05-09 - Cadastro do curso Shibari
+
+- [x] Criar script idempotente para cadastrar curso `Shibari`
+- [x] Criar modulos a partir das linhas sem numeracao informadas
+- [x] Cadastrar aulas mantendo ordem de aparicao e sequencia
+- [x] Remover numeracao do nome de cada aula antes de gravar
+- [x] Manter modulos sem aulas quando explicitado no texto
+- [x] Vincular curso ao produtor `douglaslundy@gmail.com`
+- [x] Executar script `npx tsx prisma/create-shibari-course.ts`
+- [x] Validar curso e totais no banco
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [ ] Executar testes relevantes (nao aplicavel para carga de dados sem alteracao de regras de negocio)
+- [ ] Executar build (nao aplicavel para carga de dados sem alteracao de runtime)
+
+## Ajuste 2026-05-09 - Correcao de update no cadastro de modulos
+
+- [x] Identificar causa raiz do fluxo de edicao de modulo virar criacao
+- [x] Implementar busca de modulo por `editId` no backend
+- [x] Ajustar tela para usar modulo de edicao mesmo fora da pagina atual da listagem
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [ ] Executar testes relevantes (nao identificado teste especifico de pagina server component no repositorio)

@@ -753,3 +753,58 @@ Arquivos afetados:
 - `src/app/(auth)/login/admin/page.tsx`
 - `prisma/provision-saas-accounts.ts`
 - `src/tests/unit/rbac.test.ts`
+
+## 2026-05-09 - Cadastro idempotente do curso Shibari por script Prisma
+
+Decisao:
+
+Criar script dedicado `prisma/create-shibari-course.ts` para cadastrar/atualizar o curso `Shibari` com seus modulos e aulas, garantindo vinculo ao produtor `douglaslundy@gmail.com` e removendo a numeracao dos titulos de aula antes da persistencia.
+
+Motivo:
+
+A solicitacao exige carga estruturada de conteudo em grande volume, com ordenacao por sequencia, preservacao de modulos sem aulas e vinculo explicito de ownership ao produtor. Script idempotente reduz risco operacional e permite reexecucao segura.
+
+Alternativas consideradas:
+
+1. Cadastro manual pela interface administrativa.
+2. Insercoes SQL avulsas diretamente no banco.
+
+Impacto:
+
+- Curso `Shibari` passa a existir no banco com slug fixo `shibari`.
+- Modulos e aulas ficam alinhados ao material fornecido, incluindo modulos vazios quando explicitamente sem aulas.
+- Reexecucoes futuras do script mantem consistencia ao recriar a arvore de modulos/aulas do curso.
+
+Arquivos afetados:
+
+- `prisma/create-shibari-course.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`
+
+## 2026-05-09 - Edicao de modulo desacoplada da paginacao da listagem
+
+Decisao:
+
+Buscar o modulo em edicao por `editId` diretamente no backend (escopado por curso/tenant/ownership), em vez de depender apenas de `modules.items` da pagina atual da listagem.
+
+Motivo:
+
+Quando a listagem esta paginada ou filtrada, o modulo alvo pode nao estar presente no array renderizado. Nessa situacao, o formulario perdia o campo oculto `id`, e a action de salvar executava fluxo de criacao, disparando conflito de unicidade.
+
+Alternativas consideradas:
+
+1. Aumentar `pageSize` para tentar manter o item na pagina.
+2. Manter logica atual e exigir limpeza de filtros/paginacao antes de editar.
+
+Impacto:
+
+- Fluxo de edicao de modulo passa a ser estavel mesmo com filtros e paginacao ativos.
+- Reduz falsos conflitos de duplicidade ao renomear modulo.
+
+Arquivos afetados:
+
+- `src/server/repositories/admin-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`

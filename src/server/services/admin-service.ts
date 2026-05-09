@@ -70,6 +70,17 @@ export async function getModules(courseId: string, input: PaginationInput) {
   return repository.listModules(producer.organizationId, producer.id, producer.role, courseId, input);
 }
 
+export async function getModuleForEdit(courseId: string, moduleId: string) {
+  const producer = await requireProducer();
+  return repository.findModuleById(
+    producer.organizationId,
+    producer.id,
+    producer.role,
+    courseId,
+    moduleId,
+  );
+}
+
 export async function saveModule(input: ModuleInput) {
   const producer = await requireProducer();
   return repository.upsertModule(producer.organizationId, producer.id, producer.role, input);

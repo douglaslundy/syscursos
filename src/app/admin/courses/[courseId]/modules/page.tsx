@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { Feedback } from "@/components/admin/feedback";
@@ -5,7 +6,7 @@ import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { deleteModuleAction, saveModuleAction } from "@/server/actions/admin-actions";
-import { getModules } from "@/server/services/admin-service";
+import { getModuleForEdit, getModules } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 
 type ModulesPageProps = {
@@ -15,10 +16,10 @@ type ModulesPageProps = {
 
 export default async function ModulesPage({ params, searchParams }: ModulesPageProps) {
   const pagination = getPagination(searchParams);
-  const { course, modules } = await getModules(params.courseId, pagination);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const editId = getStringParam(searchParams, "editId");
-  const editingModule = modules.items.find((module) => module.id === editId);
+  const { course, modules } = await getModules(params.courseId, pagination);
+  const editingModule = editId ? await getModuleForEdit(params.courseId, editId) : null;
 
   return (
     <section>
@@ -81,10 +82,12 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
             ) : null}
             {module.coverImageUrl ? (
               <div className="mt-2 space-y-2">
-                <img
+                <Image
                   alt={`Capa do modulo ${module.title}`}
                   className="h-24 w-full rounded-md border border-stroke-subtle object-cover md:w-56"
                   src={module.coverImageUrl}
+                  width={224}
+                  height={96}
                 />
                 <p className="break-all text-xs text-muted-foreground">Capa: {module.coverImageUrl}</p>
               </div>

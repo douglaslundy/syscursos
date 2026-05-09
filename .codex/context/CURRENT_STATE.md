@@ -48,3 +48,28 @@
 ## Itens nao identificados no repositorio
 - Procedimento operacional oficial de deploy de migration em producao.
 - Matriz formal de observabilidade/monitoramento.
+
+## Atualizacao 2026-05-09 - Cadastro do curso Shibari
+- Script adicionado: `prisma/create-shibari-course.ts`.
+- Execucao realizada: `npx tsx prisma/create-shibari-course.ts`.
+- Resultado validado em banco: curso `Shibari` (slug `shibari`) vinculado ao produtor `douglaslundy@gmail.com`.
+- Estrutura cadastrada:
+  - 8 modulos
+  - 44 aulas
+  - Modulos sem aula: `Dó Ré Mi Na Wa` e `Menu Nawa V - Suspensão`
+- Regra aplicada: numeracao removida dos titulos de aula antes da gravacao.
+
+## Validacoes executadas nesta rodada (2026-05-09)
+- `npm run lint`: aprovado com 1 warning preexistente em `src/app/admin/courses/[courseId]/modules/page.tsx` (`@next/next/no-img-element`).
+- `npm run typecheck`: aprovado.
+
+## Atualizacao 2026-05-09 - Correcao de edicao de modulo
+- Causa raiz identificada: tela de modulos buscava `editId` apenas em `modules.items` (lista paginada/filtrada). Quando o item nao estava na pagina atual, o formulario perdia o campo `id` e a acao era interpretada como criacao.
+- Correcao aplicada: busca dedicada do modulo por `editId` no backend para popular o formulario de edicao independentemente da paginacao.
+- Arquivos alterados:
+  - `src/server/repositories/admin-repository.ts`
+  - `src/server/services/admin-service.ts`
+  - `src/app/admin/courses/[courseId]/modules/page.tsx`
+- Validacoes:
+  - `npm run lint` (aprovado com warning preexistente de `<img>`)
+  - `npm run typecheck` (aprovado)

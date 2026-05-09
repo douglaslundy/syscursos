@@ -210,6 +210,30 @@ export async function listModules(
   return { course, modules: pageResult(items, total, args) };
 }
 
+export async function findModuleById(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  courseId: string,
+  moduleId: string,
+) {
+  return prisma.module.findFirst({
+    where: {
+      id: moduleId,
+      courseId,
+      course: scopedCourseWhere(organizationId, actorUserId, actorRole),
+    },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      coverImageUrl: true,
+      position: true,
+      status: true,
+    },
+  });
+}
+
 export async function upsertModule(
   organizationId: string,
   actorUserId: string,

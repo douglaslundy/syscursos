@@ -1613,6 +1613,89 @@ px prisma migrate deploy`n
 
 - Nao identificadas no escopo desta etapa.
 
+---
+
+### 2026-05-09 - Correcao de edicao de modulo (update vs create)
+
+### Arquivos criados ou alterados
+
+- `src/server/repositories/admin-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Corrigido o fluxo de edicao de modulo para nao depender do item estar em `modules.items` da pagina atual.
+- Adicionada busca dedicada de modulo por `editId` no backend, com escopo de seguranca por tenant/ownership.
+- Tela de modulos passa a preencher formulario de edicao com esse retorno dedicado, preservando envio de `id` para update.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado com warning preexistente (`@next/next/no-img-element`).
+- `npm run typecheck`: aprovado.
+
+### Riscos encontrados
+
+- Nao foram identificados riscos novos alem do warning visual preexistente de uso de `<img>`.
+
+### Pendencias
+
+- Nao identificadas no escopo desta etapa.
+
+---
+
+### 2026-05-09 - Cadastro do curso Shibari
+
+### Arquivos criados ou alterados
+
+- `prisma/create-shibari-course.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`
+
+### O que foi implementado
+
+- Criado script Prisma idempotente para cadastrar/atualizar o curso `Shibari` com slug `shibari`.
+- Vinculo do curso aplicado ao produtor `douglaslundy@gmail.com`.
+- Modulos criados conforme titulos nao numerados fornecidos.
+- Aulas criadas na ordem de aparicao, com remocao da numeracao no inicio do titulo.
+- Modulos sem aulas foram preservados (`Dó Ré Mi Na Wa` e `Menu Nawa V - Suspensão`).
+
+### Testes executados
+
+- `npx tsx prisma/create-shibari-course.ts`
+- `npm run lint`
+- `npm run typecheck`
+
+### Resultado dos testes
+
+- Script de carga: aprovado.
+- Verificacao em banco: curso localizado com 8 modulos e 44 aulas, produtor `douglaslundy@gmail.com`.
+- `npm run lint`: aprovado com 1 warning preexistente (`@next/next/no-img-element`).
+- `npm run typecheck`: aprovado.
+
+### Riscos encontrados
+
+- O script recria modulos/aulas do curso `shibari` a cada execucao (comportamento intencional para manter consistencia da trilha).
+
+### Pendencias
+
+- Nao identificadas no escopo desta etapa.
+
+### Proxima etapa recomendada
+
+- Validar visualmente no painel administrativo a ordenacao final de modulos e aulas.
+
 ### Proxima etapa recomendada
 
 - Validar manualmente login e alteracao de e-mail em `Meus dados` para admin, produtor e aluno.
