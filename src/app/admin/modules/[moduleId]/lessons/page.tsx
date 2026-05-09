@@ -157,12 +157,16 @@ type LessonFormProps = {
 
 function LessonForm({ moduleId, lesson, suggestedPosition }: LessonFormProps) {
   return (
-    <form action={saveLessonAction} className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]">
+    <form
+      action={saveLessonAction}
+      autoComplete="off"
+      className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]"
+    >
       <input name="moduleId" type="hidden" value={moduleId} />
       {lesson ? <input name="id" type="hidden" value={lesson.id} /> : null}
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={lesson?.title}
+        defaultValue={lesson?.title ?? ""}
         name="title"
         placeholder="Titulo"
       />
@@ -184,19 +188,19 @@ function LessonForm({ moduleId, lesson, suggestedPosition }: LessonFormProps) {
       <SubmitButton>{lesson ? "Salvar" : "Criar"}</SubmitButton>
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
-        defaultValue={lesson?.youtubeUrl}
+        defaultValue={lesson?.youtubeUrl ?? ""}
         name="youtubeUrl"
         placeholder="https://www.youtube.com/watch?v=..."
       />
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={lesson?.youtubeVideoId}
+        defaultValue={lesson?.youtubeVideoId ?? ""}
         name="youtubeVideoId"
         placeholder="Video ID"
       />
       <textarea
         className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
-        defaultValue={lesson?.description}
+        defaultValue={lesson?.description ?? ""}
         name="description"
         placeholder="Descricao"
       />
