@@ -190,3 +190,22 @@
   - `npm run lint`: aprovado.
   - `npm run build`: aprovado.
   - `npm run test`: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha ja registrada anteriormente.
+
+## Atualizacao 2026-05-10 - Consistencia final de edicao/exclusao de aluno
+- Causa raiz adicional identificada:
+  - o escopo de aluno para produtor dependia apenas de `producer_students`; registros acessiveis por matricula em cursos do produtor podiam falhar na edicao;
+  - exclusao de aluno removia somente o vinculo em `producer_students`, apesar da UI informar remocao de dados relacionados.
+- Correcao aplicada:
+  - escopo de aluno do produtor passou a aceitar `vinculo direto` OU `matricula em curso do produtor`;
+  - edicao valida `studentProfile.id + user.id` dentro do escopo e cria/normaliza vinculo `producer_students` quando necessario;
+  - exclusao de aluno agora remove o `user` do aluno (cascade de `studentProfile`, matriculas, progresso e notas), com validacao de escopo;
+  - mapeamento generico de erros passou a reconhecer `StudentMutationError` para nao cair em mensagem generica.
+- Arquivos alterados:
+  - `src/server/repositories/admin-repository.ts`
+  - `src/server/actions/admin-actions.ts`
+- Validacoes:
+  - `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/integration/admin-service.test.ts src/tests/integration/admin-repository.test.ts src/tests/unit/admin-validators.test.ts`: aprovado.
+  - `npm run typecheck`: aprovado.
+  - `npm run lint`: aprovado.
+  - `npm run build`: aprovado.
+  - `npm run test`: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha preexistente.

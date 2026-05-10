@@ -1631,6 +1631,54 @@ px prisma migrate deploy`n
 
 - Nao identificado no repositorio um teste de componente/server page que submeta o formulario real renderizado; a cobertura foi feita no schema/action/service.
 
+## Revisao 2026-05-10 - Consistencia de escopo e exclusao de aluno
+
+### Arquivos revisados
+
+- `src/server/repositories/admin-repository.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/app/admin/students/page.tsx`
+- `prisma/schema.prisma`
+- `src/tests/integration/admin-actions.test.ts`
+- `src/tests/integration/admin-service.test.ts`
+- `src/tests/integration/admin-repository.test.ts`
+- `src/tests/unit/admin-validators.test.ts`
+
+### Causa identificada
+
+- A listagem de alunos e os fluxos de mutacao podiam divergir por depender estritamente de `producer_students`.
+- Em cenarios com dados legados/incompletos, o aluno podia aparecer no contexto do produtor e falhar na edicao por escopo.
+- A exclusao retornava sucesso mesmo sem remover cadastro, porque apagava apenas o vinculo `producer_students`.
+
+### O que foi implementado
+
+- Escopo de aluno do produtor unificado para aceitar:
+  - vinculo direto em `producer_students`;
+  - matricula em curso cujo `producer_id` e o produtor atual.
+- Edicao de aluno passou a validar `studentProfile.id + user.id` dentro desse escopo e, quando necessario, cria o vinculo `producer_students`.
+- Exclusao de aluno passou a remover `users` (role `STUDENT`) no escopo do produtor, com cascata para `student_profiles`, `enrollments`, `lesson_progress` e `lesson_notes`.
+- Mapper generico de erro passou a reconhecer `StudentMutationError`, evitando fallback para mensagem generica.
+
+### Testes executados
+
+- `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/integration/admin-service.test.ts src/tests/integration/admin-repository.test.ts src/tests/unit/admin-validators.test.ts`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+- `npm run test`
+
+### Resultado dos testes
+
+- Testes focados: aprovados.
+- Typecheck: aprovado.
+- Lint: aprovado.
+- Build: aprovado.
+- Suite completa: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha preexistente.
+
+### Riscos encontrados
+
+- A exclusao agora e destrutiva para o cadastro do aluno no tenant; em cenarios de compartilhamento de aluno entre produtores no mesmo tenant, a remocao por um produtor remove o aluno para todos.
+
 - Cadastro publico de administrador fica aberto para qualquer e-mail nesta iteracao.
 - Nao foi identificado no repositorio um papel separado de "produtor"; o fluxo continua com roles `ADMIN` e `STUDENT`.
 

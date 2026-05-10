@@ -448,28 +448,49 @@ export async function upsertStudent(
   }
 
   if (input.id && input.studentProfileId) {
-    const currentUser = await prisma.user.findFirst({
+    const currentProfile = await prisma.studentProfile.findFirst({
       where: {
-        id: input.id,
-        organizationId,
-        role: UserRole.STUDENT,
-        studentProfile: {
-          id: input.studentProfileId,
-          producers: { some: { producerId: actorUserId } },
+        id: input.studentProfileId,
+        userId: input.id,
+        ...scopedStudentWhere(organizationId, actorUserId, actorRole),
+      },
+      select: {
+        id: true,
+        user: {
+          select: { authUserId: true },
+        },
+        producers: {
+          where: { producerId: actorUserId },
+          select: { id: true },
         },
       },
-      select: { authUserId: true },
     });
 
-    if (!currentUser) {
+    if (!currentProfile) {
       throw new StudentMutationError(
         "student_not_found",
         "Aluno nao encontrado para este produtor ou identificadores de edicao inconsistentes.",
       );
     }
 
+    if (currentProfile.producers.length === 0) {
+      await prisma.producerStudent.upsert({
+        where: {
+          producerId_studentId: {
+            producerId: actorUserId,
+            studentId: currentProfile.id,
+          },
+        },
+        update: {},
+        create: {
+          producerId: actorUserId,
+          studentId: currentProfile.id,
+        },
+      });
+    }
+
     const authUserId = await upsertStudentAuthUser({
-      authUserId: currentUser.authUserId,
+      authUserId: currentProfile.user.authUserId,
       email: input.email,
       password: input.password,
       name: input.name,
@@ -495,6 +516,7 @@ export async function upsertStudent(
   const existingStudent = await prisma.studentProfile.findFirst({
     where: {
       user: {
+        organizationId,
         role: UserRole.STUDENT,
         OR: [{ email: input.email }, ...(input.document ? [{ studentProfile: { document: input.document } }] : [])],
       },
@@ -568,16 +590,26 @@ export async function deleteStudent(
   }
 
   const profile = await prisma.studentProfile.findFirst({
-    where: { user: { id: userId, organizationId, role: UserRole.STUDENT } },
-    select: { id: true },
+    where: {
+      userId,
+      ...scopedStudentWhere(organizationId, actorUserId, actorRole),
+    },
+    select: { userId: true },
   });
 
   if (!profile) {
-    return { count: 0 };
+    throw new StudentMutationError(
+      "student_not_found",
+      "Aluno nao encontrado para este produtor.",
+    );
   }
 
-  return prisma.producerStudent.deleteMany({
-    where: { producerId: actorUserId, studentId: profile.id },
+  return prisma.user.deleteMany({
+    where: {
+      id: profile.userId,
+      organizationId,
+      role: UserRole.STUDENT,
+    },
   });
 }
 
@@ -1029,7 +1061,22 @@ function scopedStudentWhere(
     return { user: { organizationId, role: UserRole.STUDENT } };
   }
 
-  return { producers: { some: { producerId: actorUserId } } };
+  return {
+    user: { organizationId, role: UserRole.STUDENT },
+    OR: [
+      { producers: { some: { producerId: actorUserId } } },
+      {
+        enrollments: {
+          some: {
+            course: {
+              organizationId,
+              producerId: actorUserId,
+            },
+          },
+        },
+      },
+    ],
+  };
 }
 
 function scopedStudentWhereWithFilters(
@@ -1043,9 +1090,39 @@ function scopedStudentWhereWithFilters(
 
   const baseWhere: Prisma.StudentProfileWhereInput = actorRole === UserRole.ADMIN
     ? producerId
-      ? { producers: { some: { producerId } } }
+      ? {
+          user: { organizationId, role: UserRole.STUDENT },
+          OR: [
+            { producers: { some: { producerId } } },
+            {
+              enrollments: {
+                some: {
+                  course: {
+                    organizationId,
+                    producerId,
+                  },
+                },
+              },
+            },
+          ],
+        }
       : { user: { organizationId, role: UserRole.STUDENT } }
-    : { producers: { some: { producerId: actorUserId } } };
+    : {
+        user: { organizationId, role: UserRole.STUDENT },
+        OR: [
+          { producers: { some: { producerId: actorUserId } } },
+          {
+            enrollments: {
+              some: {
+                course: {
+                  organizationId,
+                  producerId: actorUserId,
+                },
+              },
+            },
+          },
+        ],
+      };
 
   if (!studentId) {
     return baseWhere;

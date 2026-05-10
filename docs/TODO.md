@@ -516,3 +516,17 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run lint`.
 - [x] Executar `npm run build`.
 - [ ] `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`).
+
+## Ajuste 2026-05-10 - Consistencia de escopo e exclusao de aluno
+
+- [x] Identificar causa da edicao retornando `student_not_found` com aluno listado.
+- [x] Revisar escopo de aluno para produtor em listagem, edicao e exclusao.
+- [x] Permitir escopo por vinculo direto (`producer_students`) ou matricula em curso do produtor.
+- [x] Normalizar vinculo `producer_students` na edicao quando aluno for acessivel por matricula.
+- [x] Ajustar exclusao para remover efetivamente aluno e dados relacionados (cascade).
+- [x] Garantir que erro de aluno fora de escopo nao retorne mensagem generica.
+- [x] Executar testes focados de action/service/repository.
+- [x] Executar `npm run typecheck`.
+- [x] Executar `npm run lint`.
+- [x] Executar `npm run build`.
+- [ ] `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`).

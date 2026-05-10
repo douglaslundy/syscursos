@@ -396,6 +396,10 @@ async function runAdminMutation(path: string, successStatus: string, mutation: (
 }
 
 function adminErrorStatus(error: unknown) {
+  if (error instanceof StudentMutationError) {
+    return error.status;
+  }
+
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2002") {
       return "conflict";
