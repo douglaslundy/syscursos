@@ -45,6 +45,7 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
         </div>
         <ModuleForm
           courseId={course.id}
+          key={`${course.id}-${editingModule?.id ?? "new"}`}
           module={
             editingModule
               ? {
@@ -165,19 +166,28 @@ type ModuleFormProps = {
 };
 
 function ModuleForm({ courseId, module }: ModuleFormProps) {
+  const baseKey = `${courseId}-${module?.id ?? "new"}`;
+
   return (
-    <form action={saveModuleAction} className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]">
+    <form
+      action={saveModuleAction}
+      autoComplete="off"
+      className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]"
+      key={baseKey}
+    >
       <input name="courseId" type="hidden" value={courseId} />
       {module ? <input name="id" type="hidden" value={module.id} /> : null}
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={module?.title}
+        defaultValue={module?.title ?? ""}
+        key={`${baseKey}-title`}
         name="title"
         placeholder="Titulo"
       />
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={module?.position ?? 1}
+        key={`${baseKey}-position`}
         min={1}
         name="position"
         type="number"
@@ -185,6 +195,7 @@ function ModuleForm({ courseId, module }: ModuleFormProps) {
       <select
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={module?.status ?? "ACTIVE"}
+        key={`${baseKey}-status`}
         name="status"
       >
         <option value="ACTIVE">Ativo</option>
@@ -193,13 +204,15 @@ function ModuleForm({ courseId, module }: ModuleFormProps) {
       <SubmitButton>{module ? "Salvar" : "Criar"}</SubmitButton>
       <textarea
         className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
-        defaultValue={module?.description}
+        defaultValue={module?.description ?? ""}
+        key={`${baseKey}-description`}
         name="description"
         placeholder="Descricao"
       />
       <input
         className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
-        defaultValue={module?.coverImageUrl}
+        defaultValue={module?.coverImageUrl ?? ""}
+        key={`${baseKey}-coverImageUrl`}
         name="coverImageUrl"
         placeholder="URL HTTPS da capa do modulo (opcional)"
         type="url"

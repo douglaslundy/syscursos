@@ -105,6 +105,22 @@ describe("admin validators", () => {
     ).toBe(true);
   });
 
+  it("allows editing a student without changing the password", () => {
+    const result = studentSchema.safeParse({
+      id: "4f0896e4-3eb5-45de-8d8f-8d0601f6946b",
+      studentProfileId: "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633",
+      email: "student@example.com",
+      name: "Student",
+      password: "",
+      document: "",
+      phone: "",
+      status: "ACTIVE",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.success ? result.data.password : "invalid").toBeNull();
+  });
+
   it("normalizes pagination and search filters", () => {
     expect(
       getPagination({

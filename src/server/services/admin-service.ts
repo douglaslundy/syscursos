@@ -111,6 +111,11 @@ export async function getStudents(input: PaginationInput) {
   return repository.listStudents(admin.organizationId, admin.id, admin.role, input);
 }
 
+export async function getStudentForEdit(userId: string) {
+  const admin = await requireAdminOrProducer();
+  return repository.findStudentByUserId(admin.organizationId, admin.id, admin.role, userId);
+}
+
 export async function getStudentOptions() {
   const admin = await requireAdminOrProducer();
   return repository.listStudentOptions(admin.organizationId, admin.id, admin.role);

@@ -5,7 +5,7 @@ import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { deleteStudentAction, saveStudentAction } from "@/server/actions/admin-actions";
-import { getStudents } from "@/server/services/admin-service";
+import { getStudentForEdit, getStudents } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 
 type StudentsPageProps = {
@@ -17,7 +17,7 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
   const students = await getStudents(pagination);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const editId = getStringParam(searchParams, "editId");
-  const editingStudent = students.items.find((student) => student.user.id === editId);
+  const editingStudent = editId ? await getStudentForEdit(editId) : null;
 
   return (
     <section>
@@ -36,6 +36,7 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
           ) : null}
         </div>
         <StudentForm
+          key={editingStudent?.user.id ?? "new"}
           student={
             editingStudent
               ? {
@@ -149,7 +150,11 @@ type StudentFormProps = {
 
 function StudentForm({ student }: StudentFormProps) {
   return (
-    <form action={saveStudentAction} className="grid gap-3 md:grid-cols-[1fr_1fr_160px_140px_auto]">
+    <form
+      action={saveStudentAction}
+      autoComplete="off"
+      className="grid gap-3 md:grid-cols-[1fr_1fr_160px_140px_auto]"
+    >
       {student ? (
         <>
           <input name="id" type="hidden" value={student.id} />
@@ -157,19 +162,25 @@ function StudentForm({ student }: StudentFormProps) {
         </>
       ) : null}
       <input
+        autoComplete="off"
         className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={student?.name}
+        defaultValue={student?.name ?? ""}
+        key={`${student?.id ?? "new"}-name`}
         name="name"
         placeholder="Nome"
       />
       <input
+        autoComplete="off"
         className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={student?.email}
+        defaultValue={student?.email ?? ""}
+        key={`${student?.id ?? "new"}-email`}
         name="email"
         placeholder="email@exemplo.com"
       />
       <input
+        autoComplete="new-password"
         className="rounded-md border px-3 py-2 text-sm outline-none"
+        key={`${student?.id ?? "new"}-password`}
         minLength={8}
         name="password"
         placeholder={student ? "Nova senha opcional" : "Senha inicial"}
@@ -179,6 +190,7 @@ function StudentForm({ student }: StudentFormProps) {
       <select
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.status ?? "ACTIVE"}
+        key={`${student?.id ?? "new"}-status`}
         name="status"
       >
         <option value="ACTIVE">Ativo</option>
@@ -186,14 +198,18 @@ function StudentForm({ student }: StudentFormProps) {
       </select>
       <SubmitButton>{student ? "Salvar" : "Criar"}</SubmitButton>
       <input
+        autoComplete="off"
         className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={student?.document}
+        defaultValue={student?.document ?? ""}
+        key={`${student?.id ?? "new"}-document`}
         name="document"
         placeholder="Documento"
       />
       <input
+        autoComplete="off"
         className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={student?.phone}
+        defaultValue={student?.phone ?? ""}
+        key={`${student?.id ?? "new"}-phone`}
         name="phone"
         placeholder="Telefone"
       />

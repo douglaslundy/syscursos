@@ -399,6 +399,23 @@ export async function listStudents(
   return pageResult(items, total, args);
 }
 
+export async function findStudentByUserId(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  userId: string,
+) {
+  return prisma.studentProfile.findFirst({
+    where: {
+      userId,
+      ...scopedStudentWhere(organizationId, actorUserId, actorRole),
+    },
+    include: {
+      user: true,
+    },
+  });
+}
+
 export async function listStudentOptions(
   organizationId: string,
   actorUserId: string,

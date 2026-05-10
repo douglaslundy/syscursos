@@ -439,3 +439,17 @@ px prisma migrate deploy no banco configurado.
 - [x] Executar `npm run lint`
 - [x] Executar `npm run typecheck`
 - [ ] Executar testes relevantes (nao identificado teste especifico de pagina server component no repositorio)
+
+## Ajuste 2026-05-10 - Edicao de modulos e alunos no admin
+
+- [x] Identificar causa raiz da posicao de modulo permanecer em `1` no formulario de edicao
+- [x] Forcar remount do formulario de modulo ao alternar entre novo/editar
+- [x] Identificar causa raiz da edicao de aluno depender da lista paginada atual
+- [x] Implementar busca dedicada de aluno por `editId` no backend
+- [x] Garantir que senha vazia em edicao de aluno continue sem alterar a senha cadastrada
+- [x] Desabilitar autocomplete nos campos do cadastro/edicao de aluno
+- [x] Executar `npm run lint`
+- [x] Executar `npm run typecheck`
+- [x] Executar testes focados
+- [x] Executar `npm run build`
+- [ ] Executar `npm run test` completo sem falhas (bloqueado por falha preexistente/ambiental em `auth-actions.test.ts`: `cache is not a function`)

@@ -1615,6 +1615,57 @@ px prisma migrate deploy`n
 
 ---
 
+### 2026-05-10 - Correcao de edicao de modulos e alunos
+
+### Arquivos criados ou alterados
+
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+- `src/app/admin/students/page.tsx`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/tests/integration/admin-service.test.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Formulario de modulos agora usa `key` estavel por curso/modulo e `autoComplete="off"` para remontar ao alternar entre cadastro e edicao.
+- Campos de modulo passam a receber valores vazios explicitos quando nao ha registro em edicao, evitando reaproveitamento visual de estado anterior.
+- Edicao de aluno passou a buscar o registro por `editId` no backend, escopado por organizacao/produtor, sem depender da pagina atual da listagem.
+- Formulario de aluno passou a usar `key` por registro e `autoComplete="off"` nos campos, com `new-password` no campo de senha.
+- Teste de validator confirma que senha vazia em edicao de aluno e normalizada para `null`, mantendo a senha existente.
+
+### Testes executados
+
+- `npm install`
+- `npm run test -- --run src/tests/unit/admin-validators.test.ts src/tests/integration/admin-service.test.ts`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm install`: aprovado; gerou Prisma Client. Aviso: projeto exige Node `20.x`, ambiente atual usa Node `24.14.1`; npm reportou 13 vulnerabilidades ja existentes na arvore instalada.
+- Testes focados: aprovados, 15 testes.
+- `npm run typecheck`: aprovado.
+- `npm run lint`: aprovado, sem warnings.
+- `npm run build`: aprovado.
+- `npm run test`: falhou em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function` ao importar `src/server/auth/session.ts`. Falha nao relacionada aos arquivos alterados nesta etapa.
+
+### Riscos encontrados
+
+- Nao foi alterada a regra de unicidade `@@unique([courseId, position])`; portanto, conflitos reais de posicao continuam corretamente bloqueados pelo banco.
+- A validacao completa via `npm run test` permanece bloqueada por falha no harness de testes de autenticacao.
+
+### Pendencias
+
+- Corrigir em etapa propria o harness de `auth-actions.test.ts` para compatibilizar `react.cache` no Vitest ou ajustar a estrategia de mock.
+
+---
+
 ### 2026-05-09 - Correcao de edicao de modulo (update vs create)
 
 ### Arquivos criados ou alterados

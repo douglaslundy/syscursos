@@ -6,6 +6,7 @@ const repositoryMock = vi.hoisted(() => ({
   upsertCourse: vi.fn(),
   upsertModule: vi.fn(),
   upsertLesson: vi.fn(),
+  findStudentByUserId: vi.fn(),
   upsertStudent: vi.fn(),
   upsertEnrollment: vi.fn(),
   renewEnrollment: vi.fn(),
@@ -37,6 +38,7 @@ describe("admin service", () => {
     repositoryMock.upsertCourse.mockReset();
     repositoryMock.upsertModule.mockReset();
     repositoryMock.upsertLesson.mockReset();
+    repositoryMock.findStudentByUserId.mockReset();
     repositoryMock.upsertStudent.mockReset();
     repositoryMock.upsertEnrollment.mockReset();
     repositoryMock.renewEnrollment.mockReset();
@@ -123,6 +125,25 @@ describe("admin service", () => {
     await saveStudent(input);
     expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
     expect(repositoryMock.upsertStudent).toHaveBeenCalledWith("org-id", "admin-id", "ADMIN", input);
+  });
+
+  it("loads a student for editing outside the current paginated list", async () => {
+    const { getStudentForEdit } = await import("@/server/services/admin-service");
+    repositoryMock.findStudentByUserId.mockResolvedValue({
+      id: "student-profile-id",
+      user: { id: "student-user-id" },
+    });
+
+    await expect(getStudentForEdit("student-user-id")).resolves.toMatchObject({
+      id: "student-profile-id",
+    });
+    expect(requireAnyRoleMock).toHaveBeenCalledWith(["ADMIN", "PRODUCER"]);
+    expect(repositoryMock.findStudentByUserId).toHaveBeenCalledWith(
+      "org-id",
+      "admin-id",
+      "ADMIN",
+      "student-user-id",
+    );
   });
 
   it("uses ADMIN authorization for enrollment and renewal", async () => {

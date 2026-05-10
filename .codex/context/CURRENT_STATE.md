@@ -73,3 +73,28 @@
 - Validacoes:
   - `npm run lint` (aprovado com warning preexistente de `<img>`)
   - `npm run typecheck` (aprovado)
+
+## Atualizacao 2026-05-10 - Edicao de modulos e alunos
+- Causa raiz identificada no modulo: formulario de modulos usava `defaultValue` sem `key` de remount. Ao alternar de cadastro para edicao, o campo `position` podia manter o valor anterior (`1`), gerando conflito com `@@unique([courseId, position])`.
+- Correcao aplicada no modulo: `ModuleForm` e campos receberam `key` baseada em curso/modulo, e o formulario recebeu `autoComplete="off"`.
+- Causa raiz identificada no aluno: tela de alunos buscava `editId` apenas em `students.items`. Com paginacao/filtro, o registro podia nao estar na lista atual e o formulario era tratado como novo cadastro.
+- Correcao aplicada no aluno: busca dedicada de aluno por `editId` no backend, escopada por organizacao/produtor, e formulario com `key` por registro.
+- Senha de aluno: validacao confirma que senha vazia em edicao vira `null`; o repositorio so envia senha ao Supabase quando preenchida.
+- Autocomplete: formulario/campos de aluno receberam `autoComplete="off"` e senha recebeu `autoComplete="new-password"`.
+- Arquivos alterados:
+  - `src/app/admin/courses/[courseId]/modules/page.tsx`
+  - `src/app/admin/students/page.tsx`
+  - `src/server/repositories/admin-repository.ts`
+  - `src/server/services/admin-service.ts`
+  - `src/tests/integration/admin-service.test.ts`
+  - `src/tests/unit/admin-validators.test.ts`
+  - `docs/TODO.md`
+  - `docs/REVIEW.md`
+  - `.codex/context/CURRENT_STATE.md`
+- Validacoes:
+  - `npm run test -- --run src/tests/unit/admin-validators.test.ts src/tests/integration/admin-service.test.ts`: aprovado.
+  - `npm run typecheck`: aprovado.
+  - `npm run lint`: aprovado.
+  - `npm run build`: aprovado.
+  - `npm run test`: falhou em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function` ao importar `src/server/auth/session.ts`; falha nao relacionada aos arquivos desta correcao.
+- Observacao de ambiente: `npm install` foi necessario porque `vitest` nao estava disponivel; o ambiente atual usa Node `24.14.1`, enquanto o projeto declara Node `20.x`.
