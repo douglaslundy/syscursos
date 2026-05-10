@@ -24,12 +24,11 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const editId = getStringParam(searchParams, "editId");
   const lookupEmail = getStringParam(searchParams, "lookupEmail");
-  const lookupState = getStringParam(searchParams, "lookup");
-  const shouldLookup = Boolean(lookupEmail && lookupState && !editId);
+  const shouldLookup = Boolean(lookupEmail && !editId);
   const editingStudent = editId ? await getStudentForEdit(editId) : null;
   const lookupResult = shouldLookup ? await lookupStudentByEmail({ email: lookupEmail as string }) : null;
-  const lookupFound = lookupState === "found" && lookupResult;
-  const lookupNotFound = lookupState === "not_found" && lookupEmail && !lookupResult;
+  const lookupFoundStudent = lookupResult ?? null;
+  const lookupNotFound = Boolean(lookupEmail && !lookupResult);
 
   return (
     <section>
@@ -65,7 +64,7 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
         ) : (
           <>
             <EmailLookupForm initialEmail={lookupEmail} />
-            {lookupNotFound ? (
+            {lookupNotFound && lookupEmail ? (
               <div className="mt-4 rounded-md border border-stroke-subtle p-4">
                 <p className="mb-3 text-sm text-muted-foreground">
                   E-mail nao encontrado na plataforma. Complete o cadastro do aluno.
@@ -73,15 +72,15 @@ export default async function StudentsPage({ searchParams }: StudentsPageProps) 
                 <StudentCreateForm initialEmail={lookupEmail} />
               </div>
             ) : null}
-            {lookupFound ? (
+            {lookupFoundStudent ? (
               <div className="mt-4 rounded-md border border-stroke-subtle p-4">
                 <p className="mb-3 text-sm text-muted-foreground">
                   Aluno encontrado. Os dados estao bloqueados para edicao; voce pode apenas vincular.
                 </p>
-                <StudentReadonlyView student={lookupResult} />
+                <StudentReadonlyView student={lookupFoundStudent} />
                 <form action={linkStudentToProducerAction} className="mt-4 flex flex-wrap items-center gap-2">
-                  <input name="studentProfileId" type="hidden" value={lookupResult.studentProfileId} />
-                  {lookupResult.alreadyLinked ? (
+                  <input name="studentProfileId" type="hidden" value={lookupFoundStudent.studentProfileId} />
+                  {lookupFoundStudent.alreadyLinked ? (
                     <button
                       className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-sm text-copy-secondary opacity-70"
                       disabled
@@ -303,8 +302,7 @@ function StudentCreateForm({ initialEmail }: { initialEmail: string }) {
         className="rounded-md border px-3 py-2 text-sm outline-none"
         minLength={8}
         name="studentPassword"
-        placeholder="Senha inicial"
-        required
+        placeholder="Senha inicial (opcional)"
         type="password"
       />
       <select className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue="ACTIVE" name="studentStatus">
@@ -325,7 +323,7 @@ function StudentCreateForm({ initialEmail }: { initialEmail: string }) {
         placeholder="Telefone"
       />
       <p className="text-xs text-muted-foreground md:col-span-5">
-        A senha inicial cria o acesso do aluno no Supabase Auth.
+        A senha inicial e opcional. Se nao for informada, o sistema cria o aluno e mantem apenas o vinculo para gestao.
       </p>
     </form>
   );

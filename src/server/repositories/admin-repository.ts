@@ -446,7 +446,6 @@ export async function findStudentByEmailForProducer(
   const student = await prisma.studentProfile.findFirst({
     where: {
       user: {
-        organizationId,
         role: UserRole.STUDENT,
         email,
       },
@@ -580,7 +579,6 @@ export async function upsertStudent(
   const existingStudent = await prisma.studentProfile.findFirst({
     where: {
       user: {
-        organizationId,
         role: UserRole.STUDENT,
         OR: [{ email: input.email }, ...(input.document ? [{ studentProfile: { document: input.document } }] : [])],
       },
@@ -627,7 +625,6 @@ export async function upsertStudent(
     const existingStudentByAuth = await prisma.studentProfile.findFirst({
       where: {
         user: {
-          organizationId,
           role: UserRole.STUDENT,
           authUserId: existingAuthUser.id,
         },
@@ -1361,9 +1358,11 @@ async function upsertStudentAuthUser(input: {
     return data.user.id;
   }
 
+  const generatedPassword = input.password ?? `${crypto.randomUUID()}Aa1!`;
+
   const { data, error } = await supabase.auth.admin.createUser({
     email: input.email,
-    password: input.password ?? undefined,
+    password: generatedPassword,
     email_confirm: true,
     user_metadata: {
       name: input.name,

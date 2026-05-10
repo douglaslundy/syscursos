@@ -74,14 +74,6 @@ export const studentSchema = z.object({
   document: z.string().trim().max(32).optional().transform(emptyToNull),
   phone: z.string().trim().max(32).optional().transform(emptyToNull),
   status: z.nativeEnum(UserStatus).default(UserStatus.ACTIVE),
-}).superRefine((value, context) => {
-  if (!value.id && !value.password) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Informe uma senha inicial para o aluno.",
-      path: ["password"],
-    });
-  }
 });
 
 export const studentEmailLookupSchema = z.object({

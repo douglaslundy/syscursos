@@ -148,7 +148,11 @@ export async function verifyStudentEmailAction(formData: FormData) {
   try {
     const student = await lookupStudentByEmail(input);
     revalidatePath(path);
-    redirect(student ? `${path}?lookupEmail=${encodeURIComponent(input.email)}&lookup=found` : `${path}?lookupEmail=${encodeURIComponent(input.email)}&lookup=not_found`);
+    redirect(
+      student
+        ? `${path}?lookupEmail=${encodeURIComponent(input.email)}&status=student_lookup_found`
+        : `${path}?lookupEmail=${encodeURIComponent(input.email)}&status=student_lookup_not_found`,
+    );
   } catch (error) {
     if (isRedirectError(error)) {
       throw error;

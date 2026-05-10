@@ -84,10 +84,8 @@ describe("admin student actions", () => {
     formData.delete("studentUserId");
     formData.delete("studentProfileId");
 
-    await expect(saveStudentAction(formData)).rejects.toThrow(
-      "REDIRECT:/admin/students?status=student_missing_password",
-    );
-    expect(saveStudentMock).not.toHaveBeenCalled();
+    await expect(saveStudentAction(formData)).rejects.toThrow("REDIRECT:/admin/students?status=saved");
+    expect(saveStudentMock).toHaveBeenCalled();
   });
 
   it("returns a specific status when the optional new password is too short", async () => {
@@ -193,7 +191,7 @@ describe("admin student actions", () => {
     lookupStudentByEmailMock.mockResolvedValue({ studentProfileId: "student-profile-id" });
 
     await expect(verifyStudentEmailAction(formData)).rejects.toThrow(
-      "REDIRECT:/admin/students?lookupEmail=student%40example.com&lookup=found",
+      "REDIRECT:/admin/students?lookupEmail=student%40example.com&status=student_lookup_found",
     );
   });
 
@@ -204,7 +202,7 @@ describe("admin student actions", () => {
     lookupStudentByEmailMock.mockResolvedValue(null);
 
     await expect(verifyStudentEmailAction(formData)).rejects.toThrow(
-      "REDIRECT:/admin/students?lookupEmail=new%40example.com&lookup=not_found",
+      "REDIRECT:/admin/students?lookupEmail=new%40example.com&status=student_lookup_not_found",
     );
   });
 
