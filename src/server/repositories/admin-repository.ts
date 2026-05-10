@@ -717,7 +717,6 @@ export async function linkStudentToProducer(
     where: {
       id: studentProfileId,
       user: {
-        organizationId,
         role: UserRole.STUDENT,
       },
     },
