@@ -118,7 +118,7 @@ export async function deleteLessonAction(formData: FormData) {
 
 export async function saveStudentAction(formData: FormData) {
   const path = "/admin/students";
-  const input = parseForm(studentSchema, formData, path);
+  const input = parseStudentForm(formData, path);
   try {
     const result = await saveStudent(input);
     revalidatePath(path);
@@ -240,6 +240,68 @@ async function parseModuleForm(formData: FormData, errorPath: string) {
   }
 
   return parsed.data;
+}
+
+function parseStudentForm(formData: FormData, errorPath: string) {
+  const draft = {
+    id: formString(formData, "studentUserId") ?? formString(formData, "id"),
+    studentProfileId: formString(formData, "studentProfileId"),
+    email: formString(formData, "studentEmail") ?? formString(formData, "email"),
+    name: formString(formData, "studentName") ?? formString(formData, "name"),
+    password: formString(formData, "studentPassword") ?? formString(formData, "password"),
+    document: formString(formData, "studentDocument") ?? formString(formData, "document"),
+    phone: formString(formData, "studentPhone") ?? formString(formData, "phone"),
+    status: formString(formData, "studentStatus") ?? formString(formData, "status"),
+  };
+
+  const parsed = studentSchema.safeParse(draft);
+
+  if (!parsed.success) {
+    console.error("Invalid admin student input.", parsed.error.flatten());
+    redirect(`${errorPath}?status=${studentValidationStatus(parsed.error)}`);
+  }
+
+  return parsed.data;
+}
+
+function formString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : undefined;
+}
+
+function studentValidationStatus(error: z.ZodError<z.input<typeof studentSchema>>) {
+  const fieldErrors = error.flatten().fieldErrors;
+
+  if (fieldErrors.id?.length || fieldErrors.studentProfileId?.length) {
+    return "student_invalid_id";
+  }
+
+  if (fieldErrors.name?.length) {
+    return "student_invalid_name";
+  }
+
+  if (fieldErrors.email?.length) {
+    return "student_invalid_email";
+  }
+
+  if (fieldErrors.password?.length) {
+    const messages = fieldErrors.password.join(" ").toLowerCase();
+    return messages.includes("senha inicial") ? "student_missing_password" : "student_invalid_password";
+  }
+
+  if (fieldErrors.document?.length) {
+    return "student_invalid_document";
+  }
+
+  if (fieldErrors.phone?.length) {
+    return "student_invalid_phone";
+  }
+
+  if (fieldErrors.status?.length) {
+    return "student_invalid_status";
+  }
+
+  return "invalid";
 }
 
 function requiredString(formData: FormData, key: string, errorPath: string) {

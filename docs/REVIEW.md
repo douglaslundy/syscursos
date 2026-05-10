@@ -1666,6 +1666,53 @@ px prisma migrate deploy`n
 
 ---
 
+### 2026-05-10 - Mensagens especificas no CRUD de alunos
+
+### Arquivos criados ou alterados
+
+- `src/app/admin/students/page.tsx`
+- `src/components/admin/feedback.tsx`
+- `src/server/actions/admin-actions.ts`
+- `src/tests/integration/admin-actions.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- `saveStudentAction` recebeu parse dedicado para aluno, separando a validacao do CRUD de alunos do `parseForm` generico.
+- Campos do formulario de aluno foram renomeados para nomes especificos (`studentEmail`, `studentPassword`, `studentName`, etc.) para reduzir autofill indevido em edicao.
+- Erros de validacao de aluno agora retornam status especificos e mensagens de UI com o motivo: identificador, nome, e-mail, senha inicial, nova senha, documento, telefone ou status.
+- Senha vazia em edicao continua sendo enviada ao service como `null`, mantendo a senha existente no Supabase.
+- Testes de Server Action cobrem edicao com senha vazia e mensagens especificas para e-mail invalido, senha inicial ausente e nova senha curta.
+
+### Testes executados
+
+- `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/unit/admin-validators.test.ts src/tests/integration/admin-service.test.ts`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+- `npm run test`
+
+### Resultado dos testes
+
+- Testes focados: aprovados, 19 testes.
+- `npm run typecheck`: aprovado.
+- `npm run lint`: aprovado.
+- `npm run build`: aprovado.
+- `npm run test`: falhou somente em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha ja registrada antes desta etapa.
+
+### Riscos encontrados
+
+- Navegadores podem ignorar `autoComplete="off"` em alguns cenarios, mas os nomes especificos dos campos reduzem a chance de preenchimento automatico indevido.
+- Mensagens agora sao mais especificas, mas continuam sem expor detalhes tecnicos de banco/Auth.
+
+### Pendencias
+
+- Corrigir em etapa propria o harness dos testes de autenticacao para liberar `npm run test` completo.
+
+---
+
 ### 2026-05-09 - Correcao de edicao de modulo (update vs create)
 
 ### Arquivos criados ou alterados

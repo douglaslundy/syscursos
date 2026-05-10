@@ -453,3 +453,18 @@ px prisma migrate deploy no banco configurado.
 - [x] Executar testes focados
 - [x] Executar `npm run build`
 - [ ] Executar `npm run test` completo sem falhas (bloqueado por falha preexistente/ambiental em `auth-actions.test.ts`: `cache is not a function`)
+
+## Ajuste 2026-05-10 - Mensagens especificas no CRUD de alunos
+
+- [x] Revisar regras de validacao do cadastro/edicao de aluno
+- [x] Identificar que `status=invalid` vinha do `studentSchema.safeParse`
+- [x] Criar parse dedicado de formulario de aluno na Server Action
+- [x] Retornar status especifico para e-mail, nome, senha, documento, telefone, status e identificador invalidos
+- [x] Trocar nomes dos campos do formulario de aluno para reduzir autofill indevido
+- [x] Garantir que senha vazia em edicao continue chegando como `null`
+- [x] Adicionar testes de Server Action para mensagens especificas
+- [x] Executar testes focados
+- [x] Executar `npm run typecheck`
+- [x] Executar `npm run lint`
+- [x] Executar `npm run build`
+- [ ] Executar `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`)

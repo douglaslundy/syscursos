@@ -98,3 +98,25 @@
   - `npm run build`: aprovado.
   - `npm run test`: falhou em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function` ao importar `src/server/auth/session.ts`; falha nao relacionada aos arquivos desta correcao.
 - Observacao de ambiente: `npm install` foi necessario porque `vitest` nao estava disponivel; o ambiente atual usa Node `24.14.1`, enquanto o projeto declara Node `20.x`.
+
+## Atualizacao 2026-05-10 - Mensagens especificas no CRUD de alunos
+- Causa raiz complementar: o erro "Revise os dados informados e tente novamente." vinha de `studentSchema.safeParse` em `saveStudentAction`, que sempre redirecionava validacoes de aluno para `status=invalid`.
+- Risco identificado: o formulario usava nomes comuns (`email`, `password`, `name`), que podem receber autofill do navegador; uma senha preenchida automaticamente com menos de 8 caracteres fazia a edicao falhar como validacao generica.
+- Correcao aplicada:
+  - `saveStudentAction` passou a usar parse dedicado de aluno.
+  - Campos do formulario de aluno foram renomeados para `studentEmail`, `studentPassword`, `studentName`, `studentDocument`, `studentPhone`, `studentStatus` e `studentUserId`.
+  - Feedback admin recebeu mensagens especificas para identificador, nome, e-mail, senha inicial ausente, nova senha curta, documento, telefone e status invalidos.
+  - Senha vazia em edicao segue normalizada para `null` e nao altera a senha cadastrada.
+- Arquivos alterados:
+  - `src/app/admin/students/page.tsx`
+  - `src/components/admin/feedback.tsx`
+  - `src/server/actions/admin-actions.ts`
+  - `src/tests/integration/admin-actions.test.ts`
+  - `docs/TODO.md`
+  - `.codex/context/CURRENT_STATE.md`
+- Validacoes:
+  - `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/unit/admin-validators.test.ts src/tests/integration/admin-service.test.ts`: aprovado.
+  - `npm run typecheck`: aprovado.
+  - `npm run lint`: aprovado.
+  - `npm run build`: aprovado.
+  - `npm run test`: falhou em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`; falha preexistente no harness de autenticacao.

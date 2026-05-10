@@ -157,7 +157,7 @@ function StudentForm({ student }: StudentFormProps) {
     >
       {student ? (
         <>
-          <input name="id" type="hidden" value={student.id} />
+          <input name="studentUserId" type="hidden" value={student.id} />
           <input name="studentProfileId" type="hidden" value={student.studentProfileId} />
         </>
       ) : null}
@@ -166,7 +166,7 @@ function StudentForm({ student }: StudentFormProps) {
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.name ?? ""}
         key={`${student?.id ?? "new"}-name`}
-        name="name"
+        name="studentName"
         placeholder="Nome"
       />
       <input
@@ -174,7 +174,7 @@ function StudentForm({ student }: StudentFormProps) {
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.email ?? ""}
         key={`${student?.id ?? "new"}-email`}
-        name="email"
+        name="studentEmail"
         placeholder="email@exemplo.com"
       />
       <input
@@ -182,7 +182,7 @@ function StudentForm({ student }: StudentFormProps) {
         className="rounded-md border px-3 py-2 text-sm outline-none"
         key={`${student?.id ?? "new"}-password`}
         minLength={8}
-        name="password"
+        name="studentPassword"
         placeholder={student ? "Nova senha opcional" : "Senha inicial"}
         required={!student}
         type="password"
@@ -191,7 +191,7 @@ function StudentForm({ student }: StudentFormProps) {
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.status ?? "ACTIVE"}
         key={`${student?.id ?? "new"}-status`}
-        name="status"
+        name="studentStatus"
       >
         <option value="ACTIVE">Ativo</option>
         <option value="INACTIVE">Inativo</option>
@@ -202,7 +202,7 @@ function StudentForm({ student }: StudentFormProps) {
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.document ?? ""}
         key={`${student?.id ?? "new"}-document`}
-        name="document"
+        name="studentDocument"
         placeholder="Documento"
       />
       <input
@@ -210,7 +210,7 @@ function StudentForm({ student }: StudentFormProps) {
         className="rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={student?.phone ?? ""}
         key={`${student?.id ?? "new"}-phone`}
-        name="phone"
+        name="studentPhone"
         placeholder="Telefone"
       />
       <p className="text-xs text-muted-foreground md:col-span-5">
