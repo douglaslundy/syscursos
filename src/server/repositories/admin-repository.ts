@@ -762,7 +762,7 @@ export async function deleteStudent(
   const profile = await prisma.studentProfile.findFirst({
     where: {
       userId,
-      user: { organizationId, role: UserRole.STUDENT },
+      user: { role: UserRole.STUDENT },
     },
     select: { id: true },
   });
@@ -1283,7 +1283,7 @@ function scopedStudentWhereWithFilters(
         }
       : { user: { organizationId, role: UserRole.STUDENT } }
     : {
-        user: { organizationId, role: UserRole.STUDENT },
+        user: { role: UserRole.STUDENT },
         OR: [
           { producers: { some: { producerId: actorUserId } } },
           {
