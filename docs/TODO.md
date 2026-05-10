@@ -501,3 +501,18 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run lint`
 - [x] Executar `npm run build`
 - [ ] Executar `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`)
+
+## Ajuste 2026-05-10 - Endurecimento final da edicao de aluno
+
+- [x] Revisar CRUD de aluno de ponta a ponta: pagina, action, schema, feedback, service, repository e testes.
+- [x] Identificar que erros de reposititorio em edicao ainda caiam em `status=invalid`.
+- [x] Trocar `findFirstOrThrow` por verificacao explicita de aluno/vinculo do produtor.
+- [x] Validar `user.id` e `studentProfile.id` juntos no update.
+- [x] Criar status especifico para aluno fora do escopo do produtor.
+- [x] Criar status especificos para conflitos de e-mail, documento e Auth.
+- [x] Cobrir cada campo do formulario de aluno em testes de Server Action.
+- [x] Executar testes focados.
+- [x] Executar `npm run typecheck`.
+- [x] Executar `npm run lint`.
+- [x] Executar `npm run build`.
+- [ ] `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`).

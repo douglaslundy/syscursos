@@ -40,6 +40,13 @@ type DashboardFilters = {
   studentId?: string | null;
 };
 
+export class StudentMutationError extends Error {
+  constructor(readonly status: string, message: string) {
+    super(message);
+    this.name = "StudentMutationError";
+  }
+}
+
 export async function getAdminDashboardStats(
   organizationId: string,
   actorUserId: string,
@@ -441,15 +448,25 @@ export async function upsertStudent(
   }
 
   if (input.id && input.studentProfileId) {
-    const currentUser = await prisma.user.findFirstOrThrow({
+    const currentUser = await prisma.user.findFirst({
       where: {
         id: input.id,
         organizationId,
         role: UserRole.STUDENT,
-        studentProfile: { producers: { some: { producerId: actorUserId } } },
+        studentProfile: {
+          id: input.studentProfileId,
+          producers: { some: { producerId: actorUserId } },
+        },
       },
       select: { authUserId: true },
     });
+
+    if (!currentUser) {
+      throw new StudentMutationError(
+        "student_not_found",
+        "Aluno nao encontrado para este produtor ou identificadores de edicao inconsistentes.",
+      );
+    }
 
     const authUserId = await upsertStudentAuthUser({
       authUserId: currentUser.authUserId,

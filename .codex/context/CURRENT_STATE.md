@@ -167,3 +167,26 @@
   - `npm run lint`: aprovado.
   - `npm run test -- --run src/tests/integration/student-service.test.ts src/tests/unit/youtube-service.test.ts`: aprovado.
   - `npm run build`: aprovado.
+
+## Atualizacao 2026-05-10 - CRUD de alunos com mensagens especificas
+- Causa raiz revisada: a edicao de aluno podia passar pela validacao Zod e falhar depois no reposititorio; o `findFirstOrThrow` do update gerava erro Prisma `P2025`, que a action convertia para `status=invalid`, exibindo a mensagem generica "Algum campo obrigatorio esta ausente ou fora do formato esperado.".
+- Correcao aplicada:
+  - update de aluno agora valida explicitamente `user.id`, `studentProfile.id` e vinculo do aluno com o produtor antes de atualizar;
+  - falha de escopo/identificadores inconsistentes retorna `student_not_found`;
+  - a action de aluno usa mapper proprio para erros de mutacao, sem cair em `adminErrorStatus`;
+  - mensagens de feedback foram adicionadas para identificador de usuario, perfil, nome, e-mail, senha, documento, telefone, status, conflito de e-mail/documento, Auth e falha de escopo;
+  - testes de action cobrem cada campo validado e erros de reposititorio/Auth.
+- Arquivos alterados:
+  - `src/server/repositories/admin-repository.ts`
+  - `src/server/actions/admin-actions.ts`
+  - `src/components/admin/feedback.tsx`
+  - `src/tests/integration/admin-actions.test.ts`
+  - `docs/TODO.md`
+  - `docs/REVIEW.md`
+  - `.codex/context/CURRENT_STATE.md`
+- Validacoes:
+  - `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/unit/admin-validators.test.ts src/tests/integration/admin-service.test.ts`: aprovado.
+  - `npm run typecheck`: aprovado.
+  - `npm run lint`: aprovado.
+  - `npm run build`: aprovado.
+  - `npm run test`: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha ja registrada anteriormente.

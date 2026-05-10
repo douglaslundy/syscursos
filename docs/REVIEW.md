@@ -1570,6 +1570,67 @@ px prisma migrate deploy`n
 
 - Se a plataforma de deploy tiver muitas instancias simultaneas, o limite total do Supabase ainda pode ser atingido; a configuracao operacional do pool no Supabase continua relevante.
 
+## Revisao 2026-05-10 - Endurecimento final da edicao de aluno
+
+### Arquivos revisados
+
+- `src/app/admin/students/page.tsx`
+- `src/server/actions/admin-actions.ts`
+- `src/server/validators/admin.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/components/admin/feedback.tsx`
+- `src/tests/integration/admin-actions.test.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `src/tests/integration/admin-service.test.ts`
+
+### Causa identificada
+
+- A mensagem "Algum campo obrigatorio esta ausente ou fora do formato esperado." corresponde a `status=invalid`.
+- O parse dedicado do aluno ja retornava mensagens especificas para erros Zod, mas a edicao ainda podia falhar depois, no reposititorio.
+- O update usava `findFirstOrThrow`; quando o produtor nao tinha vinculo com o aluno, ou quando os identificadores ocultos estavam inconsistentes, o Prisma gerava `P2025`.
+- `P2025` era convertido pelo mapper generico para `status=invalid`, por isso a tela ainda exibia a mensagem generica.
+
+### O que foi implementado
+
+- Update de aluno passou a verificar explicitamente `user.id`, `studentProfile.id` e vinculo do produtor antes de atualizar.
+- Falha de escopo ou identificadores inconsistentes retorna `student_not_found`.
+- `saveStudentAction` passou a usar mapper proprio de erros de aluno para falhas de reposititorio/Auth.
+- Feedback recebeu mensagens especificas para:
+  - identificador do usuario;
+  - identificador do perfil;
+  - nome;
+  - e-mail;
+  - senha;
+  - documento;
+  - telefone;
+  - status;
+  - aluno fora do escopo do produtor;
+  - conflito de e-mail/documento/Auth;
+  - erro de Auth;
+  - falha final de salvamento.
+- Testes de Server Action foram ampliados para cobrir cada campo e falhas de mutacao.
+
+### Testes executados
+
+- `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/unit/admin-validators.test.ts src/tests/integration/admin-service.test.ts`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+- `npm run test`
+
+### Resultado dos testes
+
+- Testes focados: aprovados, 28 testes.
+- Typecheck: aprovado.
+- Lint: aprovado.
+- Build: aprovado.
+- Suite completa: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha preexistente ja registrada.
+
+### Riscos encontrados
+
+- Nao identificado no repositorio um teste de componente/server page que submeta o formulario real renderizado; a cobertura foi feita no schema/action/service.
+
 - Cadastro publico de administrador fica aberto para qualquer e-mail nesta iteracao.
 - Nao foi identificado no repositorio um papel separado de "produtor"; o fluxo continua com roles `ADMIN` e `STUDENT`.
 

@@ -7,6 +7,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { StudentMutationError } from "@/server/repositories/admin-repository";
 import {
   cancelEnrollment as cancelEnrollmentService,
   removeCourse,
@@ -127,7 +128,7 @@ export async function saveStudentAction(formData: FormData) {
     }
   } catch (error) {
     console.error("Admin mutation failed.", error);
-    redirect(`${path}?status=${adminErrorStatus(error)}`);
+    redirect(`${path}?status=${studentMutationStatus(error)}`);
   }
 
   redirect(`${path}?status=saved`);
@@ -272,8 +273,12 @@ function formString(formData: FormData, key: string) {
 function studentValidationStatus(error: z.ZodError<z.input<typeof studentSchema>>) {
   const fieldErrors = error.flatten().fieldErrors;
 
-  if (fieldErrors.id?.length || fieldErrors.studentProfileId?.length) {
-    return "student_invalid_id";
+  if (fieldErrors.id?.length) {
+    return "student_invalid_user_id";
+  }
+
+  if (fieldErrors.studentProfileId?.length) {
+    return "student_invalid_profile_id";
   }
 
   if (fieldErrors.name?.length) {
@@ -301,7 +306,69 @@ function studentValidationStatus(error: z.ZodError<z.input<typeof studentSchema>
     return "student_invalid_status";
   }
 
-  return "invalid";
+  return "student_invalid_form";
+}
+
+function studentMutationStatus(error: unknown) {
+  if (error instanceof StudentMutationError) {
+    return error.status;
+  }
+
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2002") {
+      return studentConflictStatus(error);
+    }
+
+    if (error.code === "P2003") {
+      return "student_invalid_relation";
+    }
+
+    if (error.code === "P2025") {
+      return "student_not_found";
+    }
+  }
+
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+
+    if (message.includes("apenas produtores")) {
+      return "student_producer_required";
+    }
+
+    if (message.includes("email") || message.includes("e-mail") || message.includes("already registered")) {
+      return "student_auth_email";
+    }
+
+    if (message.includes("password") || message.includes("senha") || message.includes("weak")) {
+      return "student_auth_password";
+    }
+
+    if (message.includes("auth") || message.includes("supabase") || message.includes("acesso")) {
+      return "student_auth_error";
+    }
+  }
+
+  return "student_save_error";
+}
+
+function studentConflictStatus(error: Prisma.PrismaClientKnownRequestError) {
+  const target = Array.isArray(error.meta?.target)
+    ? error.meta.target.join(" ").toLowerCase()
+    : String(error.meta?.target ?? "").toLowerCase();
+
+  if (target.includes("email")) {
+    return "student_email_conflict";
+  }
+
+  if (target.includes("document")) {
+    return "student_document_conflict";
+  }
+
+  if (target.includes("auth_user_id")) {
+    return "student_auth_conflict";
+  }
+
+  return "student_conflict";
 }
 
 function requiredString(formData: FormData, key: string, errorPath: string) {
