@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { Feedback } from "@/components/admin/feedback";
@@ -52,7 +51,6 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
                   id: editingModule.id,
                   title: editingModule.title,
                   description: editingModule.description ?? "",
-                  coverImageUrl: editingModule.coverImageUrl ?? "",
                   position: editingModule.position,
                   status: editingModule.status,
                 }
@@ -80,18 +78,6 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
             </div>
             {module.description ? (
               <p className="mt-3 text-sm text-muted-foreground">{module.description}</p>
-            ) : null}
-            {module.coverImageUrl ? (
-              <div className="mt-2 space-y-2">
-                <Image
-                  alt={`Capa do modulo ${module.title}`}
-                  className="h-24 w-full rounded-md border border-stroke-subtle object-cover md:w-56"
-                  src={module.coverImageUrl}
-                  width={224}
-                  height={96}
-                />
-                <p className="break-all text-xs text-muted-foreground">Capa: {module.coverImageUrl}</p>
-              </div>
             ) : null}
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
@@ -159,7 +145,6 @@ type ModuleFormProps = {
     id: string;
     title: string;
     description: string;
-    coverImageUrl: string;
     position: number;
     status: string;
   };
@@ -208,20 +193,6 @@ function ModuleForm({ courseId, module }: ModuleFormProps) {
         key={`${baseKey}-description`}
         name="description"
         placeholder="Descricao"
-      />
-      <input
-        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
-        defaultValue={module?.coverImageUrl ?? ""}
-        key={`${baseKey}-coverImageUrl`}
-        name="coverImageUrl"
-        placeholder="URL HTTPS da capa do modulo (opcional)"
-        type="url"
-      />
-      <input
-        accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
-        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
-        name="coverImageFile"
-        type="file"
       />
     </form>
   );

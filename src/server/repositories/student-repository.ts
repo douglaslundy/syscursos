@@ -61,6 +61,10 @@ export async function getCourseWithActiveContent(courseId: string) {
             select: {
               id: true,
               title: true,
+              description: true,
+              youtubeUrl: true,
+              youtubeVideoId: true,
+              coverImageUrl: true,
               position: true,
               status: true,
             },

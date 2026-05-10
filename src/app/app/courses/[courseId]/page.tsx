@@ -5,6 +5,7 @@ import { CourseBlocked } from "@/components/student/course-blocked";
 import { EmptyState } from "@/components/student/empty-state";
 import { ProgressBar } from "@/components/student/progress-bar";
 import { getStudentCourse } from "@/server/services/student-service";
+import { getYouTubeThumbnailUrl } from "@/server/services/youtube-service";
 import { studentCourseParamsSchema } from "@/server/validators/student";
 
 type StudentCoursePageProps = {
@@ -42,7 +43,7 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
         </div>
       </div>
 
-      <div className="mt-8 space-y-4">
+      <div className="mt-8 space-y-5">
         {data.modules.length === 0 ? (
           <EmptyState
             description="Assim que novos modulos ativos forem liberados, eles aparecerao neste curso."
@@ -50,64 +51,81 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
           />
         ) : (
           data.modules.map((module) => (
-            <details
-              className="rounded-md border border-stroke-subtle bg-surface p-5 shadow-sm"
+            <section
+              className="rounded-md border border-stroke-subtle bg-surface p-4 shadow-sm md:p-5"
               key={module.id}
-              open={module.position === 1}
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-copy-muted">
-                    Modulo {module.position}
-                  </p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-normal text-copy-primary">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <h2 className="text-base font-semibold tracking-normal text-copy-primary md:text-lg">
                     {module.title}
                   </h2>
+                  {module.description ? (
+                    <p className="mt-1 max-w-4xl text-xs leading-5 text-copy-secondary md:text-sm">
+                      {module.description}
+                    </p>
+                  ) : null}
                 </div>
-                <span className="rounded-md border border-stroke-subtle bg-surface-elevated px-2.5 py-1 text-xs font-medium text-copy-secondary">
+                <span className="shrink-0 rounded-md border border-stroke-subtle bg-surface-elevated px-2.5 py-1 text-xs font-medium text-copy-secondary">
                   {module.lessons.length} aulas
                 </span>
-              </summary>
-              <div className="mt-4 divide-y divide-stroke-subtle">
+              </div>
+
+              <div className="mt-4">
                 {module.lessons.length === 0 ? (
                   <div className="py-3 text-sm text-copy-muted">
                     Nenhuma aula ativa neste modulo.
                   </div>
                 ) : (
-                  module.lessons.map((lesson) => {
-                    const completed = data.completedLessonIds.has(lesson.id);
+                  <div className="flex gap-3 overflow-x-auto pb-2 [scrollbar-color:#3A4048_transparent]">
+                    {module.lessons.map((lesson) => {
+                      const completed = data.completedLessonIds.has(lesson.id);
+                      const imageUrl =
+                        lesson.coverImageUrl ??
+                        getYouTubeThumbnailUrl(lesson.youtubeUrl, lesson.youtubeVideoId);
 
-                    return (
-                      <Link
-                        className="flex min-h-14 items-center justify-between gap-4 rounded-md px-2 py-3 text-sm text-copy-secondary transition hover:bg-surface-hover hover:text-brand-primary"
-                        href={`/app/courses/${data.course.id}/lessons/${lesson.id}`}
-                        key={lesson.id}
-                      >
-                        <span className="flex items-center gap-3">
-                          {completed ? (
-                            <CheckCircle2 aria-hidden="true" className="h-4 w-4 text-brand-primary" />
-                          ) : (
-                            <PlayCircle
-                              aria-hidden="true"
-                              className="h-4 w-4 text-copy-muted"
-                            />
-                          )}
-                          <span>
-                            {lesson.position}. {lesson.title}
-                          </span>
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 rounded-md border border-stroke-subtle bg-surface-elevated px-2 py-1 text-xs text-copy-secondary">
-                          {!completed ? (
-                            <Circle aria-hidden="true" className="h-2 w-2 fill-current" />
-                          ) : null}
-                          {completed ? "Concluida" : "Pendente"}
-                        </span>
-                      </Link>
-                    );
-                  })
+                      return (
+                        <Link
+                          className="group w-40 shrink-0 overflow-hidden rounded-md border border-stroke-subtle bg-surface-elevated text-copy-secondary transition hover:border-brand-primary/60 hover:bg-surface-hover hover:text-copy-primary md:w-44"
+                          href={`/app/courses/${data.course.id}/lessons/${lesson.id}`}
+                          key={lesson.id}
+                        >
+                          <div
+                            className="relative aspect-[9/14] bg-surface-hover bg-cover bg-center"
+                            style={
+                              imageUrl
+                                ? { backgroundImage: `url("${imageUrl}")` }
+                                : undefined
+                            }
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/15 to-black/75" />
+                            <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-sm bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-normal text-white">
+                              {completed ? (
+                                <CheckCircle2 aria-hidden="true" className="h-3 w-3 text-brand-primary" />
+                              ) : (
+                                <PlayCircle aria-hidden="true" className="h-3 w-3" />
+                              )}
+                              Aula {lesson.position}
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 p-3">
+                              <h3 className="line-clamp-3 text-sm font-semibold leading-5 text-white">
+                                {lesson.title}
+                              </h3>
+                              <span className="mt-2 inline-flex items-center gap-1.5 rounded-sm border border-white/20 bg-black/45 px-2 py-1 text-[11px] text-white/85">
+                                {!completed ? (
+                                  <Circle aria-hidden="true" className="h-2 w-2 fill-current" />
+                                ) : null}
+                                {completed ? "Concluida" : "Pendente"}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
-            </details>
+            </section>
           ))
         )}
       </div>

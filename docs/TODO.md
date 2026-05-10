@@ -354,6 +354,27 @@ px prisma migrate deploy no banco configurado.
 - [x] Executar `npm run typecheck`
 - [ ] Executar testes relevantes (falha de ambiente local EPERM em `C:\Users\User`)
 
+Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito posterior; a capa visual passou a pertencer a `lessons`.
+
+## Ajustes 2026-05-10 - Capa por aula e vitrine do curso
+
+- [x] Analisar print mais recente da pasta de screenshots.
+- [x] Remover cadastro/exibicao de capa do modulo na area do produtor.
+- [x] Remover `cover_image_url` de `modules` via migration.
+- [x] Adicionar `cover_image_url` em `lessons` via migration.
+- [x] Permitir capa de aula por URL HTTPS.
+- [x] Permitir upload de capa de aula para imagens `jpeg`, `png`, `webp`, `gif` e `avif`.
+- [x] Listar modulos na vertical e aulas na horizontal na pagina inicial do curso do aluno.
+- [x] Usar thumbnail do YouTube quando a aula nao tiver capa cadastrada.
+- [x] Preservar a listagem da pagina interna da aula.
+- [x] Executar `npx prisma generate`.
+- [x] Executar `npm run prisma:validate`.
+- [x] Executar `npm run typecheck`.
+- [x] Executar testes focados de validators, YouTube, admin service e student service.
+- [x] Executar `npm run lint`.
+- [x] Executar `npm run build`.
+- [ ] `npm run test` completo sem falhas (falha preexistente em `src/tests/integration/auth-actions.test.ts` com `cache is not a function`).
+
 ## Ajustes 2026-05-08 - Papel PRODUCER e escopo administrativo
 
 - [x] Adicionar `PRODUCER` no enum `UserRole`

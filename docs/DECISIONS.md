@@ -604,6 +604,10 @@ Decisao:
 
 Adicionar `cover_image_url` em `modules` e tratar capa de modulo como URL HTTPS em vez de upload binario nesta etapa.
 
+Status 2026-05-10:
+
+Decisao substituida por requisito posterior. A capa foi removida de `modules` e movida para `lessons`.
+
 Motivo:
 
 Implementacao incremental e testavel, reaproveitando validacao ja adotada para capa de curso sem ampliar escopo para novos fluxos de storage.
@@ -623,6 +627,43 @@ Arquivos afetados:
 - `src/server/validators/admin.ts`
 - `src/server/repositories/admin-repository.ts`
 - `src/app/admin/courses/[courseId]/modules/page.tsx`
+
+## 2026-05-10 - Capa visual pertence a aula
+
+Decisao:
+
+Remover a coluna `cover_image_url` de `modules` e adicionar `cover_image_url` em `lessons`. A capa visual da trilha passa a ser cadastrada por aula.
+
+Motivo:
+
+O layout validado pelo print organiza modulos como grupos verticais e aulas como cards horizontais com imagem. A imagem representa o conteudo da aula, nao o modulo.
+
+Alternativas consideradas:
+
+- Manter capa no modulo e duplicar capa na aula.
+- Usar apenas thumbnail do YouTube sem permitir capa cadastrada.
+
+Impacto:
+
+- Migration remove `modules.cover_image_url`, com perda intencional dos valores de capa de modulo.
+- Migration adiciona `lessons.cover_image_url`.
+- Area do produtor remove capa do formulario/listagem de modulos.
+- Area do produtor adiciona capa de aula por URL HTTPS ou upload de imagem.
+- Area do aluno usa capa da aula e fallback para thumbnail do YouTube.
+- Pagina interna da aula permanece com a listagem existente.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260510133000_lesson_cover_remove_module_cover/migration.sql`
+- `src/server/validators/admin.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/youtube-service.ts`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/app/courses/[courseId]/page.tsx`
 
 ## 2026-05-08 - Cadastro publico por audiencia de login
 

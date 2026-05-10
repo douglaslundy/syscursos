@@ -1454,6 +1454,7 @@ px prisma migrate deploy`n
 ### O que foi implementado
 
 - Cadastro de capa por modulo com campo `coverImageUrl` (URL HTTPS) no schema, validacao, repositorio e UI administrativa de modulos.
+- Observacao 2026-05-10: este comportamento foi substituido; capa de modulo foi removida do banco e capa visual passou a pertencer a aula.
 - Criado fluxo de solicitacao de cadastro publico por pagina:
   - admin: `/login/admin/register`
   - cliente: `/login/client/register`
@@ -1473,6 +1474,59 @@ px prisma migrate deploy`n
 - Teste focado: falhou por restricao de ambiente local (`EPERM: lstat C:\Users\User`).
 
 ### Riscos encontrados
+
+## Revisao 2026-05-10 - Capa por aula e vitrine do curso
+
+### Arquivos revisados
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260510133000_lesson_cover_remove_module_cover/migration.sql`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/server/actions/admin-actions.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/youtube-service.ts`
+- `src/server/validators/admin.ts`
+- `src/tests/unit/admin-validators.test.ts`
+- `src/tests/unit/youtube-service.test.ts`
+- `src/tests/integration/admin-service.test.ts`
+- `src/tests/integration/student-service.test.ts`
+
+### O que foi implementado
+
+- Capa de modulo removida do schema, migration, repositorio e UI administrativa.
+- Capa de aula adicionada ao schema, validacao, repositorio, action e UI administrativa.
+- Upload de capa de aula reaproveita o storage de capas existente, sem criar nova variavel de ambiente.
+- Pagina inicial do curso do aluno passou a exibir modulos verticais e aulas horizontais com cards visuais.
+- Aula sem capa cadastrada usa thumbnail do YouTube como fallback.
+- Pagina interna da aula nao foi alterada.
+
+### Testes executados
+
+- `npx prisma generate`
+- `npm run typecheck`
+- `npm run prisma:validate` com `DATABASE_URL` e `DIRECT_URL` temporarios locais.
+- `npm run test -- --run src/tests/unit/admin-validators.test.ts src/tests/unit/youtube-service.test.ts src/tests/integration/admin-service.test.ts src/tests/integration/student-service.test.ts`
+- `npm run lint`
+- `npm run build`
+- `npm run test`
+
+### Resultado dos testes
+
+- Prisma generate: aprovado.
+- Typecheck: aprovado.
+- Prisma validate: aprovado com variaveis temporarias locais.
+- Testes focados: aprovados.
+- Lint: aprovado.
+- Build: aprovado.
+- Suite completa: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha preexistente ja registrada.
+
+### Riscos encontrados
+
+- A migration remove intencionalmente dados existentes em `modules.cover_image_url`.
+- Nao identificado no repositorio um procedimento oficial para aplicar a migration no banco de producao.
 
 - Cadastro publico de administrador fica aberto para qualquer e-mail nesta iteracao.
 - Nao foi identificado no repositorio um papel separado de "produtor"; o fluxo continua com roles `ADMIN` e `STUDENT`.

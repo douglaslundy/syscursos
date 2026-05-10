@@ -65,16 +65,7 @@ export async function deleteCourseAction(formData: FormData) {
 }
 
 export async function saveModuleAction(formData: FormData) {
-  let input: z.output<typeof moduleSchema>;
-  try {
-    input = await parseModuleForm(formData, "/admin/courses");
-  } catch (error) {
-    if (isRedirectError(error)) {
-      throw error;
-    }
-    console.error("Failed to parse or upload module cover.", error);
-    redirect("/admin/courses?status=invalid");
-  }
+  const input = parseForm(moduleSchema, formData, "/admin/courses");
   const path = `/admin/courses/${input.courseId}/modules`;
   await runAdminMutation(path, "saved", async () => {
     await saveModule(input);
@@ -93,7 +84,16 @@ export async function deleteModuleAction(formData: FormData) {
 }
 
 export async function saveLessonAction(formData: FormData) {
-  const input = parseForm(lessonSchema, formData, "/admin/courses");
+  let input: z.output<typeof lessonSchema>;
+  try {
+    input = await parseLessonForm(formData, "/admin/courses");
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+    console.error("Failed to parse or upload lesson cover.", error);
+    redirect("/admin/courses?status=invalid");
+  }
   const path = `/admin/modules/${input.moduleId}/lessons`;
   try {
     await saveLesson(input);
@@ -222,20 +222,20 @@ async function parseCourseForm(formData: FormData, errorPath: string) {
   return parsed.data;
 }
 
-async function parseModuleForm(formData: FormData, errorPath: string) {
+async function parseLessonForm(formData: FormData, errorPath: string) {
   const draft = Object.fromEntries(formData.entries());
   const coverFile = formData.get("coverImageFile");
   delete draft.coverImageFile;
 
   if (coverFile instanceof File && coverFile.size > 0) {
     assertValidImageCover(coverFile, errorPath);
-    draft.coverImageUrl = await uploadImageCover(coverFile, "modules");
+    draft.coverImageUrl = await uploadImageCover(coverFile, "lessons");
   }
 
-  const parsed = moduleSchema.safeParse(draft);
+  const parsed = lessonSchema.safeParse(draft);
 
   if (!parsed.success) {
-    console.error("Invalid admin module input.", parsed.error.flatten());
+    console.error("Invalid admin lesson input.", parsed.error.flatten());
     redirect(`${errorPath}?status=invalid`);
   }
 
@@ -389,7 +389,7 @@ async function uploadCourseCover(file: File) {
   return uploadImageCover(file, "courses");
 }
 
-async function uploadImageCover(file: File, folder: "courses" | "modules") {
+async function uploadImageCover(file: File, folder: "courses" | "lessons") {
   const supabase = createSupabaseAdminClient();
   const bucket = process.env.SUPABASE_COURSE_COVER_BUCKET ?? "course-covers";
   await ensureCourseCoverBucket(supabase, bucket);

@@ -37,7 +37,7 @@
   - `ADMIN` e `PRODUCER` direcionados para `/admin`
   - `PRODUCER` com restricoes de rotas administrativas especificas
 - Escopo de dados por tenant (`organization_id`) e ownership por produtor (`producer_id`, `producer_students`).
-- Upload de capa por arquivo habilitado para cursos e modulos com storage Supabase.
+- Upload de capa por arquivo habilitado para cursos e aulas com storage Supabase.
 
 ## Validacoes executadas nesta rodada
 - `npm.cmd run lint`: falhou (`next` nao encontrado no ambiente atual).
@@ -120,3 +120,34 @@
   - `npm run lint`: aprovado.
   - `npm run build`: aprovado.
   - `npm run test`: falhou em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`; falha preexistente no harness de autenticacao.
+
+## Atualizacao 2026-05-10 - Capa por aula e vitrine do curso
+- Print analisado: `C:\Users\dougl\Pictures\Screenshots\Captura de tela 2026-05-10 012313.png`; o layout mostra modulos empilhados verticalmente e aulas em cards horizontais com imagem.
+- Decisao aplicada: `modules.cover_image_url` foi removido por migration, e `lessons.cover_image_url` foi adicionado para a capa visual ficar na aula.
+- Area do produtor:
+  - formulario/listagem de modulos nao cadastra nem exibe capa;
+  - formulario/listagem de aulas aceita capa por URL HTTPS ou upload de imagem (`jpeg`, `png`, `webp`, `gif`, `avif`).
+- Area do aluno:
+  - pagina inicial do curso (`/app/courses/[courseId]`) lista modulos verticalmente e aulas horizontalmente;
+  - quando a aula nao possui capa cadastrada, usa thumbnail do YouTube por `youtubeVideoId` ou URL;
+  - pagina interna da aula nao foi alterada, mantendo a listagem existente.
+- Arquivos alterados:
+  - `prisma/schema.prisma`
+  - `prisma/migrations/20260510133000_lesson_cover_remove_module_cover/migration.sql`
+  - `src/app/admin/courses/[courseId]/modules/page.tsx`
+  - `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+  - `src/app/app/courses/[courseId]/page.tsx`
+  - `src/server/actions/admin-actions.ts`
+  - `src/server/repositories/admin-repository.ts`
+  - `src/server/repositories/student-repository.ts`
+  - `src/server/services/youtube-service.ts`
+  - `src/server/validators/admin.ts`
+  - testes unitarios/integracao relacionados.
+- Validacoes:
+  - `npx prisma generate`: aprovado.
+  - `npm run typecheck`: aprovado.
+  - `npm run prisma:validate`: aprovado com `DATABASE_URL` e `DIRECT_URL` temporarios locais.
+  - `npm run test -- --run src/tests/unit/admin-validators.test.ts src/tests/unit/youtube-service.test.ts src/tests/integration/admin-service.test.ts src/tests/integration/student-service.test.ts`: aprovado.
+  - `npm run lint`: aprovado.
+  - `npm run build`: aprovado.
+  - `npm run test`: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha ja registrada anteriormente.

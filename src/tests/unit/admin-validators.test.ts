@@ -56,6 +56,7 @@ describe("admin validators", () => {
         moduleId: "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633",
         title: "Aula",
         youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        coverImageUrl: "https://example.com/aula.jpg",
         position: "1",
         status: "ACTIVE",
       }).success,
@@ -70,6 +71,19 @@ describe("admin validators", () => {
         status: "ACTIVE",
       }).success,
     ).toBe(false);
+  });
+
+  it("rejects lesson cover URL without HTTPS", () => {
+    const result = lessonSchema.safeParse({
+      moduleId: "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633",
+      title: "Aula",
+      youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      coverImageUrl: "http://example.com/aula.jpg",
+      position: "1",
+      status: "ACTIVE",
+    });
+
+    expect(result.success).toBe(false);
   });
 
   it("normalizes open-ended enrollment expiration", () => {

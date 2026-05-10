@@ -8,6 +8,16 @@ export function getYouTubeEmbedUrl(youtubeUrl: string, youtubeVideoId: string | 
   return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&enablejsapi=1`;
 }
 
+export function getYouTubeThumbnailUrl(youtubeUrl: string, youtubeVideoId: string | null) {
+  const videoId = normalizeYouTubeVideoId(youtubeVideoId) || extractYouTubeVideoId(youtubeUrl);
+
+  if (!videoId) {
+    return null;
+  }
+
+  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+}
+
 export function extractYouTubeVideoId(youtubeUrl: string) {
   try {
     const url = new URL(youtubeUrl);

@@ -81,7 +81,7 @@ Constraints e indices:
 
 ### Lesson
 
-Aula ordenada dentro de um modulo, com link do YouTube.
+Aula ordenada dentro de um modulo, com link do YouTube e capa opcional.
 
 Relacionamentos:
 

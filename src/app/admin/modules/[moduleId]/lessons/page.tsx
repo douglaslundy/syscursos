@@ -57,6 +57,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
                   description: editingLesson.description ?? "",
                   youtubeUrl: editingLesson.youtubeUrl,
                   youtubeVideoId: editingLesson.youtubeVideoId ?? "",
+                  coverImageUrl: editingLesson.coverImageUrl ?? "",
                   position: editingLesson.position,
                   status: editingLesson.status,
                 }
@@ -85,6 +86,11 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
               </div>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">{lesson.youtubeUrl}</p>
+            {lesson.coverImageUrl ? (
+              <p className="mt-2 break-all text-xs text-muted-foreground">
+                Capa: {lesson.coverImageUrl}
+              </p>
+            ) : null}
             {lesson.description ? (
               <p className="mt-2 text-sm text-muted-foreground">{lesson.description}</p>
             ) : null}
@@ -152,6 +158,7 @@ type LessonFormProps = {
     description: string;
     youtubeUrl: string;
     youtubeVideoId: string;
+    coverImageUrl: string;
     position: number;
     status: string;
   };
@@ -206,6 +213,21 @@ function LessonForm({ moduleId, lesson, suggestedPosition, formResetToken }: Les
         key={`${baseKey}-youtubeVideoId`}
         name="youtubeVideoId"
         placeholder="Video ID"
+      />
+      <input
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
+        defaultValue={lesson?.coverImageUrl ?? ""}
+        key={`${baseKey}-coverImageUrl`}
+        name="coverImageUrl"
+        placeholder="URL HTTPS da capa da aula (opcional)"
+        type="url"
+      />
+      <input
+        accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
+        key={`${baseKey}-coverImageFile`}
+        name="coverImageFile"
+        type="file"
       />
       <textarea
         className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"

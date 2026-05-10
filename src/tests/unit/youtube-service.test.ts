@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { extractYouTubeVideoId, getYouTubeEmbedUrl } from "@/server/services/youtube-service";
+import {
+  extractYouTubeVideoId,
+  getYouTubeEmbedUrl,
+  getYouTubeThumbnailUrl,
+} from "@/server/services/youtube-service";
 
 describe("youtube service", () => {
   it("extracts video id from watch URLs", () => {
@@ -25,6 +29,12 @@ describe("youtube service", () => {
   it("falls back to the URL when a stored video id is invalid", () => {
     expect(getYouTubeEmbedUrl("https://youtu.be/dQw4w9WgXcQ", "invalid-id")).toBe(
       "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1&enablejsapi=1",
+    );
+  });
+
+  it("builds a YouTube thumbnail URL from a valid video", () => {
+    expect(getYouTubeThumbnailUrl("https://youtu.be/dQw4w9WgXcQ", null)).toBe(
+      "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
     );
   });
 

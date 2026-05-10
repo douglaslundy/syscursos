@@ -57,3 +57,24 @@ Evidencias:
 - `src/server/auth/schemas.ts`
 - `src/server/validators/admin.ts`
 - `src/server/validators/student.ts`
+
+## 2026-05-10 - Capa visual pertence a aula
+
+Decisao:
+- Remover a capa persistida em `modules` e persistir a capa em `lessons`.
+
+Motivo:
+- A vitrine do curso exibe cards de aulas dentro de cada modulo; a imagem exibida representa a aula, nao o agrupador do modulo.
+
+Impacto:
+- Migration remove `modules.cover_image_url`.
+- Migration adiciona `lessons.cover_image_url`.
+- Area do produtor cadastra capa na aula por URL HTTPS ou upload de imagem.
+- Area do aluno usa capa da aula e, quando ausente, thumbnail do YouTube.
+
+Evidencias:
+- `prisma/schema.prisma`
+- `prisma/migrations/20260510133000_lesson_cover_remove_module_cover/migration.sql`
+- `src/app/admin/courses/[courseId]/modules/page.tsx`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/app/courses/[courseId]/page.tsx`
