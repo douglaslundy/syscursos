@@ -27,10 +27,15 @@ describe("student repository", () => {
           studentId: "student-id",
           status: "ACTIVE",
           startsAt: expect.objectContaining({ lte: expect.any(Date) }),
-          OR: [{ expiresAt: null }, { expiresAt: { gt: expect.any(Date) } }],
-          course: {
+          OR: expect.arrayContaining([{ expiresAt: null }, { expiresAt: { gt: expect.any(Date) } }]),
+          course: expect.objectContaining({
             status: "ACTIVE",
-          },
+            producer: {
+              producerStudents: {
+                some: { studentId: "student-id" },
+              },
+            },
+          }),
         }),
       }),
     );
