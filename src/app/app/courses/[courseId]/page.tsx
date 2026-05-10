@@ -86,7 +86,7 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
 
                       return (
                         <Link
-                          className="group w-40 shrink-0 overflow-hidden rounded-md border border-stroke-subtle bg-surface-elevated text-copy-secondary transition hover:border-brand-primary/60 hover:bg-surface-hover hover:text-copy-primary md:w-44"
+                          className="group w-52 shrink-0 overflow-hidden rounded-md border border-stroke-subtle bg-surface-elevated text-copy-secondary transition hover:border-brand-primary/60 hover:bg-surface-hover hover:text-copy-primary md:w-56"
                           href={`/app/courses/${data.course.id}/lessons/${lesson.id}`}
                           key={lesson.id}
                         >

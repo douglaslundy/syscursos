@@ -94,3 +94,26 @@ Impacto:
 
 Evidencias:
 - `src/lib/db/prisma.ts`
+
+## 2026-05-10 - Fluxo de aluno por produtor em duas etapas (e-mail primeiro)
+
+Decisao:
+- O cadastro/vinculo de aluno por produtor passa a iniciar obrigatoriamente por verificacao de e-mail.
+- Se o e-mail existir, o produtor nao pode editar dados do aluno e apenas cria o vinculo.
+- Se o e-mail nao existir, o produtor conclui cadastro e o vinculo e criado junto.
+
+Motivo:
+- Impedir edicao indevida de dados de alunos ja existentes na plataforma.
+- Tornar o comportamento de vinculo N:N explicito e previsivel no fluxo de UI e backend.
+
+Impacto:
+- `/admin/students` passa a ter estados: consulta de e-mail, cadastro de novo aluno, vinculo de aluno existente.
+- Exclusao feita por produtor remove apenas o vinculo em `producer_students`.
+- A listagem/acesso do aluno a cursos passa a exigir tambem vinculo com o produtor do curso, alem da matricula.
+
+Evidencias:
+- `src/app/admin/students/page.tsx`
+- `src/server/actions/admin-actions.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`

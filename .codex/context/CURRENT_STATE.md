@@ -234,4 +234,43 @@
   - `npm run typecheck`: aprovado.
   - `npm run lint`: aprovado.
   - `npm run build`: aprovado.
-  - `npm run test` completo: nao executado nesta rodada; segue registrada falha preexistente em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`.
+- `npm run test` completo: nao executado nesta rodada; segue registrada falha preexistente em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`.
+
+## Atualizacao 2026-05-10 - Aumento de 30% dos cards de aulas no aluno
+- Escopo aplicado somente na vitrine de aulas da pagina de curso do aluno.
+- Alteracao visual realizada:
+  - `src/app/app/courses/[courseId]/page.tsx`
+  - largura do card alterada de `w-40 md:w-44` para `w-52 md:w-56` (aumento aproximado de 30%).
+- Nenhuma mudanca de logica, rotas, APIs ou banco.
+
+## Validacoes executadas nesta rodada (2026-05-10)
+- `npm run lint`: nao executado diretamente por bloqueio de policy do PowerShell (`npm.ps1`).
+- `npm.cmd run lint`: aprovado, sem warnings ou erros.
+- `npm run typecheck`: nao executado diretamente por bloqueio de policy do PowerShell (`npm.ps1`).
+- `npm.cmd run typecheck`: falhou com erros TypeScript preexistentes fora do escopo desta tarefa (campos `coverImageUrl`/tipagens em arquivos de admin, student service e repositories).
+- `npm.cmd run test -- --run src/tests/unit/student-components.test.tsx src/tests/integration/student-service.test.ts`: falhou por erro de ambiente/permissao ao carregar `vitest.config.mts` (`Cannot read directory \"../..\": Access is denied`).
+- `npm.cmd run build`: falhou por restricao de rede/permissao ao buscar fontes Google (`Nunito` e `Sora`) durante `next build` (`EACCES`).
+
+## Atualizacao 2026-05-10 - Fluxo de cadastro e vinculo de aluno por produtor
+- Fluxo em duas etapas implementado na tela de alunos do produtor:
+  - etapa inicial com apenas e-mail + botao de verificacao;
+  - e-mail nao encontrado: libera formulario editavel para criar aluno e vincular;
+  - e-mail encontrado: exibe dados bloqueados e botao para vincular aluno ao produtor.
+- Backend adicionado para:
+  - verificar e-mail de aluno por produtor;
+  - vincular aluno existente ao produtor;
+  - evitar vinculo duplicado (`student_already_linked`).
+- Exclusao de aluno por produtor alterada para remover somente vinculo `producer_students` (nao remove `users`/`student_profiles`).
+- Regras de acesso do aluno endurecidas no repositório:
+  - dashboard e opcoes de caderno filtram apenas cursos cujo produtor possui vinculo com o aluno;
+  - acesso por matricula considera tambem vinculo com produtor.
+
+### Commits desta etapa
+- `47ea25e feat(producer-students): add lookup/link workflow backend and unlink-only removal`
+- `d3de3ed feat(producer-students): add lookup/link workflow backend and unlink-only removal` (ajuste de teste de repositorio)
+- `e30a9ed feat(producer-students): implement two-step email lookup UI for student link/create`
+
+### Validacoes executadas nesta etapa
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- `npm.cmd run test -- --run src/tests/integration/admin-actions.test.ts src/tests/integration/admin-repository.test.ts src/tests/integration/student-repository.test.ts src/tests/integration/student-service.test.ts`: falhou por restricao de ambiente (`Cannot read directory "../..": Access is denied` ao carregar `vitest.config.mts`).
