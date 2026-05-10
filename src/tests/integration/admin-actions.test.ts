@@ -9,6 +9,8 @@ const redirectMock = vi.hoisted(() =>
 );
 const revalidatePathMock = vi.hoisted(() => vi.fn());
 const saveStudentMock = vi.hoisted(() => vi.fn());
+const lookupStudentByEmailMock = vi.hoisted(() => vi.fn());
+const linkStudentToProducerMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
@@ -20,8 +22,8 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/server/services/admin-service", () => ({
   cancelEnrollment: vi.fn(),
-  linkStudentToProducer: vi.fn(),
-  lookupStudentByEmail: vi.fn(),
+  linkStudentToProducer: linkStudentToProducerMock,
+  lookupStudentByEmail: lookupStudentByEmailMock,
   removeCourse: vi.fn(),
   removeLesson: vi.fn(),
   removeModule: vi.fn(),
@@ -41,7 +43,11 @@ describe("admin student actions", () => {
     redirectMock.mockClear();
     revalidatePathMock.mockClear();
     saveStudentMock.mockReset();
+    lookupStudentByEmailMock.mockReset();
+    linkStudentToProducerMock.mockReset();
     saveStudentMock.mockResolvedValue({ linkedExisting: false });
+    lookupStudentByEmailMock.mockResolvedValue(null);
+    linkStudentToProducerMock.mockResolvedValue({ id: "link-id" });
   });
 
   it("updates a student without changing the password when password is blank", async () => {
@@ -178,6 +184,41 @@ describe("admin student actions", () => {
     await expect(saveStudentAction(studentForm())).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_auth_email",
     );
+  });
+
+  it("redirects with lookup=found when an e-mail already exists", async () => {
+    const { verifyStudentEmailAction } = await import("@/server/actions/admin-actions");
+    const formData = new FormData();
+    formData.set("email", "student@example.com");
+    lookupStudentByEmailMock.mockResolvedValue({ studentProfileId: "student-profile-id" });
+
+    await expect(verifyStudentEmailAction(formData)).rejects.toThrow(
+      "REDIRECT:/admin/students?lookupEmail=student%40example.com&lookup=found",
+    );
+  });
+
+  it("redirects with lookup=not_found when an e-mail does not exist", async () => {
+    const { verifyStudentEmailAction } = await import("@/server/actions/admin-actions");
+    const formData = new FormData();
+    formData.set("email", "new@example.com");
+    lookupStudentByEmailMock.mockResolvedValue(null);
+
+    await expect(verifyStudentEmailAction(formData)).rejects.toThrow(
+      "REDIRECT:/admin/students?lookupEmail=new%40example.com&lookup=not_found",
+    );
+  });
+
+  it("links an existing student to the producer", async () => {
+    const { linkStudentToProducerAction } = await import("@/server/actions/admin-actions");
+    const formData = new FormData();
+    formData.set("studentProfileId", "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633");
+
+    await expect(linkStudentToProducerAction(formData)).rejects.toThrow(
+      "REDIRECT:/admin/students?status=linked_existing",
+    );
+    expect(linkStudentToProducerMock).toHaveBeenCalledWith({
+      studentProfileId: "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633",
+    });
   });
 });
 

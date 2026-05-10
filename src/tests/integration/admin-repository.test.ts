@@ -7,6 +7,8 @@ const findStudentOrThrowMock = vi.hoisted(() => vi.fn());
 const findStudentFirstMock = vi.hoisted(() => vi.fn());
 const producerStudentUpsertMock = vi.hoisted(() => vi.fn());
 const producerStudentFindUniqueMock = vi.hoisted(() => vi.fn());
+const producerStudentCreateMock = vi.hoisted(() => vi.fn());
+const producerStudentDeleteManyMock = vi.hoisted(() => vi.fn());
 const userCreateMock = vi.hoisted(() => vi.fn());
 const listUsersMock = vi.hoisted(() => vi.fn());
 const updateUserByIdMock = vi.hoisted(() => vi.fn());
@@ -28,6 +30,8 @@ vi.mock("@/lib/db/prisma", () => ({
     producerStudent: {
       upsert: producerStudentUpsertMock,
       findUnique: producerStudentFindUniqueMock,
+      create: producerStudentCreateMock,
+      deleteMany: producerStudentDeleteManyMock,
     },
     user: {
       create: userCreateMock,
@@ -56,6 +60,8 @@ describe("admin repository", () => {
     findStudentFirstMock.mockReset();
     producerStudentUpsertMock.mockReset();
     producerStudentFindUniqueMock.mockReset();
+    producerStudentCreateMock.mockReset();
+    producerStudentDeleteManyMock.mockReset();
     userCreateMock.mockReset();
     listUsersMock.mockReset();
     updateUserByIdMock.mockReset();
@@ -67,6 +73,8 @@ describe("admin repository", () => {
     updateUserByIdMock.mockResolvedValue({ data: { user: { id: "auth-user-id" } }, error: null });
     createUserMock.mockResolvedValue({ data: { user: { id: "auth-user-id" } }, error: null });
     producerStudentFindUniqueMock.mockResolvedValue(null);
+    producerStudentCreateMock.mockResolvedValue({ id: "producer-link-id" });
+    producerStudentDeleteManyMock.mockResolvedValue({ count: 1 });
   });
 
   it("updates an enrollment by id when editing an existing record", async () => {
@@ -158,5 +166,31 @@ describe("admin repository", () => {
     });
     expect(userCreateMock).not.toHaveBeenCalled();
     expect(createUserMock).not.toHaveBeenCalled();
+  });
+
+  it("looks up an existing student by e-mail for producer flow", async () => {
+    const { findStudentByEmailForProducer } = await import("@/server/repositories/admin-repository");
+    findStudentFirstMock.mockResolvedValueOnce({
+      id: "student-profile-id",
+      document: null,
+      phone: null,
+      user: {
+        id: "student-user-id",
+        email: "student@example.com",
+        name: "Student",
+        status: "ACTIVE",
+      },
+      producers: [],
+    });
+
+    await expect(
+      findStudentByEmailForProducer("org-id", "producer-id", "PRODUCER", "student@example.com"),
+    ).resolves.toMatchObject({
+      studentProfileId: "student-profile-id",
+      userId: "student-user-id",
+      email: "student@example.com",
+      name: "Student",
+      alreadyLinked: false,
+    });
   });
 });
