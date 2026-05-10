@@ -874,3 +874,32 @@ Arquivos afetados:
 - `src/server/repositories/admin-repository.ts`
 - `src/server/services/admin-service.ts`
 - `src/app/admin/courses/[courseId]/modules/page.tsx`
+
+## 2026-05-10 - Vinculo de aluno preexistente por `auth_user_id`
+
+Decisao:
+
+Quando o produtor cadastra um aluno novo e nao existe correspondencia interna por e-mail/documento, o fluxo passa a verificar se o e-mail ja existe no Supabase Auth e se esse `auth_user_id` ja pertence a um aluno do mesmo tenant. Nesse caso, o sistema vincula o aluno existente ao produtor e retorna sucesso de vinculacao, em vez de deixar a constraint unica de `users.auth_user_id` falhar.
+
+Motivo:
+
+Havia cenarios legados em que o aluno nao era encontrado pelo filtro interno inicial, mas o acesso Auth ja estava ligado a um usuario `STUDENT` do tenant. O cadastro acabava em `student_auth_conflict`, apesar de o comportamento esperado ser apenas reaproveitar e vincular esse aluno.
+
+Alternativas consideradas:
+
+1. Manter o erro de conflito e exigir saneamento manual no banco.
+2. Atualizar automaticamente os dados cadastrais do aluno existente no fallback por Auth.
+
+Impacto:
+
+- O cadastro de aluno do produtor fica resiliente a inconsistencias legadas entre e-mail/documento e `auth_user_id`.
+- O feedback de sucesso `linked_existing` passa a chegar corretamente na UI.
+- O fallback continua restrito a usuarios `STUDENT` da mesma `organization`, evitando vincular acessos de outros papeis.
+
+Arquivos afetados:
+
+- `src/server/repositories/admin-repository.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/components/admin/feedback.tsx`
+- `src/tests/integration/admin-actions.test.ts`
+- `src/tests/integration/admin-repository.test.ts`

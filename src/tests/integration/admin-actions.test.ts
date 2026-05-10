@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const redirectMock = vi.hoisted(() =>
   vi.fn((url: string): never => {
-    throw new Error(`REDIRECT:${url}`);
+    const error = new Error(`REDIRECT:${url}`) as Error & { digest: string };
+    error.digest = `NEXT_REDIRECT;${url}`;
+    throw error;
   }),
 );
 const revalidatePathMock = vi.hoisted(() => vi.fn());
@@ -152,6 +154,18 @@ describe("admin student actions", () => {
 
     await expect(saveStudentAction(studentForm())).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_not_found",
+    );
+  });
+
+  it("redirects with linked_existing when the student is only linked to the producer", async () => {
+    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const formData = studentForm({ password: "password123" });
+    formData.delete("studentUserId");
+    formData.delete("studentProfileId");
+    saveStudentMock.mockResolvedValue({ linkedExisting: true });
+
+    await expect(saveStudentAction(formData)).rejects.toThrow(
+      "REDIRECT:/admin/students?status=linked_existing",
     );
   });
 

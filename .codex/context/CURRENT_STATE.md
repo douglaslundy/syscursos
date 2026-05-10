@@ -209,3 +209,29 @@
   - `npm run lint`: aprovado.
   - `npm run build`: aprovado.
   - `npm run test`: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha preexistente.
+
+## Atualizacao 2026-05-10 - Vinculo de aluno preexistente por Auth
+- Causa raiz identificada:
+  - o cadastro de aluno do produtor ja reaproveitava aluno interno existente por e-mail/documento, mas ainda podia falhar quando o e-mail ja existia no Supabase Auth e o `auth_user_id` correspondente ja estava vinculado a outro `users` interno do mesmo tenant;
+  - nesse cenario, a tentativa de criar novo `users` com o mesmo `auth_user_id` disparava `student_auth_conflict`, embora o comportamento esperado fosse apenas vincular o aluno existente ao produtor.
+- Correcao aplicada:
+  - o fluxo de criacao agora consulta o Supabase Auth antes de criar novo aluno quando nao encontra correspondencia interna inicial;
+  - se o `auth_user_id` encontrado ja pertence a um `STUDENT` da mesma `organization`, o sistema cria/normaliza somente o vinculo em `producer_students` e retorna `linked_existing`;
+  - `saveStudentAction` passou a respeitar o `redirect` de `linked_existing`, sem converte-lo em `student_save_error`;
+  - a mensagem de feedback foi ajustada para confirmar vinculacao com sucesso.
+- Arquivos alterados:
+  - `src/server/repositories/admin-repository.ts`
+  - `src/server/actions/admin-actions.ts`
+  - `src/components/admin/feedback.tsx`
+  - `src/tests/integration/admin-actions.test.ts`
+  - `src/tests/integration/admin-repository.test.ts`
+  - `docs/TODO.md`
+  - `docs/DECISIONS.md`
+  - `docs/REVIEW.md`
+  - `.codex/context/CURRENT_STATE.md`
+- Validacoes:
+  - `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/integration/admin-service.test.ts src/tests/integration/admin-repository.test.ts src/tests/unit/admin-validators.test.ts`: aprovado.
+  - `npm run typecheck`: aprovado.
+  - `npm run lint`: aprovado.
+  - `npm run build`: aprovado.
+  - `npm run test` completo: nao executado nesta rodada; segue registrada falha preexistente em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`.

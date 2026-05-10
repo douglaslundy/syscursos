@@ -3,7 +3,7 @@ const messages: Record<string, string> = {
   deleted: "Registro removido com sucesso.",
   renewed: "Matricula renovada com sucesso.",
   canceled: "Matricula cancelada com sucesso.",
-  linked_existing: "Aluno ja possuia cadastro na plataforma e foi vinculado a sua lista.",
+  linked_existing: "Aluno ja possuia cadastro na plataforma e foi vinculado com sucesso a sua lista.",
   invalid: "Algum campo obrigatorio esta ausente ou fora do formato esperado.",
   student_invalid_id: "Nao foi possivel identificar o aluno em edicao. Abra o cadastro pelo botao Editar e tente novamente.",
   student_invalid_user_id: "O identificador do usuario do aluno esta ausente ou invalido. Abra o cadastro pelo botao Editar e tente novamente.",

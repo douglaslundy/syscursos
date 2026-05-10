@@ -1,33 +1,68 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const updateMock = vi.hoisted(() => vi.fn());
-const upsertMock = vi.hoisted(() => vi.fn());
+const updateManyMock = vi.hoisted(() => vi.fn());
+const enrollmentUpsertMock = vi.hoisted(() => vi.fn());
 const findCourseMock = vi.hoisted(() => vi.fn());
-const findStudentMock = vi.hoisted(() => vi.fn());
+const findStudentOrThrowMock = vi.hoisted(() => vi.fn());
+const findStudentFirstMock = vi.hoisted(() => vi.fn());
+const producerStudentUpsertMock = vi.hoisted(() => vi.fn());
+const userCreateMock = vi.hoisted(() => vi.fn());
+const listUsersMock = vi.hoisted(() => vi.fn());
+const updateUserByIdMock = vi.hoisted(() => vi.fn());
+const createUserMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     enrollment: {
-      updateMany: updateMock,
-      upsert: upsertMock,
+      updateMany: updateManyMock,
+      upsert: enrollmentUpsertMock,
     },
     course: {
       findFirstOrThrow: findCourseMock,
     },
     studentProfile: {
-      findFirstOrThrow: findStudentMock,
+      findFirst: findStudentFirstMock,
+      findFirstOrThrow: findStudentOrThrowMock,
+    },
+    producerStudent: {
+      upsert: producerStudentUpsertMock,
+    },
+    user: {
+      create: userCreateMock,
     },
   },
 }));
 
+vi.mock("@/lib/supabase/admin", () => ({
+  createSupabaseAdminClient: () => ({
+    auth: {
+      admin: {
+        listUsers: listUsersMock,
+        updateUserById: updateUserByIdMock,
+        createUser: createUserMock,
+      },
+    },
+  }),
+}));
+
 describe("admin repository", () => {
   beforeEach(() => {
-    updateMock.mockReset();
-    upsertMock.mockReset();
+    updateManyMock.mockReset();
+    enrollmentUpsertMock.mockReset();
     findCourseMock.mockReset();
-    findStudentMock.mockReset();
+    findStudentOrThrowMock.mockReset();
+    findStudentFirstMock.mockReset();
+    producerStudentUpsertMock.mockReset();
+    userCreateMock.mockReset();
+    listUsersMock.mockReset();
+    updateUserByIdMock.mockReset();
+    createUserMock.mockReset();
+
     findCourseMock.mockResolvedValue({ id: "course-id" });
-    findStudentMock.mockResolvedValue({ id: "student-id" });
+    findStudentOrThrowMock.mockResolvedValue({ id: "student-id" });
+    listUsersMock.mockResolvedValue({ data: { users: [] }, error: null });
+    updateUserByIdMock.mockResolvedValue({ data: { user: { id: "auth-user-id" } }, error: null });
+    createUserMock.mockResolvedValue({ data: { user: { id: "auth-user-id" } }, error: null });
   });
 
   it("updates an enrollment by id when editing an existing record", async () => {
@@ -41,11 +76,11 @@ describe("admin repository", () => {
       status: "CANCELED" as const,
     };
 
-    updateMock.mockResolvedValue({ count: 1 });
+    updateManyMock.mockResolvedValue({ count: 1 });
 
     await upsertEnrollment("org-id", "admin-id", "ADMIN", input);
 
-    expect(updateMock).toHaveBeenCalledWith({
+    expect(updateManyMock).toHaveBeenCalledWith({
       where: { id: input.id, course: { organizationId: "org-id" } },
       data: {
         studentId: input.studentId,
@@ -55,6 +90,69 @@ describe("admin repository", () => {
         status: input.status,
       },
     });
-    expect(upsertMock).not.toHaveBeenCalled();
+    expect(enrollmentUpsertMock).not.toHaveBeenCalled();
+  });
+
+  it("links an existing student when the auth account already belongs to a student in the same organization", async () => {
+    const { upsertStudent } = await import("@/server/repositories/admin-repository");
+    const input = {
+      email: "student@example.com",
+      name: "Student",
+      password: "password123",
+      document: null,
+      phone: null,
+      status: "ACTIVE" as const,
+    };
+
+    findStudentFirstMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: "existing-student-profile-id" });
+
+    listUsersMock.mockResolvedValue({
+      data: {
+        users: [{ id: "auth-user-id", email: "student@example.com" }],
+      },
+      error: null,
+    });
+
+    await expect(upsertStudent("org-id", "producer-id", "PRODUCER", input)).resolves.toEqual({
+      linkedExisting: true,
+    });
+
+    expect(findStudentFirstMock).toHaveBeenNthCalledWith(1, {
+      where: {
+        user: {
+          organizationId: "org-id",
+          role: "STUDENT",
+          OR: [{ email: "student@example.com" }],
+        },
+      },
+      include: { user: true },
+    });
+    expect(findStudentFirstMock).toHaveBeenNthCalledWith(2, {
+      where: {
+        user: {
+          organizationId: "org-id",
+          role: "STUDENT",
+          authUserId: "auth-user-id",
+        },
+      },
+      select: { id: true },
+    });
+    expect(producerStudentUpsertMock).toHaveBeenCalledWith({
+      where: {
+        producerId_studentId: {
+          producerId: "producer-id",
+          studentId: "existing-student-profile-id",
+        },
+      },
+      update: {},
+      create: {
+        producerId: "producer-id",
+        studentId: "existing-student-profile-id",
+      },
+    });
+    expect(userCreateMock).not.toHaveBeenCalled();
+    expect(createUserMock).not.toHaveBeenCalled();
   });
 });

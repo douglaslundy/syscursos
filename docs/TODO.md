@@ -530,3 +530,16 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run lint`.
 - [x] Executar `npm run build`.
 - [ ] `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`).
+
+## Ajuste 2026-05-10 - Vinculo de aluno preexistente por Auth
+
+- [x] Identificar causa do erro `student_auth_conflict` ao cadastrar aluno ja existente.
+- [x] Reaproveitar aluno interno existente quando o `auth_user_id` ja estiver vinculado a um aluno do mesmo tenant.
+- [x] Preservar conflito apenas para casos realmente inconsistentes fora do fluxo de vinculo.
+- [x] Corrigir `saveStudentAction` para nao converter `linked_existing` em `student_save_error`.
+- [x] Ajustar mensagem de feedback para confirmar vinculo com sucesso.
+- [x] Adicionar testes focados de repository/action para o novo fallback.
+- [x] Executar testes focados.
+- [x] Executar `npm run typecheck`.
+- [x] Executar `npm run lint`.
+- [x] Executar `npm run build`.

@@ -1820,6 +1820,53 @@ px prisma migrate deploy`n
 
 ---
 
+### 2026-05-10 - Vinculo de aluno preexistente por Auth
+
+### Arquivos criados ou alterados
+
+- `src/server/repositories/admin-repository.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/components/admin/feedback.tsx`
+- `src/tests/integration/admin-actions.test.ts`
+- `src/tests/integration/admin-repository.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- O cadastro de aluno por produtor agora tenta reaproveitar um aluno interno existente tambem pelo `auth_user_id` quando o e-mail ja existe no Supabase Auth.
+- Quando esse aluno ja pertence ao mesmo tenant como `STUDENT`, o fluxo cria apenas o vinculo em `producer_students` e retorna `linked_existing`.
+- `saveStudentAction` passou a preservar o `redirect` de sucesso `linked_existing`, sem converte-lo para `student_save_error`.
+- A mensagem de feedback do admin foi ajustada para confirmar vinculacao com sucesso.
+- Testes focados cobrem o fallback por Auth no repository e o redirect de sucesso na action.
+
+### Testes executados
+
+- `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/integration/admin-service.test.ts src/tests/integration/admin-repository.test.ts src/tests/unit/admin-validators.test.ts`
+- `npm run typecheck`
+- `npm run lint`
+- `npm run build`
+
+### Resultado dos testes
+
+- Testes focados: aprovados, 31 testes.
+- `npm run typecheck`: aprovado.
+- `npm run lint`: aprovado.
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- O fallback por Auth continua restrito a `role=STUDENT` e `organizationId` igual; acessos Auth ligados a outros papeis continuam fora desse reaproveitamento.
+- Nao foi executada a suite completa `npm run test`; permanece a falha preexistente em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, ja registrada no repositorio.
+
+### Pendencias
+
+- Corrigir em etapa propria o harness de `auth-actions.test.ts` para liberar a suite completa.
+
+---
+
 ### 2026-05-10 - Correcao de edicao de modulos e alunos
 
 ### Arquivos criados ou alterados

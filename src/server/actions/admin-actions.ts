@@ -127,6 +127,9 @@ export async function saveStudentAction(formData: FormData) {
       redirect(`${path}?status=linked_existing`);
     }
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
     console.error("Admin mutation failed.", error);
     redirect(`${path}?status=${studentMutationStatus(error)}`);
   }

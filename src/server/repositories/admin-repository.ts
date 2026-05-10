@@ -542,11 +542,46 @@ export async function upsertStudent(
     return { linkedExisting: true };
   }
 
+  const supabase = createSupabaseAdminClient();
+  const existingAuthUser = await findAuthUserByEmail(supabase, input.email);
+
+  if (existingAuthUser) {
+    const existingStudentByAuth = await prisma.studentProfile.findFirst({
+      where: {
+        user: {
+          organizationId,
+          role: UserRole.STUDENT,
+          authUserId: existingAuthUser.id,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (existingStudentByAuth) {
+      await prisma.producerStudent.upsert({
+        where: {
+          producerId_studentId: {
+            producerId: actorUserId,
+            studentId: existingStudentByAuth.id,
+          },
+        },
+        update: {},
+        create: {
+          producerId: actorUserId,
+          studentId: existingStudentByAuth.id,
+        },
+      });
+
+      return { linkedExisting: true };
+    }
+  }
+
   const authUserId = await upsertStudentAuthUser({
     authUserId: null,
     email: input.email,
     password: input.password,
     name: input.name,
+    existingAuthUserId: existingAuthUser?.id ?? null,
   });
 
   const created = await prisma.user.create({
@@ -1139,6 +1174,7 @@ async function upsertStudentAuthUser(input: {
   password: string | null;
   name: string;
   role?: UserRole;
+  existingAuthUserId?: string | null;
 }) {
   const supabase = createSupabaseAdminClient();
 
@@ -1160,7 +1196,9 @@ async function upsertStudentAuthUser(input: {
     return data.user.id;
   }
 
-  const existing = await findAuthUserByEmail(supabase, input.email);
+  const existing = input.existingAuthUserId
+    ? { id: input.existingAuthUserId }
+    : await findAuthUserByEmail(supabase, input.email);
 
   if (existing) {
     const { data, error } = await supabase.auth.admin.updateUserById(existing.id, {
