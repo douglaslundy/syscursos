@@ -26,6 +26,13 @@ export async function listStudentCourseEnrollments(studentId: string) {
   return prisma.enrollment.findMany({
     where: {
       studentId,
+      course: {
+        producer: {
+          producerStudents: {
+            some: { studentId },
+          },
+        },
+      },
     },
     orderBy: { createdAt: "desc" },
     include: courseAccessInclude,
@@ -40,8 +47,47 @@ export async function findEnrollmentForCourse(studentId: string, courseId: strin
         courseId,
       },
     },
-    include: courseAccessInclude,
+    include: {
+      ...courseAccessInclude,
+      course: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          description: true,
+          coverImageUrl: true,
+          status: true,
+          producerId: true,
+        },
+      },
+    },
+  }).then((enrollment) => {
+    if (!enrollment) {
+      return null;
+    }
+
+    return prisma.producerStudent.findUnique({
+      where: {
+        producerId_studentId: {
+          producerId: enrollment.course.producerId,
+          studentId,
+        },
+      },
+      select: { id: true },
+    }).then((link) => (link ? enrollment : null));
   });
+}
+
+export async function hasProducerLink(studentId: string, producerId: string) {
+  const link = await prisma.producerStudent.findUnique({
+    where: {
+      producerId_studentId: {
+        producerId,
+        studentId,
+      },
+    },
+  });
+  return Boolean(link);
 }
 
 export async function getCourseWithActiveContent(courseId: string) {
@@ -285,6 +331,11 @@ export async function listNotebookCourseOptions(studentId: string) {
       OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
       course: {
         status: CourseStatus.ACTIVE,
+        producer: {
+          producerStudents: {
+            some: { studentId },
+          },
+        },
       },
     },
     orderBy: {

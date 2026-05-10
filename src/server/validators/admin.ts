@@ -84,6 +84,14 @@ export const studentSchema = z.object({
   }
 });
 
+export const studentEmailLookupSchema = z.object({
+  email: z.string().trim().email().max(255),
+});
+
+export const studentLinkSchema = z.object({
+  studentProfileId: uuidSchema,
+});
+
 export const enrollmentSchema = z.object({
   id: uuidSchema.optional(),
   studentId: uuidSchema,
@@ -152,6 +160,8 @@ export type CourseInput = z.infer<typeof courseSchema>;
 export type ModuleInput = z.infer<typeof moduleSchema>;
 export type LessonInput = z.infer<typeof lessonSchema>;
 export type StudentInput = z.infer<typeof studentSchema>;
+export type StudentEmailLookupInput = z.infer<typeof studentEmailLookupSchema>;
+export type StudentLinkInput = z.infer<typeof studentLinkSchema>;
 export type EnrollmentInput = z.infer<typeof enrollmentSchema>;
 export type RenewEnrollmentInput = z.infer<typeof renewEnrollmentSchema>;
 export type ManagedUserInput = z.infer<typeof managedUserSchema>;

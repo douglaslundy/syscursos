@@ -17,6 +17,7 @@ const messages: Record<string, string> = {
   student_invalid_status: "Selecione um status valido para o aluno.",
   student_invalid_form: "Revise os campos do aluno: algum valor enviado nao corresponde aos campos esperados pelo cadastro.",
   student_not_found: "Este aluno nao foi encontrado para o produtor atual. Abra o cadastro pela listagem de alunos e tente novamente.",
+  student_already_linked: "Este aluno ja esta vinculado a este produtor.",
   student_invalid_relation: "Nao foi possivel relacionar este aluno ao produtor atual. Reabra o cadastro pela listagem e tente novamente.",
   student_email_conflict: "Ja existe um usuario cadastrado com este e-mail.",
   student_document_conflict: "Ja existe um aluno cadastrado com este documento.",

@@ -9,7 +9,9 @@ import type {
   ManagedUserInput,
   ModuleInput,
   RenewEnrollmentInput,
+  StudentEmailLookupInput,
   StudentInput,
+  StudentLinkInput,
 } from "@/server/validators/admin";
 
 export async function getAdminDashboard() {
@@ -124,6 +126,16 @@ export async function getStudentOptions() {
 export async function saveStudent(input: StudentInput) {
   const admin = await requireAdminOrProducer();
   return repository.upsertStudent(admin.organizationId, admin.id, admin.role, input);
+}
+
+export async function lookupStudentByEmail(input: StudentEmailLookupInput) {
+  const producer = await requireProducer();
+  return repository.findStudentByEmailForProducer(producer.organizationId, producer.id, producer.role, input.email);
+}
+
+export async function linkStudentToProducer(input: StudentLinkInput) {
+  const producer = await requireProducer();
+  return repository.linkStudentToProducer(producer.organizationId, producer.id, producer.role, input.studentProfileId);
 }
 
 export async function removeStudent(id: string) {

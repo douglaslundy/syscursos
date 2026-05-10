@@ -6,6 +6,7 @@ const findCourseMock = vi.hoisted(() => vi.fn());
 const findStudentOrThrowMock = vi.hoisted(() => vi.fn());
 const findStudentFirstMock = vi.hoisted(() => vi.fn());
 const producerStudentUpsertMock = vi.hoisted(() => vi.fn());
+const producerStudentFindUniqueMock = vi.hoisted(() => vi.fn());
 const userCreateMock = vi.hoisted(() => vi.fn());
 const listUsersMock = vi.hoisted(() => vi.fn());
 const updateUserByIdMock = vi.hoisted(() => vi.fn());
@@ -26,6 +27,7 @@ vi.mock("@/lib/db/prisma", () => ({
     },
     producerStudent: {
       upsert: producerStudentUpsertMock,
+      findUnique: producerStudentFindUniqueMock,
     },
     user: {
       create: userCreateMock,
@@ -53,6 +55,7 @@ describe("admin repository", () => {
     findStudentOrThrowMock.mockReset();
     findStudentFirstMock.mockReset();
     producerStudentUpsertMock.mockReset();
+    producerStudentFindUniqueMock.mockReset();
     userCreateMock.mockReset();
     listUsersMock.mockReset();
     updateUserByIdMock.mockReset();
@@ -63,6 +66,7 @@ describe("admin repository", () => {
     listUsersMock.mockResolvedValue({ data: { users: [] }, error: null });
     updateUserByIdMock.mockResolvedValue({ data: { user: { id: "auth-user-id" } }, error: null });
     createUserMock.mockResolvedValue({ data: { user: { id: "auth-user-id" } }, error: null });
+    producerStudentFindUniqueMock.mockResolvedValue(null);
   });
 
   it("updates an enrollment by id when editing an existing record", async () => {

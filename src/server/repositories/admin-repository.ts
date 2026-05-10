@@ -47,6 +47,17 @@ export class StudentMutationError extends Error {
   }
 }
 
+export type StudentLookupResult = {
+  studentProfileId: string;
+  userId: string;
+  email: string;
+  name: string;
+  document: string | null;
+  phone: string | null;
+  status: UserStatus;
+  alreadyLinked: boolean;
+};
+
 export async function getAdminDashboardStats(
   organizationId: string,
   actorUserId: string,
@@ -422,6 +433,59 @@ export async function findStudentByUserId(
   });
 }
 
+export async function findStudentByEmailForProducer(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  email: string,
+): Promise<StudentLookupResult | null> {
+  if (actorRole !== UserRole.PRODUCER) {
+    throw new Error("Apenas produtores podem consultar alunos por e-mail.");
+  }
+
+  const student = await prisma.studentProfile.findFirst({
+    where: {
+      user: {
+        organizationId,
+        role: UserRole.STUDENT,
+        email,
+      },
+    },
+    select: {
+      id: true,
+      document: true,
+      phone: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          status: true,
+        },
+      },
+      producers: {
+        where: { producerId: actorUserId },
+        select: { id: true },
+      },
+    },
+  });
+
+  if (!student) {
+    return null;
+  }
+
+  return {
+    studentProfileId: student.id,
+    userId: student.user.id,
+    email: student.user.email,
+    name: student.user.name,
+    document: student.document,
+    phone: student.phone,
+    status: student.user.status,
+    alreadyLinked: student.producers.length > 0,
+  };
+}
+
 export async function listStudentOptions(
   organizationId: string,
   actorUserId: string,
@@ -525,6 +589,20 @@ export async function upsertStudent(
   });
 
   if (existingStudent) {
+    const existingLink = await prisma.producerStudent.findUnique({
+      where: {
+        producerId_studentId: {
+          producerId: actorUserId,
+          studentId: existingStudent.id,
+        },
+      },
+      select: { id: true },
+    });
+
+    if (existingLink) {
+      throw new StudentMutationError("student_already_linked", "Este aluno ja esta vinculado a este produtor.");
+    }
+
     await prisma.producerStudent.upsert({
       where: {
         producerId_studentId: {
@@ -558,6 +636,20 @@ export async function upsertStudent(
     });
 
     if (existingStudentByAuth) {
+      const existingLink = await prisma.producerStudent.findUnique({
+        where: {
+          producerId_studentId: {
+            producerId: actorUserId,
+            studentId: existingStudentByAuth.id,
+          },
+        },
+        select: { id: true },
+      });
+
+      if (existingLink) {
+        throw new StudentMutationError("student_already_linked", "Este aluno ja esta vinculado a este produtor.");
+      }
+
       await prisma.producerStudent.upsert({
         where: {
           producerId_studentId: {
@@ -614,6 +706,53 @@ export async function upsertStudent(
   return { linkedExisting: false };
 }
 
+export async function linkStudentToProducer(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  studentProfileId: string,
+) {
+  if (actorRole !== UserRole.PRODUCER) {
+    throw new Error("Apenas produtores podem vincular alunos.");
+  }
+
+  const student = await prisma.studentProfile.findFirst({
+    where: {
+      id: studentProfileId,
+      user: {
+        organizationId,
+        role: UserRole.STUDENT,
+      },
+    },
+    select: { id: true },
+  });
+
+  if (!student) {
+    throw new StudentMutationError("student_not_found", "Aluno nao encontrado para este produtor.");
+  }
+
+  const existingLink = await prisma.producerStudent.findUnique({
+    where: {
+      producerId_studentId: {
+        producerId: actorUserId,
+        studentId: student.id,
+      },
+    },
+    select: { id: true },
+  });
+
+  if (existingLink) {
+    throw new StudentMutationError("student_already_linked", "Este aluno ja esta vinculado a este produtor.");
+  }
+
+  return prisma.producerStudent.create({
+    data: {
+      producerId: actorUserId,
+      studentId: student.id,
+    },
+  });
+}
+
 export async function deleteStudent(
   organizationId: string,
   actorUserId: string,
@@ -627,9 +766,9 @@ export async function deleteStudent(
   const profile = await prisma.studentProfile.findFirst({
     where: {
       userId,
-      ...scopedStudentWhere(organizationId, actorUserId, actorRole),
+      user: { organizationId, role: UserRole.STUDENT },
     },
-    select: { userId: true },
+    select: { id: true },
   });
 
   if (!profile) {
@@ -639,13 +778,18 @@ export async function deleteStudent(
     );
   }
 
-  return prisma.user.deleteMany({
+  const deleted = await prisma.producerStudent.deleteMany({
     where: {
-      id: profile.userId,
-      organizationId,
-      role: UserRole.STUDENT,
+      producerId: actorUserId,
+      studentId: profile.id,
     },
   });
+
+  if (deleted.count === 0) {
+    throw new StudentMutationError("student_not_found", "Aluno nao encontrado para este produtor.");
+  }
+
+  return deleted;
 }
 
 export async function listEnrollments(

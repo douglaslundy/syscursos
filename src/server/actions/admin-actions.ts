@@ -10,6 +10,8 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { StudentMutationError } from "@/server/repositories/admin-repository";
 import {
   cancelEnrollment as cancelEnrollmentService,
+  linkStudentToProducer,
+  lookupStudentByEmail,
   removeCourse,
   removeLesson,
   removeModule,
@@ -32,6 +34,8 @@ import {
   moduleSchema,
   managedUserSchema,
   renewEnrollmentSchema,
+  studentEmailLookupSchema,
+  studentLinkSchema,
   studentSchema,
   adminProfileSchema,
 } from "@/server/validators/admin";
@@ -135,6 +139,40 @@ export async function saveStudentAction(formData: FormData) {
   }
 
   redirect(`${path}?status=saved`);
+}
+
+export async function verifyStudentEmailAction(formData: FormData) {
+  const path = "/admin/students";
+  const input = parseForm(studentEmailLookupSchema, formData, path);
+
+  try {
+    const student = await lookupStudentByEmail(input);
+    revalidatePath(path);
+    redirect(student ? `${path}?lookupEmail=${encodeURIComponent(input.email)}&lookup=found` : `${path}?lookupEmail=${encodeURIComponent(input.email)}&lookup=not_found`);
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+    console.error("Admin mutation failed.", error);
+    redirect(`${path}?status=${studentMutationStatus(error)}`);
+  }
+}
+
+export async function linkStudentToProducerAction(formData: FormData) {
+  const path = "/admin/students";
+  const input = parseForm(studentLinkSchema, formData, path);
+
+  try {
+    await linkStudentToProducer(input);
+    revalidatePath(path);
+    redirect(`${path}?status=linked_existing`);
+  } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+    console.error("Admin mutation failed.", error);
+    redirect(`${path}?status=${studentMutationStatus(error)}`);
+  }
 }
 
 export async function deleteStudentAction(formData: FormData) {

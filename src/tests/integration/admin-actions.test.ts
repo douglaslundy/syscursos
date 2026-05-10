@@ -20,6 +20,8 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/server/services/admin-service", () => ({
   cancelEnrollment: vi.fn(),
+  linkStudentToProducer: vi.fn(),
+  lookupStudentByEmail: vi.fn(),
   removeCourse: vi.fn(),
   removeLesson: vi.fn(),
   removeModule: vi.fn(),
