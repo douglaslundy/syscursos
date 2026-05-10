@@ -78,3 +78,19 @@ Evidencias:
 - `src/app/admin/courses/[courseId]/modules/page.tsx`
 - `src/app/admin/modules/[moduleId]/lessons/page.tsx`
 - `src/app/app/courses/[courseId]/page.tsx`
+
+## 2026-05-10 - Prisma com limite de conexao em producao
+
+Decisao:
+- Reaproveitar `PrismaClient` em `globalThis` tambem em producao e adicionar `connection_limit=1` em `DATABASE_URL` quando o parametro nao estiver definido.
+
+Motivo:
+- O banco Supabase retornou `EMAXCONNSESSION max clients reached in session mode`, causando erro generico ao carregar paginas da area do aluno.
+
+Impacto:
+- Reduz a quantidade de conexoes abertas por instancia da aplicacao.
+- Preserva URLs que ja definem explicitamente `connection_limit`.
+- Mantem build local funcional quando `DATABASE_URL` nao esta configurada.
+
+Evidencias:
+- `src/lib/db/prisma.ts`

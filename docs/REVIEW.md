@@ -1528,6 +1528,48 @@ px prisma migrate deploy`n
 - A migration remove intencionalmente dados existentes em `modules.cover_image_url`.
 - Nao identificado no repositorio um procedimento oficial para aplicar a migration no banco de producao.
 
+## Revisao 2026-05-10 - Conexoes Prisma no aluno
+
+### Arquivos revisados
+
+- `src/app/app/error.tsx`
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/server/services/student-service.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/lib/db/prisma.ts`
+
+### Causa identificada
+
+- A mensagem exibida ao aluno vem do error boundary da area `/app`.
+- A consulta operacional ao banco retornou `EMAXCONNSESSION max clients reached in session mode`, indicando esgotamento de conexoes no pooler Supabase.
+- Com `connection_limit=1`, `npx prisma migrate status` confirmou `Database schema is up to date!`.
+
+### O que foi implementado
+
+- `PrismaClient` passou a ser reaproveitado via `globalThis` tambem em producao.
+- Em producao, `DATABASE_URL` recebe `connection_limit=1` em runtime quando esse parametro nao foi definido.
+- O build local continua funcional quando `DATABASE_URL` nao esta configurada.
+
+### Testes executados
+
+- `npm run typecheck`
+- `npm run lint`
+- `npm run test -- --run src/tests/integration/student-service.test.ts src/tests/unit/youtube-service.test.ts`
+- `npm run build`
+- `npx prisma migrate status` com `connection_limit=1`
+
+### Resultado dos testes
+
+- Typecheck: aprovado.
+- Lint: aprovado.
+- Testes focados: aprovados.
+- Build: aprovado.
+- Prisma migrate status: banco atualizado.
+
+### Riscos encontrados
+
+- Se a plataforma de deploy tiver muitas instancias simultaneas, o limite total do Supabase ainda pode ser atingido; a configuracao operacional do pool no Supabase continua relevante.
+
 - Cadastro publico de administrador fica aberto para qualquer e-mail nesta iteracao.
 - Nao foi identificado no repositorio um papel separado de "produtor"; o fluxo continua com roles `ADMIN` e `STUDENT`.
 

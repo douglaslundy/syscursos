@@ -151,3 +151,19 @@
   - `npm run lint`: aprovado.
   - `npm run build`: aprovado.
   - `npm run test`: falhou apenas em `src/tests/integration/auth-actions.test.ts` com `TypeError: cache is not a function`, falha ja registrada anteriormente.
+
+## Atualizacao 2026-05-10 - Conexoes Prisma no acesso do aluno
+- Sintoma analisado: area do aluno exibindo o error boundary `Nao foi possivel carregar` ao acessar curso.
+- Evidencia encontrada no banco: `npx prisma migrate status` falhou inicialmente com `FATAL: (EMAXCONNSESSION) max clients reached in session mode - max clients are limited to pool_size: 15`.
+- Confirmacao posterior: com `connection_limit=1`, `npx prisma migrate status` retornou `Database schema is up to date!`.
+- Correcao aplicada:
+  - `src/lib/db/prisma.ts` passou a reaproveitar o `PrismaClient` via `globalThis` tambem em producao;
+  - em producao, quando `DATABASE_URL` nao define `connection_limit`, o cliente adiciona `connection_limit=1` antes de criar o PrismaClient;
+  - quando `DATABASE_URL` nao existe no build local, o cliente usa a configuracao padrao do Prisma sem sobrescrever datasource.
+- Arquivo alterado:
+  - `src/lib/db/prisma.ts`
+- Validacoes:
+  - `npm run typecheck`: aprovado.
+  - `npm run lint`: aprovado.
+  - `npm run test -- --run src/tests/integration/student-service.test.ts src/tests/unit/youtube-service.test.ts`: aprovado.
+  - `npm run build`: aprovado.

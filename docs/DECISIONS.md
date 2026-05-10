@@ -665,6 +665,31 @@ Arquivos afetados:
 - `src/app/admin/modules/[moduleId]/lessons/page.tsx`
 - `src/app/app/courses/[courseId]/page.tsx`
 
+## 2026-05-10 - Prisma com limite de conexao em producao
+
+Decisao:
+
+Reaproveitar `PrismaClient` em `globalThis` tambem em producao e adicionar `connection_limit=1` em `DATABASE_URL` quando o parametro nao estiver definido.
+
+Motivo:
+
+Ao investigar erro generico na area do aluno, o banco Supabase retornou `EMAXCONNSESSION max clients reached in session mode`. A aplicacao usa Prisma em rotas server-side e pode abrir pools demais para o limite atual do pooler.
+
+Alternativas consideradas:
+
+- Corrigir apenas por variavel de ambiente, exigindo ajuste operacional fora do repositorio.
+- Trocar provider de banco ou fluxo de consulta, fora do escopo do incidente.
+
+Impacto:
+
+- Menor pressao de conexoes por instancia da aplicacao.
+- URLs que ja definirem `connection_limit` continuam sendo respeitadas.
+- Build local sem `DATABASE_URL` continua usando a configuracao padrao do Prisma.
+
+Arquivos afetados:
+
+- `src/lib/db/prisma.ts`
+
 ## 2026-05-08 - Cadastro publico por audiencia de login
 
 Decisao:

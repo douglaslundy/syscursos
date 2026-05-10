@@ -375,6 +375,18 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run build`.
 - [ ] `npm run test` completo sem falhas (falha preexistente em `src/tests/integration/auth-actions.test.ts` com `cache is not a function`).
 
+## Ajustes 2026-05-10 - Conexoes Prisma no aluno
+
+- [x] Identificar origem da mensagem generica `Nao foi possivel carregar`.
+- [x] Confirmar erro de banco `EMAXCONNSESSION max clients reached in session mode`.
+- [x] Confirmar migration atualizada com `npx prisma migrate status` usando `connection_limit=1`.
+- [x] Reaproveitar `PrismaClient` via `globalThis` tambem em producao.
+- [x] Adicionar `connection_limit=1` em runtime quando `DATABASE_URL` nao definir limite.
+- [x] Executar `npm run typecheck`.
+- [x] Executar `npm run lint`.
+- [x] Executar testes focados da area do aluno.
+- [x] Executar `npm run build`.
+
 ## Ajustes 2026-05-08 - Papel PRODUCER e escopo administrativo
 
 - [x] Adicionar `PRODUCER` no enum `UserRole`
