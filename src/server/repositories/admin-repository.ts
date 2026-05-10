@@ -1237,7 +1237,7 @@ function scopedStudentWhere(
   }
 
   return {
-    user: { organizationId, role: UserRole.STUDENT },
+    user: { role: UserRole.STUDENT },
     OR: [
       { producers: { some: { producerId: actorUserId } } },
       {
