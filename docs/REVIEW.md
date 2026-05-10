@@ -1820,6 +1820,51 @@ px prisma migrate deploy`n
 
 ---
 
+### 2026-05-10 - Correcoes finais do vinculo produtor-aluno por e-mail
+
+### Arquivos criados ou alterados
+
+- `src/app/admin/students/page.tsx`
+- `src/components/admin/feedback.tsx`
+- `src/server/actions/admin-actions.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/validators/admin.ts`
+- `src/tests/integration/admin-actions.test.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Ajustado fluxo de verificacao por e-mail para carregar aluno existente com campos bloqueados e acao exclusiva de vinculo.
+- Removida obrigatoriedade de senha para novo cadastro por produtor.
+- Corrigido algoritmo de vinculo para manter o mesmo escopo da busca por e-mail e evitar falso `student_not_found`.
+- Corrigida listagem/dashboard de alunos do produtor para exibir alunos vinculados no novo fluxo.
+- Corrigida remocao de aluno para remover apenas vinculo sem depender de filtro de tenant que invalida o unlink.
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test -- --run src/tests/integration/admin-actions.test.ts src/tests/integration/admin-repository.test.ts src/tests/integration/student-repository.test.ts src/tests/integration/student-service.test.ts`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado.
+- `npm run typecheck`: aprovado.
+- Testes de integracao focados: bloqueados por ambiente local ao carregar `vitest.config.mts` (`Cannot read directory "../..": Access is denied`).
+
+### Riscos encontrados
+
+- O fluxo de vinculo entre tenants diferentes exige atencao para governanca de dados no nivel de produto.
+- Nao foi possivel validar os testes focados de integracao neste ambiente por restricao de permissao local.
+
+### Pendencias
+
+- Reexecutar os testes de integracao focados em ambiente sem restricao de leitura de `vitest.config.mts`.
+
+---
+
 ### 2026-05-10 - Vinculo de aluno preexistente por Auth
 
 ### Arquivos criados ou alterados

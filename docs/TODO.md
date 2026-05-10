@@ -543,3 +543,14 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run typecheck`.
 - [x] Executar `npm run lint`.
 - [x] Executar `npm run build`.
+
+## Ajuste 2026-05-10 - Fluxo final de vinculo por e-mail no produtor
+
+- [x] Corrigir preenchimento/bloqueio dos dados quando o e-mail ja existe.
+- [x] Tornar senha opcional no cadastro novo por produtor.
+- [x] Corrigir vinculo apos lookup para evitar `student_not_found` indevido.
+- [x] Corrigir listagem de alunos do produtor para exibir alunos vinculados no novo fluxo.
+- [x] Corrigir remocao para excluir apenas vinculo sem erro de escopo.
+- [x] Executar `npm run lint`.
+- [x] Executar `npm run typecheck`.
+- [ ] Executar testes focados de integracao (bloqueado por ambiente local `Access is denied` ao carregar `vitest.config.mts`).

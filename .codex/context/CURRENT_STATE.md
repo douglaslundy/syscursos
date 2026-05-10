@@ -274,3 +274,28 @@
 - `npm.cmd run lint`: aprovado.
 - `npm.cmd run typecheck`: aprovado.
 - `npm.cmd run test -- --run src/tests/integration/admin-actions.test.ts src/tests/integration/admin-repository.test.ts src/tests/integration/student-repository.test.ts src/tests/integration/student-service.test.ts`: falhou por restricao de ambiente (`Cannot read directory "../..": Access is denied` ao carregar `vitest.config.mts`).
+
+## Atualizacao 2026-05-10 - Correcao de vinculo/listagem/exclusao no fluxo produtor-aluno
+- Correcao 1: alinhado escopo de `linkStudentToProducer` com a verificacao por e-mail.
+  - Causa: lookup por e-mail encontrava aluno globalmente, mas o vinculo ainda filtrava por `organizationId`.
+  - Ajuste: vinculo passou a localizar aluno por `studentProfileId` + `role=STUDENT`, evitando falso `student_not_found` apos lookup bem-sucedido.
+- Correcao 2: listagem de alunos do produtor corrigida para incluir alunos vinculados fora do tenant original.
+  - Causa: `scopedStudentWhere` para produtor ainda exigia `user.organizationId`.
+  - Ajuste: escopo do produtor na listagem passou a priorizar relacao de vinculo/matricula com `user.role=STUDENT`, sem filtro fixo de `organizationId`.
+- Correcao 3: remocao de vinculo corrigida.
+  - Causa: `deleteStudent` ainda buscava aluno com `organizationId`, gerando `student_not_found` indevido.
+  - Ajuste: busca previa para unlink passou a usar `user.role=STUDENT` e remocao exclusiva em `producer_students`.
+- Impacto funcional:
+  - vincular aluno encontrado por e-mail funciona de ponta a ponta;
+  - aluno vinculado aparece na listagem/dashboard do produtor;
+  - remover aluno pelo produtor remove apenas o vinculo sem excluir cadastro global.
+
+### Commits complementares desta correcao
+- `6b4bc6f fix(students): populate and lock existing student data on email lookup`
+- `e21052d fix(students): align producer link lookup with email verification scope`
+- `07c1977 fix(students): list producer-linked students regardless of tenant id filter`
+- `529b8e6 fix(students): allow unlink and dashboard visibility for linked external students`
+
+### Validacoes executadas
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
