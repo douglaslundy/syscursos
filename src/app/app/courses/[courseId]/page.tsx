@@ -44,6 +44,34 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
       </div>
 
       <div className="mt-8 space-y-5">
+        {(() => {
+          const continueTarget = getContinueTarget(data.modules, data.completedLessonIds);
+          if (!continueTarget) {
+            return null;
+          }
+
+          return (
+            <section className="rounded-md border border-stroke-subtle bg-surface p-4 shadow-sm md:p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-copy-muted">
+                {continueTarget.mode === "NEXT_LESSON" ? "Continuar deste curso" : "Rever ultima aula do curso"}
+              </p>
+              <h2 className="mt-2 text-base font-semibold tracking-normal text-copy-primary md:text-lg">
+                {continueTarget.lesson.title}
+              </h2>
+              <p className="mt-1 text-sm text-copy-secondary">
+                Modulo {continueTarget.module.position}: {continueTarget.module.title} • Aula{" "}
+                {continueTarget.lesson.position}
+              </p>
+              <Link
+                className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
+                href={`/app/courses/${data.course.id}/lessons/${continueTarget.lesson.id}`}
+              >
+                {continueTarget.mode === "NEXT_LESSON" ? "Continuar agora" : "Abrir aula"}
+              </Link>
+            </section>
+          );
+        })()}
+
         {data.modules.length === 0 ? (
           <EmptyState
             description="Assim que novos modulos ativos forem liberados, eles aparecerao neste curso."
@@ -131,4 +159,42 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
       </div>
     </section>
   );
+}
+
+function getContinueTarget(
+  modules: Array<{
+    id: string;
+    title: string;
+    position: number;
+    lessons: Array<{
+      id: string;
+      title: string;
+      position: number;
+    }>;
+  }>,
+  completedLessonIds: Set<string>,
+) {
+  const lessons = modules.flatMap((module) =>
+    module.lessons.map((lesson) => ({
+      module,
+      lesson,
+    })),
+  );
+
+  if (lessons.length === 0) {
+    return null;
+  }
+
+  const nextItem = lessons.find((item) => !completedLessonIds.has(item.lesson.id));
+  if (nextItem) {
+    return {
+      mode: "NEXT_LESSON" as const,
+      ...nextItem,
+    };
+  }
+
+  return {
+    mode: "REVIEW_LAST" as const,
+    ...lessons[lessons.length - 1],
+  };
 }
