@@ -1820,6 +1820,130 @@ px prisma migrate deploy`n
 
 ---
 
+### 2026-05-16 - Discovery: PDF, links de aula e continuar ultima aula
+
+### Arquivos criados ou alterados
+
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `prompts/13_DISCOVERY_PDF_LINKS_CONTINUE.md`
+- `prompts/14_IMPLEMENT_PDF_LINKS.md`
+- `prompts/15_IMPLEMENT_CONTINUE_LAST_LESSON.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Mapeamento tecnico das camadas atuais de aula:
+  - admin: CRUD de aulas em `src/app/admin/modules/[moduleId]/lessons/page.tsx`, `src/server/actions/admin-actions.ts`, `src/server/services/admin-service.ts`, `src/server/repositories/admin-repository.ts`, `src/server/validators/admin.ts`;
+  - aluno: consumo de aula em `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx` com service/repository em `student-service` e `student-repository`.
+- Proposta de evolucao definida:
+  - materiais de aula por entidade dedicada (`lesson_materials`) com tipo (`PDF`/`LINK`), ordenacao e status;
+  - continuidade de estudo por leitura de progresso (`lesson_progress`) e trilha ordenada de aulas ativas.
+- Prompts de execucao criados em 3 etapas:
+  - discovery;
+  - implementacao de materiais;
+  - implementacao do menu "continuar ultima aula".
+
+### Testes executados
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado.
+- `npm run typecheck`: aprovado.
+- `npm run test`: falhou em 3 suites:
+  - `src/tests/integration/auth-actions.test.ts` (`cache is not a function`);
+  - `src/tests/unit/admin-validators.test.ts` (regra de senha inicial);
+  - `src/tests/integration/admin-repository.test.ts` (expectativa de escopo antiga).
+
+### Riscos encontrados
+
+- Sem alinhamento previo de modelagem, adicionar PDF/links direto em `lessons` tende a gerar acoplamento e migracoes futuras mais caras.
+- Fluxo de "continuar ultima aula" pode expor aula indevida sem reuso das verificacoes atuais de matricula/status.
+- Integracoes de links externos ampliam superficie de risco sem validacao HTTPS e renderizacao segura.
+
+### Pendencias
+
+- Implementar migration + schema para `lesson_materials`.
+- Implementar CRUD admin/aluno para materiais.
+- Implementar menu/atalho "Continuar ultima aula".
+- Corrigir suites de testes pendentes para voltar ao verde completo.
+
+### Proxima etapa recomendada
+
+Executar `prompts/14_IMPLEMENT_PDF_LINKS.md` em etapa incremental, mantendo bloqueio de escrita em producao sem aprovacao explicita.
+
+---
+
+### 2026-05-16 - Implementacao inicial: materiais de aula e continuar ultima aula
+
+### Arquivos criados ou alterados
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260516141000_add_lesson_materials/migration.sql`
+- `src/server/validators/admin.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/services/student-service.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/app/page.tsx`
+- `src/app/app/continue/page.tsx`
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- `src/components/student/student-navigation.tsx`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+
+### O que foi implementado
+
+- Modelagem de materiais por aula com entidade dedicada `lesson_materials`:
+  - `type` (`PDF`/`LINK`), `title`, `url`, `position`, `status`.
+- Validator Zod para material de aula com URL HTTPS obrigatoria.
+- CRUD de materiais na area administrativa dentro da tela de aulas por modulo.
+- Exibicao de materiais da aula na area do aluno com abertura externa segura.
+- Continuidade de estudo:
+  - calculo server-side da aula elegivel;
+  - rota `/app/continue` para redirecionamento automatico;
+  - CTA na home e item de navegacao "Continuar".
+
+### Testes executados
+
+- `npm run lint`
+- `npx prisma generate`
+- `npm run typecheck`
+- `npm run test -- --run src/tests/integration/admin-service.test.ts src/tests/integration/student-service.test.ts src/tests/integration/admin-actions.test.ts src/tests/unit/student-components.test.tsx`
+- `npm run build`
+
+### Resultado dos testes
+
+- `npm run lint`: aprovado.
+- `npx prisma generate`: aprovado.
+- `npm run typecheck`: aprovado.
+- Testes focados: aprovados (35 testes).
+- `npm run build`: aprovado.
+
+### Riscos encontrados
+
+- Upload binario de PDF ainda nao foi implementado; nesta etapa o material PDF depende de URL HTTPS.
+- Suite completa `npm run test` continua com pendencias antigas fora do escopo desta entrega (auth/tests legados ja mapeados no TODO).
+
+### Pendencias
+
+- Criar testes unitarios/integracao especificos para `lesson_materials` e para regra de continuidade.
+- Avaliar etapa futura de upload binario de PDF com storage dedicado e validacoes de tamanho/tipo.
+
+### Proxima etapa recomendada
+
+Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo admin/aluno com dados reais de materiais.
+
+---
+
 ### 2026-05-10 - Correcoes finais do vinculo produtor-aluno por e-mail
 
 ### Arquivos criados ou alterados

@@ -6,6 +6,7 @@ import type {
   CourseInput,
   EnrollmentInput,
   LessonInput,
+  LessonMaterialInput,
   ManagedUserInput,
   ModuleInput,
   RenewEnrollmentInput,
@@ -106,6 +107,21 @@ export async function saveLesson(input: LessonInput) {
 export async function removeLesson(id: string) {
   const producer = await requireProducer();
   return repository.deleteLesson(producer.organizationId, producer.id, producer.role, id);
+}
+
+export async function getLessonMaterials(lessonId: string) {
+  const producer = await requireProducer();
+  return repository.listLessonMaterials(producer.organizationId, producer.id, producer.role, lessonId);
+}
+
+export async function saveLessonMaterial(input: LessonMaterialInput) {
+  const producer = await requireProducer();
+  return repository.upsertLessonMaterial(producer.organizationId, producer.id, producer.role, input);
+}
+
+export async function removeLessonMaterial(id: string) {
+  const producer = await requireProducer();
+  return repository.deleteLessonMaterial(producer.organizationId, producer.id, producer.role, id);
 }
 
 export async function getStudents(input: PaginationInput) {

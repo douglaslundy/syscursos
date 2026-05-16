@@ -15,6 +15,7 @@ import type {
   CourseInput,
   EnrollmentInput,
   LessonInput,
+  LessonMaterialInput,
   ModuleInput,
   RenewEnrollmentInput,
   StudentInput,
@@ -374,6 +375,92 @@ export async function deleteLesson(
 ) {
   return prisma.lesson.deleteMany({
     where: { id, module: { course: scopedCourseWhere(organizationId, actorUserId, actorRole) } },
+  });
+}
+
+export async function listLessonMaterials(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  lessonId: string,
+) {
+  return prisma.lessonMaterial.findMany({
+    where: {
+      lessonId,
+      lesson: {
+        module: {
+          course: scopedCourseWhere(organizationId, actorUserId, actorRole),
+        },
+      },
+    },
+    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+  });
+}
+
+export async function upsertLessonMaterial(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  input: LessonMaterialInput,
+) {
+  const courseScope = scopedCourseWhere(organizationId, actorUserId, actorRole);
+  if (input.id) {
+    return prisma.lessonMaterial.updateMany({
+      where: {
+        id: input.id,
+        lesson: {
+          module: {
+            course: courseScope,
+          },
+        },
+      },
+      data: {
+        type: input.type,
+        title: input.title,
+        url: input.url,
+        position: input.position,
+        status: input.status,
+      },
+    });
+  }
+
+  await prisma.lesson.findFirstOrThrow({
+    where: {
+      id: input.lessonId,
+      module: {
+        course: courseScope,
+      },
+    },
+    select: { id: true },
+  });
+
+  return prisma.lessonMaterial.create({
+    data: {
+      lessonId: input.lessonId,
+      type: input.type,
+      title: input.title,
+      url: input.url,
+      position: input.position,
+      status: input.status,
+    },
+  });
+}
+
+export async function deleteLessonMaterial(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  id: string,
+) {
+  return prisma.lessonMaterial.deleteMany({
+    where: {
+      id,
+      lesson: {
+        module: {
+          course: scopedCourseWhere(organizationId, actorUserId, actorRole),
+        },
+      },
+    },
   });
 }
 

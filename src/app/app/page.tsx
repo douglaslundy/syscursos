@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/student/empty-state";
 
 export default async function StudentHomePage() {
   const { getStudentDashboard } = await import("@/server/services/student-service");
-  const { courses } = await getStudentDashboard();
+  const { courses, continueHref, continueLesson } = await getStudentDashboard();
 
   return (
     <section>
@@ -17,13 +17,40 @@ export default async function StudentHomePage() {
             Acesse seus cursos liberados, acompanhe progresso e continue estudando de onde parou.
           </p>
         </div>
-        <Link
-          className="inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
-          href="/app/notebooks"
-        >
-          Abrir cadernos
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
+            href={continueHref ?? "/app/continue"}
+          >
+            Continuar ultima aula
+          </Link>
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+            href="/app/notebooks"
+          >
+            Abrir cadernos
+          </Link>
+        </div>
       </div>
+
+      {continueLesson ? (
+        <section className="mb-6 rounded-md border border-stroke-subtle bg-surface p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-copy-muted">
+            {continueLesson.mode === "NEXT_LESSON" ? "Proxima aula para assistir" : "Rever ultima aula da trilha"}
+          </p>
+          <h2 className="mt-2 text-lg font-semibold text-copy-primary">{continueLesson.lessonTitle}</h2>
+          <p className="mt-1 text-sm text-copy-secondary">
+            {continueLesson.courseTitle} • Modulo {continueLesson.modulePosition}: {continueLesson.moduleTitle} • Aula{" "}
+            {continueLesson.lessonPosition}
+          </p>
+          <Link
+            className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
+            href={continueLesson.href}
+          >
+            {continueLesson.mode === "NEXT_LESSON" ? "Continuar agora" : "Abrir aula"}
+          </Link>
+        </section>
+      ) : null}
 
       {courses.length === 0 ? (
         <EmptyState

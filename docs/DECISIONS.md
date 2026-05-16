@@ -903,3 +903,84 @@ Arquivos afetados:
 - `src/components/admin/feedback.tsx`
 - `src/tests/integration/admin-actions.test.ts`
 - `src/tests/integration/admin-repository.test.ts`
+
+## 2026-05-16 - Descoberta para materiais de aula (PDF/links) e continuidade da ultima aula
+
+Decisao:
+
+Evoluir o dominio de aula com uma entidade dedicada de materiais (`lesson_materials`) e implementar continuidade por ultima aula via leitura de progresso (`lesson_progress`), sem criar escrita adicional para "ultimo acesso" nesta etapa.
+
+Motivo:
+
+O fluxo atual de aula suporta apenas video YouTube e anotacoes. PDF e links exigem ordenacao, status e controle de acesso por aluno matriculado. Para "continuar ultima aula", o repositorio ja possui estado confiavel de conclusao (`COMPLETED`/`NOT_STARTED`) e trilha ordenada por modulo/aula.
+
+Alternativas consideradas:
+
+1. Adicionar apenas campos `pdfUrl`/`externalLink` em `lessons`.
+2. Criar tabela unica de anexos sem tipagem forte.
+3. Persistir "ultima aula acessada" em nova tabela de tracking.
+
+Impacto:
+
+- Modelo recomendado:
+  - nova tabela `lesson_materials` com: `id`, `lesson_id`, `type` (`PDF`/`LINK`), `title`, `url`, `position`, `status`, timestamps;
+  - `@@unique([lessonId, position])`, `@@index([lessonId, status])`.
+- Seguranca:
+  - URL de material obrigatoriamente HTTPS;
+  - links externos com validacao server-side e renderizacao segura no cliente (`rel="noopener noreferrer"`).
+- Continuidade:
+  - "Continuar ultima aula" por curso: primeira aula ativa nao concluida; fallback para ultima aula ativa do curso.
+  - "Continuar agora" global: primeiro curso com matricula ativa que possua aula elegivel.
+  - fallback quando curso/modulo/aula estiver inativo ou acesso expirado: redirecionar para curso disponivel ou dashboard com mensagem controlada.
+- Producao:
+  - discovery sem escrita no banco de producao; qualquer escrita futura exige aprovacao previa explicita.
+
+Arquivos afetados:
+
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`
+- `prompts/13_DISCOVERY_PDF_LINKS_CONTINUE.md`
+- `prompts/14_IMPLEMENT_PDF_LINKS.md`
+- `prompts/15_IMPLEMENT_CONTINUE_LAST_LESSON.md`
+
+## 2026-05-16 - Implementacao inicial de materiais de aula e rota de continuidade
+
+Decisao:
+
+Implementar a primeira entrega funcional de materiais de aula com suporte a `PDF`/`LINK` por URL HTTPS e adicionar rota server-side `/app/continue` para redirecionar o aluno para a proxima aula elegivel.
+
+Motivo:
+
+Atende ao requisito de materiais complementares e ao fluxo de continuidade sem escrita adicional em dados de progresso/alocacao de "ultimo acesso". Reaproveita as garantias existentes de matricula ativa e status de conteudo no backend.
+
+Alternativas consideradas:
+
+1. Implementar upload binario de PDF nesta mesma etapa.
+2. Persistir tracking de ultimo acesso em tabela dedicada.
+
+Impacto:
+
+- Nova modelagem `lesson_materials` com ordenacao e status.
+- CRUD de materiais no admin integrado a pagina de aulas.
+- Exibicao de materiais na pagina da aula do aluno com links seguros.
+- Entrada de navegacao "Continuar" e rota `/app/continue` com fallback para `/app?status=no-continue-lesson`.
+- Upload binario de PDF adiado; nesta etapa o PDF e tratado por URL HTTPS.
+
+Arquivos afetados:
+
+- `prisma/schema.prisma`
+- `prisma/migrations/20260516141000_add_lesson_materials/migration.sql`
+- `src/server/validators/admin.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/services/student-service.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/app/page.tsx`
+- `src/app/app/continue/page.tsx`
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- `src/components/student/student-navigation.tsx`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`

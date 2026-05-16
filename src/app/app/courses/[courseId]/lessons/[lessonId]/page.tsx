@@ -92,6 +92,32 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
         <p className="mt-4 text-sm text-copy-secondary">{data.lesson.description}</p>
       ) : null}
 
+      <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">
+          Materiais da aula
+        </h2>
+        {data.lesson.materials.length === 0 ? (
+          <p className="mt-2 text-sm text-copy-secondary">Nenhum material complementar nesta aula.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {data.lesson.materials.map((material) => (
+              <a
+                className="block rounded-md border border-stroke-subtle bg-background px-3 py-2 transition hover:bg-surface-hover"
+                href={material.url}
+                key={material.id}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <p className="text-sm font-medium text-copy-primary">{material.title}</p>
+                <p className="text-xs text-copy-muted">
+                  {material.type === "PDF" ? "PDF" : "Link externo"} • material {material.position}
+                </p>
+              </a>
+            ))}
+          </div>
+        )}
+      </section>
+
       <div className="mt-6 flex flex-wrap gap-2">
         {data.navigation?.previousLesson ? (
           <Link

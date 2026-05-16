@@ -1,6 +1,8 @@
 import {
   CourseStatus,
   EnrollmentStatus,
+  LessonMaterialStatus,
+  LessonMaterialType,
   LessonStatus,
   ModuleStatus,
   UserRole,
@@ -58,6 +60,21 @@ export const lessonSchema = z.object({
   coverImageUrl: optionalHttpsUrlSchema,
   position: z.coerce.number().int().min(1),
   status: z.nativeEnum(LessonStatus).default(LessonStatus.ACTIVE),
+});
+
+export const lessonMaterialSchema = z.object({
+  id: uuidSchema.optional(),
+  lessonId: uuidSchema,
+  type: z.nativeEnum(LessonMaterialType),
+  title: z.string().trim().min(2).max(180),
+  url: z
+    .string()
+    .trim()
+    .url()
+    .max(500)
+    .refine(isHttpsUrl, "Informe uma URL HTTPS valida para o material."),
+  position: z.coerce.number().int().min(1),
+  status: z.nativeEnum(LessonMaterialStatus).default(LessonMaterialStatus.ACTIVE),
 });
 
 export const studentSchema = z.object({
@@ -151,6 +168,7 @@ export const adminProfileSchema = z.object({
 export type CourseInput = z.infer<typeof courseSchema>;
 export type ModuleInput = z.infer<typeof moduleSchema>;
 export type LessonInput = z.infer<typeof lessonSchema>;
+export type LessonMaterialInput = z.infer<typeof lessonMaterialSchema>;
 export type StudentInput = z.infer<typeof studentSchema>;
 export type StudentEmailLookupInput = z.infer<typeof studentEmailLookupSchema>;
 export type StudentLinkInput = z.infer<typeof studentLinkSchema>;

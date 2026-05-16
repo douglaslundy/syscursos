@@ -27,6 +27,16 @@ export type StudentCourseCard = {
   };
 };
 
+export type ContinueLessonCard = {
+  href: string;
+  courseTitle: string;
+  moduleTitle: string;
+  lessonTitle: string;
+  lessonPosition: number;
+  modulePosition: number;
+  mode: "NEXT_LESSON" | "REVIEW_LAST";
+} | null;
+
 export async function getStudentDashboard() {
   const studentId = await requireStudentProfileId();
   const enrollments = await repository.listStudentCourseEnrollments(studentId);
@@ -51,7 +61,13 @@ export async function getStudentDashboard() {
     }),
   );
 
-  return { courses };
+  const continueLesson = await resolveContinueLessonCard(studentId, enrollments.map((enrollment) => enrollment.courseId));
+
+  return {
+    courses,
+    continueHref: continueLesson?.href ?? null,
+    continueLesson,
+  };
 }
 
 export async function getStudentCourse(courseId: string) {
@@ -98,6 +114,7 @@ export async function getStudentCourse(courseId: string) {
     modules: course.modules,
     completedLessonIds,
     progress: calculateCourseProgress(completedLessons, totalLessons),
+    continueHref: buildContinueHrefFromCourseModules(course.modules, completedLessonIds, courseId),
   };
 }
 
@@ -153,6 +170,13 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     navigation: buildLessonNavigation(courseContent.modules, lessonId, completedLessonIds),
     progress: calculateCourseProgress(completedLessons, totalLessons),
   };
+}
+
+export async function getContinueLearningTarget() {
+  const studentId = await requireStudentProfileId();
+  const enrollments = await repository.listStudentCourseEnrollments(studentId);
+  const card = await resolveContinueLessonCard(studentId, enrollments.map((enrollment) => enrollment.courseId));
+  return card?.href ?? "/app?status=no-continue-lesson";
 }
 
 export async function completeLesson(input: CompleteLessonInput) {
@@ -290,6 +314,97 @@ function buildLessonNavigation(
     completedLessonIds,
     previousLesson: currentIndex > 0 ? lessons[currentIndex - 1] : null,
     nextLesson: currentIndex >= 0 && currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null,
+  };
+}
+
+function buildContinueHrefFromCourseModules(
+  modules: CourseModuleRow,
+  completedLessonIds: Set<string>,
+  courseId: string,
+) {
+  const lessons = modules.flatMap((module) => module.lessons);
+  if (lessons.length === 0) {
+    return null;
+  }
+
+  const firstNotCompleted = lessons.find((lesson) => !completedLessonIds.has(lesson.id));
+  const targetLesson = firstNotCompleted ?? lessons[lessons.length - 1];
+
+  return `/app/courses/${courseId}/lessons/${targetLesson.id}`;
+}
+
+async function resolveContinueLessonCard(
+  studentId: string,
+  courseIds: string[],
+): Promise<ContinueLessonCard> {
+  for (const courseId of courseIds) {
+    const enrollment = await repository.findEnrollmentForCourse(studentId, courseId);
+    if (!enrollment || getCourseAccessStatus(enrollment) !== "AVAILABLE") {
+      continue;
+    }
+
+    const [course, completedLessonIds] = await Promise.all([
+      repository.getCourseWithActiveContent(courseId),
+      repository.getCompletedLessonIds(studentId, courseId),
+    ]);
+
+    if (!course) {
+      continue;
+    }
+
+    const card = buildContinueLessonCardFromCourseModules(
+      course.modules,
+      completedLessonIds,
+      courseId,
+      course.title,
+    );
+    if (card) {
+      return card;
+    }
+  }
+
+  return null;
+}
+
+function buildContinueLessonCardFromCourseModules(
+  modules: CourseModuleRow,
+  completedLessonIds: Set<string>,
+  courseId: string,
+  courseTitle: string,
+): ContinueLessonCard {
+  const lessons = modules.flatMap((module) =>
+    module.lessons.map((lesson) => ({
+      lesson,
+      module,
+    })),
+  );
+
+  if (lessons.length === 0) {
+    return null;
+  }
+
+  const nextItem = lessons.find((item) => !completedLessonIds.has(item.lesson.id));
+  if (nextItem) {
+    return {
+      href: `/app/courses/${courseId}/lessons/${nextItem.lesson.id}`,
+      courseTitle,
+      moduleTitle: nextItem.module.title,
+      lessonTitle: nextItem.lesson.title,
+      lessonPosition: nextItem.lesson.position,
+      modulePosition: nextItem.module.position,
+      mode: "NEXT_LESSON",
+    };
+  }
+
+  const lastItem = lessons[lessons.length - 1];
+  return {
+    href: `/app/courses/${courseId}/lessons/${lastItem.lesson.id}`,
+    courseTitle,
+    moduleTitle: lastItem.module.title,
+    lessonTitle: lastItem.lesson.title,
+    lessonPosition: lastItem.lesson.position,
+    modulePosition: lastItem.module.position,
+    mode: "REVIEW_LAST",
   };
 }
 

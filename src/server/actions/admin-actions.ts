@@ -14,12 +14,14 @@ import {
   lookupStudentByEmail,
   removeCourse,
   removeLesson,
+  removeLessonMaterial,
   removeModule,
   removeStudent,
   renewEnrollment as renewEnrollmentService,
   saveCourse,
   saveEnrollment,
   saveLesson,
+  saveLessonMaterial,
   saveManagedUser,
   saveModule,
   saveStudent,
@@ -31,6 +33,7 @@ import {
   enrollmentSchema,
   idSchema,
   lessonSchema,
+  lessonMaterialSchema,
   moduleSchema,
   managedUserSchema,
   renewEnrollmentSchema,
@@ -118,6 +121,30 @@ export async function deleteLessonAction(formData: FormData) {
   await runAdminMutation(path, "deleted", async () => {
     await removeLesson(id);
     revalidatePath(path);
+  });
+}
+
+export async function saveLessonMaterialAction(formData: FormData) {
+  const input = parseForm(lessonMaterialSchema, formData, "/admin/courses");
+  const moduleId = requiredString(formData, "moduleId", "/admin/courses");
+  const path = `/admin/modules/${moduleId}/lessons`;
+
+  await runAdminMutation(path, "saved", async () => {
+    await saveLessonMaterial(input);
+    revalidatePath(path);
+    revalidatePath(`/app/courses/${requiredString(formData, "courseId", "/admin/courses")}`);
+  });
+}
+
+export async function deleteLessonMaterialAction(formData: FormData) {
+  const { id } = parseForm(idSchema, formData, "/admin/courses");
+  const moduleId = requiredString(formData, "moduleId", "/admin/courses");
+  const path = `/admin/modules/${moduleId}/lessons`;
+
+  await runAdminMutation(path, "deleted", async () => {
+    await removeLessonMaterial(id);
+    revalidatePath(path);
+    revalidatePath(`/app/courses/${requiredString(formData, "courseId", "/admin/courses")}`);
   });
 }
 

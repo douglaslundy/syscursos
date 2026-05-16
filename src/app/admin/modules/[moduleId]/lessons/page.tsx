@@ -4,8 +4,13 @@ import { Feedback } from "@/components/admin/feedback";
 import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { deleteLessonAction, saveLessonAction } from "@/server/actions/admin-actions";
-import { getLessons } from "@/server/services/admin-service";
+import {
+  deleteLessonAction,
+  deleteLessonMaterialAction,
+  saveLessonAction,
+  saveLessonMaterialAction,
+} from "@/server/actions/admin-actions";
+import { getLessonMaterials, getLessons } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 
 type LessonsPageProps = {
@@ -16,6 +21,10 @@ type LessonsPageProps = {
 export default async function LessonsPage({ params, searchParams }: LessonsPageProps) {
   const pagination = getPagination(searchParams);
   const { module, lessons } = await getLessons(params.moduleId, pagination);
+  const lessonMaterialsEntries = await Promise.all(
+    lessons.items.map(async (lesson) => [lesson.id, await getLessonMaterials(lesson.id)] as const),
+  );
+  const materialsByLesson = new Map(lessonMaterialsEntries);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const formReset = getStringParam(searchParams, "formReset") ?? "idle";
   const editId = getStringParam(searchParams, "editId");
@@ -109,6 +118,54 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
               </SubmitButton>
               </form>
             </div>
+            <div className="mt-4 rounded-md border border-stroke-subtle bg-surface-elevated p-3">
+              <p className="text-xs font-medium uppercase tracking-[0.1em] text-muted-foreground">
+                Materiais da aula
+              </p>
+              <LessonMaterialForm
+                courseId={module.courseId}
+                lessonId={lesson.id}
+                moduleId={module.id}
+                suggestedPosition={(materialsByLesson.get(lesson.id)?.length ?? 0) + 1}
+              />
+              <div className="mt-3 space-y-2">
+                {(materialsByLesson.get(lesson.id) ?? []).length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum material cadastrado.</p>
+                ) : (
+                  (materialsByLesson.get(lesson.id) ?? []).map((material) => (
+                    <article
+                      className="rounded-md border border-stroke-subtle bg-background px-3 py-2"
+                      key={material.id}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium">{material.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {material.type} • posicao {material.position} • {material.status}
+                          </p>
+                        </div>
+                        <form action={deleteLessonMaterialAction}>
+                          <input name="id" type="hidden" value={material.id} />
+                          <input name="moduleId" type="hidden" value={module.id} />
+                          <input name="courseId" type="hidden" value={module.courseId} />
+                          <SubmitButton destructive confirmMessage="Remover este material?">
+                            Remover material
+                          </SubmitButton>
+                        </form>
+                      </div>
+                      <a
+                        className="mt-1 block break-all text-xs text-muted-foreground hover:text-foreground"
+                        href={material.url}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {material.url}
+                      </a>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
           </article>
         ))}
       </div>
@@ -119,6 +176,50 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
         query={pagination.query}
       />
     </section>
+  );
+}
+
+type LessonMaterialFormProps = {
+  lessonId: string;
+  moduleId: string;
+  courseId: string;
+  suggestedPosition: number;
+};
+
+function LessonMaterialForm({ lessonId, moduleId, courseId, suggestedPosition }: LessonMaterialFormProps) {
+  return (
+    <form action={saveLessonMaterialAction} className="mt-3 grid gap-2 md:grid-cols-[120px_1fr_1fr_100px_120px_auto]">
+      <input name="lessonId" type="hidden" value={lessonId} />
+      <input name="moduleId" type="hidden" value={moduleId} />
+      <input name="courseId" type="hidden" value={courseId} />
+      <select className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue="PDF" name="type">
+        <option value="PDF">PDF</option>
+        <option value="LINK">Link</option>
+      </select>
+      <input
+        className="rounded-md border px-3 py-2 text-sm outline-none"
+        name="title"
+        placeholder="Titulo do material"
+      />
+      <input
+        className="rounded-md border px-3 py-2 text-sm outline-none"
+        name="url"
+        placeholder="https://..."
+        type="url"
+      />
+      <input
+        className="rounded-md border px-3 py-2 text-sm outline-none"
+        defaultValue={suggestedPosition}
+        min={1}
+        name="position"
+        type="number"
+      />
+      <select className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue="ACTIVE" name="status">
+        <option value="ACTIVE">Ativo</option>
+        <option value="INACTIVE">Inativo</option>
+      </select>
+      <SubmitButton>Adicionar</SubmitButton>
+    </form>
   );
 }
 

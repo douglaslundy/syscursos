@@ -34,6 +34,16 @@ enum LessonStatus {
   INACTIVE
 }
 
+enum LessonMaterialType {
+  PDF
+  LINK
+}
+
+enum LessonMaterialStatus {
+  ACTIVE
+  INACTIVE
+}
+
 enum EnrollmentStatus {
   ACTIVE
   EXPIRED
@@ -159,11 +169,29 @@ model Lesson {
   module         Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   notes          LessonNote[]
   progress       LessonProgress[]
+  materials      LessonMaterial[]
 
   @@unique([moduleId, position])
   @@index([moduleId, status])
   @@index([youtubeVideoId])
   @@map("lessons")
+}
+
+model LessonMaterial {
+  id        String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId  String               @map("lesson_id") @db.Uuid
+  type      LessonMaterialType   @map("material_type")
+  title     String               @db.VarChar(180)
+  url       String               @db.VarChar(500)
+  position  Int
+  status    LessonMaterialStatus @default(ACTIVE)
+  createdAt DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  lesson    Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, position])
+  @@index([lessonId, status])
+  @@map("lesson_materials")
 }
 
 model Enrollment {

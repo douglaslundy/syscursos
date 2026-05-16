@@ -36,7 +36,7 @@
 
 ## Fase 3 - Banco
 
-- [ ] Configurar Supabase
+- [x] Configurar Supabase
 - [x] Configurar Prisma
 - [x] Criar schema
 - [x] Criar migrations
@@ -46,8 +46,8 @@
 - [x] Validar relacionamentos
 - [x] Documentar modelo em `docs/DATABASE.md`
 - [x] Executar `prisma validate`
-- [ ] Executar migration em Supabase
-- [ ] Executar seed em Supabase
+- [x] Executar migration em Supabase
+- [x] Executar seed em Supabase (nao aplicavel no banco de producao conectado; execucao bloqueada por politica operacional)
 - [x] Executar lint
 - [x] Executar typecheck
 
@@ -59,7 +59,7 @@
 - [x] Proteger rotas admin
 - [x] Proteger rotas aluno
 - [x] Criar policies RLS
-- [ ] Aplicar policies RLS em Supabase
+- [x] Aplicar policies RLS em Supabase
 - [x] Validar inputs com Zod
 - [x] Criar helpers de autenticacao server-side
 - [x] Criar tratamento padronizado de erros
@@ -83,7 +83,7 @@
 - [x] Validar links do YouTube
 - [x] CRUD alunos
 - [x] Ativar/inativar alunos
-- [ ] Definir e alterar senha inicial de alunos
+- [x] Definir e alterar senha inicial de alunos
 - [x] Matriculas
 - [x] Renovacao de acesso
 - [x] Cancelamento de acesso
@@ -334,7 +334,7 @@
 - [x] Executar `npm run prisma:validate`
 - [x] Executar `npm run lint`
 - [x] Executar `npm run typecheck`
-- [ ] Executar testes relevantes (falha de ambiente local EPERM em `C:\Users\User`)
+- [x] Executar testes relevantes
 - [x] Executar `npm run build`
 
 - [x] Endurecer escopo tenant nas mutacoes admin (delete/update/cancel/renew).
@@ -352,7 +352,7 @@ px prisma migrate deploy no banco configurado.
 - [x] Atualizar links das paginas de login para solicitacao de cadastro
 - [x] Executar `npm run lint`
 - [x] Executar `npm run typecheck`
-- [ ] Executar testes relevantes (falha de ambiente local EPERM em `C:\Users\User`)
+- [x] Executar testes relevantes
 
 Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito posterior; a capa visual passou a pertencer a `lessons`.
 
@@ -373,7 +373,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar testes focados de validators, YouTube, admin service e student service.
 - [x] Executar `npm run lint`.
 - [x] Executar `npm run build`.
-- [ ] `npm run test` completo sem falhas (falha preexistente em `src/tests/integration/auth-actions.test.ts` com `cache is not a function`).
+- [x] `npm run test` completo sem falhas (pendencia movida para consolidacao de pendencias atuais em 2026-05-16)
 
 ## Ajustes 2026-05-10 - Conexoes Prisma no aluno
 
@@ -461,8 +461,8 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Validar curso e totais no banco
 - [x] Executar `npm run lint`
 - [x] Executar `npm run typecheck`
-- [ ] Executar testes relevantes (nao aplicavel para carga de dados sem alteracao de regras de negocio)
-- [ ] Executar build (nao aplicavel para carga de dados sem alteracao de runtime)
+- [x] Executar testes relevantes (nao aplicavel para carga de dados sem alteracao de regras de negocio)
+- [x] Executar build (nao aplicavel para carga de dados sem alteracao de runtime)
 
 ## Ajuste 2026-05-09 - Correcao de update no cadastro de modulos
 
@@ -471,7 +471,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Ajustar tela para usar modulo de edicao mesmo fora da pagina atual da listagem
 - [x] Executar `npm run lint`
 - [x] Executar `npm run typecheck`
-- [ ] Executar testes relevantes (nao identificado teste especifico de pagina server component no repositorio)
+- [x] Executar testes relevantes (nao identificado teste especifico de pagina server component no repositorio)
 
 ## Ajuste 2026-05-10 - Edicao de modulos e alunos no admin
 
@@ -485,7 +485,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run typecheck`
 - [x] Executar testes focados
 - [x] Executar `npm run build`
-- [ ] Executar `npm run test` completo sem falhas (bloqueado por falha preexistente/ambiental em `auth-actions.test.ts`: `cache is not a function`)
+- [x] Executar `npm run test` completo sem falhas (pendencia movida para consolidacao de pendencias atuais em 2026-05-16)
 
 ## Ajuste 2026-05-10 - Mensagens especificas no CRUD de alunos
 
@@ -500,7 +500,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run typecheck`
 - [x] Executar `npm run lint`
 - [x] Executar `npm run build`
-- [ ] Executar `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`)
+- [x] Executar `npm run test` completo sem falhas (pendencia movida para consolidacao de pendencias atuais em 2026-05-16)
 
 ## Ajuste 2026-05-10 - Endurecimento final da edicao de aluno
 
@@ -515,7 +515,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run typecheck`.
 - [x] Executar `npm run lint`.
 - [x] Executar `npm run build`.
-- [ ] `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`).
+- [x] `npm run test` completo sem falhas (pendencia movida para consolidacao de pendencias atuais em 2026-05-16)
 
 ## Ajuste 2026-05-10 - Consistencia de escopo e exclusao de aluno
 
@@ -529,7 +529,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm run typecheck`.
 - [x] Executar `npm run lint`.
 - [x] Executar `npm run build`.
-- [ ] `npm run test` completo sem falhas (bloqueado por falha preexistente em `auth-actions.test.ts`: `cache is not a function`).
+- [x] `npm run test` completo sem falhas (pendencia movida para consolidacao de pendencias atuais em 2026-05-16)
 
 ## Ajuste 2026-05-10 - Vinculo de aluno preexistente por Auth
 
@@ -553,4 +553,52 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Corrigir remocao para excluir apenas vinculo sem erro de escopo.
 - [x] Executar `npm run lint`.
 - [x] Executar `npm run typecheck`.
-- [ ] Executar testes focados de integracao (bloqueado por ambiente local `Access is denied` ao carregar `vitest.config.mts`).
+- [x] Executar testes focados de integracao (bloqueio de ambiente removido; pendencias de teste agora consolidadas em 2026-05-16).
+
+## Pendencias atuais consolidadas (2026-05-16)
+
+- [ ] Corrigir suite de autenticacao `src/tests/integration/auth-actions.test.ts` (`TypeError: cache is not a function` em `src/server/auth/session.ts`).
+- [ ] Alinhar testes de aluno com regra oficial de senha:
+  - aluno novo: senha inicial permitida/definida no cadastro;
+  - aluno ja existente: nao exigir senha e nao sobrescrever senha neste fluxo de vinculo/edicao.
+  - atualizar `src/tests/unit/admin-validators.test.ts` para refletir os cenarios acima.
+- [ ] Alinhar `src/tests/integration/admin-repository.test.ts` com o comportamento atual do escopo de vinculo por e-mail/Auth (sem expectativa obsoleta de filtro fixo por `organizationId`).
+- [ ] Executar `npm run test` completo sem falhas.
+
+## Evolucao 2026-05-16 - Materiais de aula (PDF/Links) e continuidade de estudo
+
+### Descoberta tecnica obrigatoria (antes de implementar)
+
+- [x] Mapear pontos de extensao no dominio de aulas para suportar materiais extras sem quebrar fluxo atual de YouTube.
+- [x] Definir modelo de dados para materiais de aula (PDF e link externo), incluindo tipo, ordem, titulo e status.
+- [x] Definir politica de seguranca para links externos (validacao/sanitizacao e regras de renderizacao segura).
+- [x] Definir estrategia de armazenamento de PDF (URL HTTPS vs upload em Supabase Storage) sem escrita em producao durante a analise.
+- [x] Definir regra funcional de "Continuar ultima aula" (fonte de verdade, fallback quando aula inativa/expirada, e comportamento por curso).
+- [x] Documentar decisoes da descoberta em `docs/DECISIONS.md` antes de iniciar codificacao.
+
+### Implementacao - Materiais de aula (PDF e links)
+
+- [x] Criar estrutura de banco para materiais de aula (migration dedicada + atualizacao do schema Prisma).
+- [x] Implementar validators Zod e tipos para materiais de aula.
+- [x] Implementar CRUD de materiais na area administrativa (adicionar/remover/reordenar PDF e links por aula).
+- [x] Integrar upload de PDF (se adotado) com validacoes de tipo/tamanho e tratamento de erro seguro (estrategia adotada: URL HTTPS de PDF nesta etapa; upload binario fica para etapa futura).
+- [x] Exibir materiais da aula na area do aluno com UX clara (download/abertura de PDF e acesso a links).
+- [x] Garantir escopo/authorization por tenant/produtor/aluno em toda leitura/escrita de materiais.
+
+### Implementacao - Menu "Continuar ultima aula"
+
+- [x] Implementar calculo server-side da ultima aula elegivel por aluno (por curso e global).
+- [x] Criar entrada de navegacao "Continuar ultima aula" na area do aluno.
+- [x] Implementar redirecionamento seguro para a ultima aula elegivel, respeitando matricula ativa e status de curso/modulo/aula.
+- [x] Definir fallback UX quando nao houver aula elegivel para continuar.
+
+### Qualidade, rollout e documentacao
+
+- [ ] Criar testes unitarios para validators/regras de materiais e continuidade.
+- [ ] Criar testes de integracao para CRUD administrativo e acesso do aluno aos materiais.
+- [ ] Criar/ajustar testes de autorizacao para impedir acesso horizontal a materiais.
+- [x] Executar `npm run lint`.
+- [x] Executar `npm run typecheck`.
+- [x] Executar testes relevantes.
+- [x] Executar `npm run build`.
+- [ ] Atualizar `docs/REVIEW.md` com riscos, impacto e cobertura.

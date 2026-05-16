@@ -1,6 +1,7 @@
 import {
   CourseStatus,
   EnrollmentStatus,
+  LessonMaterialStatus,
   LessonProgressStatus,
   LessonStatus,
   ModuleStatus,
@@ -188,6 +189,17 @@ export async function getActiveLessonForStudent(courseId: string, lessonId: stri
       },
     },
     include: {
+      materials: {
+        where: { status: LessonMaterialStatus.ACTIVE },
+        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+        select: {
+          id: true,
+          type: true,
+          title: true,
+          url: true,
+          position: true,
+        },
+      },
       module: {
         select: {
           id: true,

@@ -299,3 +299,101 @@
 ### Validacoes executadas
 - `npm.cmd run lint`: aprovado.
 - `npm.cmd run typecheck`: aprovado.
+
+## Atualizacao 2026-05-16 - Configuracao Supabase e auditoria de pendencias
+- Configuracao local criada em `.env` com `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `DATABASE_URL` e `DIRECT_URL` para o projeto Supabase informado.
+- Diagnostico de migrations no banco remoto:
+  - comando: `npx prisma migrate status`
+  - resultado: `8 migrations found in prisma/migrations` e `Database schema is up to date!`.
+- Diagnostico de seed (comparando `prisma/seed.ts` com dados reais):
+  - organizacao fixa da seed (`11111111-1111-1111-1111-111111111111`) existe, mas com nome diferente (`SysCursos Default Tenant` em vez de `SysCursos Tenant Demo`);
+  - usuarios da seed (`admin@syscursos.local`, `aluno@syscursos.local`, `produtor@syscursos.local`) nao existem;
+  - curso da seed (`slug=curso-demonstracao`) nao existe.
+- Conclusao:
+  - migrations: sem pendencias;
+  - seed: pendente/nao aplicada para o estado esperado do `prisma/seed.ts` atual.
+
+## Validacoes executadas nesta rodada (2026-05-16)
+- `npm install`: aprovado (incluiu `prisma generate` no `postinstall`).
+- `npm run prisma:validate`: aprovado.
+- `npx prisma migrate status`: aprovado (executado fora do sandbox para acesso de rede).
+- leitura de dados via Prisma Client (query pontual): aprovado (executado fora do sandbox).
+
+## Politica operacional 2026-05-16 - Banco de producao
+- O banco Supabase atualmente conectado neste workspace deve ser tratado como ambiente de producao.
+- Qualquer tarefa futura (incluindo uso de skills, scripts, seeds, migrations, rotinas de manutencao ou desenvolvimento) nao deve alterar registros de banco em nenhuma tabela por padrao.
+- Excecao: alteracao de dados somente quando for estritamente necessaria para cumprir a tarefa.
+- Antes de qualquer alteracao de dados em producao, e obrigatorio:
+  1. explicar claramente a necessidade tecnica e o impacto esperado;
+  2. solicitar aprovacao previa explicita do usuario;
+  3. executar apenas apos aprovacao.
+- Leitura/auditoria sem escrita permanece permitida.
+- Observacao desta rodada: desconsiderar a conclusao anterior sobre seed pendente como acao requerida, pois este banco e de producao.
+
+## Atualizacao 2026-05-16 - Consolidacao do TODO e analise tecnica
+- Revisao completa do `docs/TODO.md` para alinhar checklist com estado real do repositorio e do ambiente atual.
+- Atualizacoes aplicadas no TODO:
+  - Fase 3: `Configurar Supabase` e `Executar migration em Supabase` marcados como concluidos.
+  - Fase 3: `Executar seed em Supabase` marcado como nao aplicavel no banco de producao conectado (politica operacional).
+  - Fase 4: `Aplicar policies RLS em Supabase` marcado como concluido.
+  - Fase 5: `Definir e alterar senha inicial de alunos` marcado como concluido.
+  - Pendencias historicas duplicadas/obsoletas de testes foram consolidadas em uma secao unica de pendencias atuais.
+- Pendencias reais mantidas no TODO (2026-05-16):
+  - falha em `src/tests/integration/auth-actions.test.ts` (`cache is not a function`);
+  - desalinhamentos em `src/tests/unit/admin-validators.test.ts` e `src/tests/integration/admin-repository.test.ts`;
+  - `npm run test` completo ainda sem status verde.
+
+## Validacoes executadas nesta rodada (2026-05-16)
+- `npm run lint`: aprovado.
+- `npm run typecheck`: aprovado.
+- `npm run test`: falhou com 3 suites:
+  - `src/tests/integration/auth-actions.test.ts` (7 falhas);
+  - `src/tests/unit/admin-validators.test.ts` (1 falha);
+  - `src/tests/integration/admin-repository.test.ts` (1 falha).
+
+## Atualizacao 2026-05-16 - Regra oficial de senha no fluxo produtor-aluno
+- Regra validada com o usuario:
+  - aluno novo: senha inicial pode ser definida no cadastro;
+  - aluno ja existente no sistema: produtor nao deve preencher senha neste fluxo, para evitar sobrescrita indevida.
+- `docs/TODO.md` atualizado para refletir essa regra na secao de pendencias consolidadas, incluindo ajuste explicito dos testes a serem alinhados.
+
+## Atualizacao 2026-05-16 - Planejamento de evolucao (PDF, links e continuar ultima aula)
+- `docs/TODO.md` atualizado com nova trilha de evolucao contendo:
+  - descoberta tecnica obrigatoria;
+  - implementacao de materiais de aula (PDF e links);
+  - implementacao do menu/atalho "Continuar ultima aula";
+  - checklist de qualidade e documentacao.
+- Prompts criados para execucao em etapas:
+  - `prompts/13_DISCOVERY_PDF_LINKS_CONTINUE.md`
+  - `prompts/14_IMPLEMENT_PDF_LINKS.md`
+  - `prompts/15_IMPLEMENT_CONTINUE_LAST_LESSON.md`
+- Observacao operacional mantida: sem alteracao de dados em producao sem necessidade extrema + explicacao + aprovacao previa do usuario.
+
+## Atualizacao 2026-05-16 - Discovery concluida (PDF/links e continuar ultima aula)
+- Discovery tecnica executada com base no repositorio para evolucao de materiais de aula e continuidade de estudo.
+- Decisoes registradas em `docs/DECISIONS.md`:
+  - adotar entidade dedicada `lesson_materials` para PDF/links (tipo, titulo, url, posicao, status);
+  - implementar "Continuar ultima aula" por leitura de `lesson_progress` + ordem de trilha ativa;
+  - manter validacoes server-side de matricula/status e links HTTPS.
+- `docs/TODO.md` atualizado:
+  - bloco de descoberta tecnica marcado como concluido;
+  - blocos de implementacao permanecem pendentes.
+- `docs/REVIEW.md` atualizado com diagnostico, riscos e proxima etapa recomendada.
+- Politica operacional mantida: sem escrita em banco de producao sem necessidade extrema + explicacao + aprovacao previa explicita.
+
+## Atualizacao 2026-05-16 - Implementacao inicial (PDF/links e continuar ultima aula)
+- Escopo implementado:
+  - nova modelagem `lesson_materials` no Prisma (`PDF`/`LINK`, titulo, url HTTPS, posicao, status);
+  - migration criada: `prisma/migrations/20260516141000_add_lesson_materials/migration.sql`;
+  - CRUD de materiais de aula na tela admin de aulas por modulo;
+  - exibicao de materiais na pagina da aula do aluno;
+  - continuidade de estudo com calculo server-side + rota `/app/continue` + CTA/menu "Continuar".
+- Decisao aplicada nesta etapa: PDF por URL HTTPS (upload binario adiado para etapa futura).
+- Observacao operacional: nenhuma escrita em banco de producao foi executada nesta implementacao.
+
+## Validacoes executadas nesta rodada (2026-05-16)
+- `npm run lint`: aprovado.
+- `npx prisma generate`: aprovado.
+- `npm run typecheck`: aprovado.
+- `npm run test -- --run src/tests/integration/admin-service.test.ts src/tests/integration/student-service.test.ts src/tests/integration/admin-actions.test.ts src/tests/unit/student-components.test.tsx`: aprovado (35 testes).
+- `npm run build`: aprovado.
