@@ -1,6 +1,7 @@
 import {
   CourseStatus,
   EnrollmentStatus,
+  Prisma,
   LessonMaterialStatus,
   LessonProgressStatus,
   LessonStatus,
@@ -189,17 +190,6 @@ export async function getActiveLessonForStudent(courseId: string, lessonId: stri
       },
     },
     include: {
-      materials: {
-        where: { status: LessonMaterialStatus.ACTIVE },
-        orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-        select: {
-          id: true,
-          type: true,
-          title: true,
-          url: true,
-          position: true,
-        },
-      },
       module: {
         select: {
           id: true,
@@ -214,6 +204,35 @@ export async function getActiveLessonForStudent(courseId: string, lessonId: stri
       },
     },
   });
+}
+
+export async function listActiveLessonMaterials(lessonId: string) {
+  try {
+    return await prisma.lessonMaterial.findMany({
+      where: {
+        lessonId,
+        status: LessonMaterialStatus.ACTIVE,
+      },
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        url: true,
+        position: true,
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2021"
+    ) {
+      // Backward-compatible fallback when lesson_materials migration is not applied yet.
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export async function findLessonProgress(studentId: string, lessonId: string) {

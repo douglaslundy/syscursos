@@ -146,7 +146,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     notFound();
   }
 
-  const [totalLessons, completedLessons, progress, note, courseContent, completedLessonIds] =
+  const [totalLessons, completedLessons, progress, note, courseContent, completedLessonIds, materials] =
     await Promise.all([
     repository.countActiveLessonsByCourse(courseId),
     repository.countCompletedLessonsByCourse(studentId, courseId),
@@ -154,6 +154,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     repository.findLessonNote(studentId, lessonId),
     repository.getCourseWithActiveContent(courseId),
     repository.getCompletedLessonIds(studentId, courseId),
+    repository.listActiveLessonMaterials(lessonId),
   ]);
 
   if (!courseContent) {
@@ -163,7 +164,10 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
   return {
     status: "AVAILABLE" as const,
     course: enrollment.course,
-    lesson,
+    lesson: {
+      ...lesson,
+      materials,
+    },
     embedUrl: getYouTubeEmbedUrl(lesson.youtubeUrl, lesson.youtubeVideoId),
     isCompleted: progress?.status === "COMPLETED",
     note,

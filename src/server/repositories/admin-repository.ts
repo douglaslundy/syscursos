@@ -384,17 +384,29 @@ export async function listLessonMaterials(
   actorRole: ActorRole,
   lessonId: string,
 ) {
-  return prisma.lessonMaterial.findMany({
-    where: {
-      lessonId,
-      lesson: {
-        module: {
-          course: scopedCourseWhere(organizationId, actorUserId, actorRole),
+  try {
+    return await prisma.lessonMaterial.findMany({
+      where: {
+        lessonId,
+        lesson: {
+          module: {
+            course: scopedCourseWhere(organizationId, actorUserId, actorRole),
+          },
         },
       },
-    },
-    orderBy: [{ position: "asc" }, { createdAt: "asc" }],
-  });
+      orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2021"
+    ) {
+      // Backward-compatible fallback when lesson_materials migration is not applied yet.
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 export async function upsertLessonMaterial(
