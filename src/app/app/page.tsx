@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/student/empty-state";
 
 export default async function StudentHomePage() {
   const { getStudentDashboard } = await import("@/server/services/student-service");
-  const { courses, continueHref, continueLesson } = await getStudentDashboard();
+  const { courses, continueLesson } = await getStudentDashboard();
 
   return (
     <section>
@@ -18,12 +18,6 @@ export default async function StudentHomePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link
-            className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
-            href={continueHref ?? "/app/continue"}
-          >
-            Continuar ultima aula
-          </Link>
           <Link
             className="inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
             href="/app/notebooks"

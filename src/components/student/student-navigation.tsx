@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Home, PlayCircle, User } from "lucide-react";
+import { FileText, Home, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,12 +12,6 @@ const navigationItems = [
     label: "Cursos",
     icon: Home,
     match: (pathname: string) => pathname === "/app" || pathname.startsWith("/app/courses"),
-  },
-  {
-    href: "/app/continue",
-    label: "Continuar",
-    icon: PlayCircle,
-    match: (pathname: string) => pathname.startsWith("/app/continue"),
   },
   {
     href: "/app/notebooks",
