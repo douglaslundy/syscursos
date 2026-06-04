@@ -849,6 +849,35 @@ Arquivos afetados:
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
 
+## 2026-05-22 - Cadastro idempotente do curso de boxe por script Prisma
+
+Decisao:
+
+Criar script dedicado `prisma/create-boxing-course.ts` para cadastrar/atualizar o curso `CURSO DE BOXE` com slug `curso-de-boxe`, 4 modulos e aulas vinculadas aos videos identificados na playlist informada, sob ownership do produtor `douglaslundy@gmail.com`.
+
+Motivo:
+
+A carga possui volume alto de aulas e precisa manter ordenacao por modulo. Script idempotente reduz risco operacional, permite reexecucao controlada e evita cadastro manual inconsistente.
+
+Alternativas consideradas:
+
+1. Cadastro manual pela interface administrativa.
+2. Insercoes SQL avulsas diretamente no banco.
+
+Impacto:
+
+- Curso `CURSO DE BOXE` passa a existir no banco com slug fixo `curso-de-boxe`.
+- Reexecucoes futuras do script recriam modulos/aulas do curso para manter a estrutura alinhada ao material informado.
+- `Aula 29 - Combinações Básicas` nao foi cadastrada porque o video nao foi identificado na playlist e `Lesson.youtubeUrl` e obrigatorio no schema.
+
+Arquivos afetados:
+
+- `prisma/create-boxing-course.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`
+
 ## 2026-05-09 - Edicao de modulo desacoplada da paginacao da listagem
 
 Decisao:
@@ -984,3 +1013,169 @@ Arquivos afetados:
 - `src/components/student/student-navigation.tsx`
 - `docs/TODO.md`
 - `docs/DECISIONS.md`
+
+## 2026-06-04 - Erros de salvamento de aula com status especifico
+
+Decisao:
+
+O salvamento de aula passa a usar um mapeamento especifico de erros para `lesson_*` em vez de cair no fallback generico de mutacao administrativa.
+
+Motivo:
+
+O fluxo de aulas estava retornando a mensagem generica "Nao foi possivel concluir a operacao. Tente novamente." quando uma excecao nao mapeada ocorria no salvamento. Isso escondia a natureza da falha e dificultava diagnostico para o usuario e para manutencao.
+
+Alternativas consideradas:
+
+1. Manter o fallback generico para qualquer erro nao classificado.
+2. Expor o texto tecnico completo da excecao na interface.
+
+Impacto:
+
+- Salvamento de aula passa a diferenciar falhas de validacao, conflito e erro desconhecido com mensagens proprias.
+- O fluxo de lesson nao herda mais o fallback generico usado por outras mutacoes administrativas.
+- Testes passam a cobrir o redirecionamento especifico de erro para o salvamento de aula.
+
+Arquivos afetados:
+
+- `src/server/actions/admin-actions.ts`
+- `src/components/admin/feedback.tsx`
+- `src/tests/integration/admin-actions.test.ts`
+
+## 2026-06-04 - Home do aluno guiada por ultima progressao
+
+Decisao:
+
+A home da area do aluno passa a usar o `lesson_progress` mais recente para decidir qual curso aparece no bloco de continuidade.
+
+Motivo:
+
+O comportamento anterior priorizava a ordem de criacao da matricula, o que fazia o bloco exibir o ultimo curso criado em vez do ultimo curso efetivamente acessado.
+
+Alternativas consideradas:
+
+1. Manter a ordem por matricula mais recente.
+2. Criar um campo dedicado de "ultima aula acessada" e passar a gravar esse estado em cada visita.
+
+Impacto:
+
+- O bloco de continuidade da home passa a refletir a ultima interacao real do aluno.
+- O fallback continua funcionando para alunos sem progresso salvo.
+- A selecao fica alinhada com o historico de progresso ja existente, sem criar nova tabela.
+
+Arquivos afetados:
+
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/tests/integration/student-service.test.ts`
+
+## 2026-06-04 - Carga idempotente do curso Mestre co Claude
+
+Decisao:
+
+Criar um script idempotente dedicado para cadastrar o curso `Mestre co Claude`, remover o prefixo numerico dos titulos dos modulos no momento da gravacao e preservar apenas as aulas com URL de video fornecida.
+
+Motivo:
+
+A carga tem estrutura longa e precisa ser reexecutavel sem criar duplicacoes. Os modulos chegam numerados no pedido, mas a interface e o banco devem manter apenas o nome limpo. Duas aulas vieram sem URL, entao registrar esses itens como ausentes evita inventar links e mantém o banco consistente.
+
+Alternativas consideradas:
+
+1. Inserir os dados manualmente pela interface administrativa.
+2. Inventar URLs ausentes para completar a carga.
+
+Impacto:
+
+- Curso `Mestre co Claude` passa a existir com 3 modulos e 27 aulas.
+- Modulos sao gravados sem prefixo numerico.
+- Aulas sem URL permanecem registradas apenas como pendencia de origem, sem insercao falsa.
+
+Arquivos afetados:
+
+- `prisma/create-mestre-com-claude-course.ts`
+- `.codex/context/CURRENT_STATE.md`
+
+## 2026-06-04 - Carga idempotente do modulo CONTEUDO EXTRA do curso O PODER DO FLASH
+
+Decisao:
+
+Criar um script idempotente para atualizar apenas o modulo `CONTEUDO EXTRA` do curso `O PODER DO FLASH`, limpando as aulas existentes naquele modulo antes de recriar a trilha e removendo a numeracao inicial dos titulos informados.
+
+Motivo:
+
+A solicitacao era localizada em um unico modulo de um curso existente. Limitar a escrita ao modulo alvo reduz risco de alterar a estrutura de outros modulos do curso e permite reexecucao segura sem duplicar aulas. A constraint de banco em `lessons.youtube_url` nao aceita URLs `shorts`, entao os links precisaram ser normalizados para `watch?v=` para manter compatibilidade com o schema atual.
+
+Alternativas consideradas:
+
+1. Recriar o curso inteiro.
+2. Inserir as aulas manualmente pela interface administrativa.
+3. Manter os links `shorts` e contornar a constraint no banco.
+
+Impacto:
+
+- Apenas o modulo alvo foi alterado.
+- As aulas passaram a existir na ordem fornecida, sem o prefixo numerico no titulo.
+- A carga ficou reexecutavel e aderente ao schema atual de `youtube_url`.
+
+Arquivos afetados:
+
+- `prisma/create-o-poder-do-flash-extra-lessons.ts`
+- `.codex/context/CURRENT_STATE.md`
+
+## 2026-06-04 - Home do aluno baseada na ultima aula aberta
+
+Decisao:
+
+A home da area do aluno passa a registrar `lesson_progress` quando a aula e aberta, mesmo sem conclusao, e usa essa ultima interacao real para montar o card de continuidade.
+
+Motivo:
+
+O comportamento anterior dependia apenas de progresso concluido, o que fazia a home permanecer presa ao ultimo curso cadastrado quando o aluno apenas assistia uma aula sem marcar como concluida. Registrar a abertura da aula no mesmo estado de progresso preserva a trilha existente e elimina a necessidade de uma nova tabela de tracking.
+
+Alternativas consideradas:
+
+1. Criar uma entidade separada de "ultima aula acessada".
+2. Manter a home baseada somente em aulas concluidas.
+3. Atualizar somente quando o aluno clica em "concluido".
+
+Impacto:
+
+- A home passa a refletir a ultima interacao real do aluno com a trilha.
+- A leitura continua baseada em `lesson_progress`, sem duplicar modelo de dados.
+- O fluxo de concluir aula continua funcionando e agora compartilha a mesma fonte de verdade da abertura da aula.
+
+Arquivos afetados:
+
+- `src/server/services/student-service.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/tests/integration/student-service.test.ts`
+- `.codex/context/CURRENT_STATE.md`
+
+## 2026-06-04 - Card de continuidade do curso baseado na ultima aula tocada
+
+Decisao:
+
+A pagina do curso passou a usar a ultima aula tocada dentro daquele proprio curso para montar o card de continuidade, consultando a mesma fonte de verdade do service de aluno em vez de recomputar o card apenas pelas aulas concluidas.
+
+Motivo:
+
+Depois do ajuste da home, a pagina do curso ainda podia exibir uma sugestao baseada apenas no conjunto de aulas concluidas. Isso criava divergencia entre telas. Centralizar a regra no service de aluno garante consistencia e reduz duplicacao de logica.
+
+Alternativas consideradas:
+
+1. Manter a pagina do curso com logica local baseada em concluidas.
+2. Criar uma nova entidade de tracking de visita.
+3. Reaproveitar apenas a primeira aula pendente do curso.
+
+Impacto:
+
+- Home e pagina do curso passam a usar a mesma interpretacao de "continuar de onde parei".
+- A pagina do curso deixa de depender de uma funcao local de calculo de card.
+- O service de aluno permanece como ponto central da regra.
+
+Arquivos afetados:
+
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/server/services/student-service.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/tests/integration/student-service.test.ts`
+- `.codex/context/CURRENT_STATE.md`

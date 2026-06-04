@@ -176,6 +176,123 @@ export async function getCompletedLessonIds(studentId: string, courseId: string)
   return new Set(rows.map((row) => row.lessonId));
 }
 
+export async function findMostRecentLessonProgress(studentId: string) {
+  const now = new Date();
+
+  return prisma.lessonProgress.findFirst({
+    where: {
+      studentId,
+      lesson: {
+        status: LessonStatus.ACTIVE,
+        module: {
+          status: ModuleStatus.ACTIVE,
+          course: {
+            status: CourseStatus.ACTIVE,
+            enrollments: {
+              some: {
+                studentId,
+                status: EnrollmentStatus.ACTIVE,
+                startsAt: { lte: now },
+                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+              },
+            },
+            producer: {
+              producerStudents: {
+                some: { studentId },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: [{ updatedAt: "desc" }, { completedAt: "desc" }],
+    select: {
+      status: true,
+      updatedAt: true,
+      completedAt: true,
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+          position: true,
+          module: {
+            select: {
+              id: true,
+              title: true,
+              position: true,
+              course: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function findMostRecentLessonProgressForCourse(studentId: string, courseId: string) {
+  const now = new Date();
+
+  return prisma.lessonProgress.findFirst({
+    where: {
+      studentId,
+      lesson: {
+        status: LessonStatus.ACTIVE,
+        module: {
+          status: ModuleStatus.ACTIVE,
+          courseId,
+          course: {
+            status: CourseStatus.ACTIVE,
+            enrollments: {
+              some: {
+                studentId,
+                status: EnrollmentStatus.ACTIVE,
+                startsAt: { lte: now },
+                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+              },
+            },
+            producer: {
+              producerStudents: {
+                some: { studentId },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: [{ updatedAt: "desc" }, { completedAt: "desc" }],
+    select: {
+      status: true,
+      updatedAt: true,
+      completedAt: true,
+      lesson: {
+        select: {
+          id: true,
+          title: true,
+          position: true,
+          module: {
+            select: {
+              id: true,
+              title: true,
+              position: true,
+              course: {
+                select: {
+                  id: true,
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 export async function getActiveLessonForStudent(courseId: string, lessonId: string) {
   return prisma.lesson.findFirst({
     where: {
@@ -242,6 +359,35 @@ export async function findLessonProgress(studentId: string, lessonId: string) {
         studentId,
         lessonId,
       },
+    },
+  });
+}
+
+export async function touchLessonProgress(
+  studentId: string,
+  lessonId: string,
+  progress: { status: LessonProgressStatus; completedAt: Date | null } | null,
+) {
+  const status = progress?.status ?? LessonProgressStatus.NOT_STARTED;
+  const completedAt =
+    status === LessonProgressStatus.COMPLETED ? progress?.completedAt ?? new Date() : null;
+
+  return prisma.lessonProgress.upsert({
+    where: {
+      studentId_lessonId: {
+        studentId,
+        lessonId,
+      },
+    },
+    update: {
+      status,
+      completedAt,
+    },
+    create: {
+      studentId,
+      lessonId,
+      status,
+      completedAt,
     },
   });
 }

@@ -9,6 +9,7 @@ const redirectMock = vi.hoisted(() =>
 );
 const revalidatePathMock = vi.hoisted(() => vi.fn());
 const saveStudentMock = vi.hoisted(() => vi.fn());
+const saveLessonMock = vi.hoisted(() => vi.fn());
 const lookupStudentByEmailMock = vi.hoisted(() => vi.fn());
 const linkStudentToProducerMock = vi.hoisted(() => vi.fn());
 
@@ -31,7 +32,7 @@ vi.mock("@/server/services/admin-service", () => ({
   renewEnrollment: vi.fn(),
   saveCourse: vi.fn(),
   saveEnrollment: vi.fn(),
-  saveLesson: vi.fn(),
+  saveLesson: saveLessonMock,
   saveManagedUser: vi.fn(),
   saveModule: vi.fn(),
   saveStudent: saveStudentMock,
@@ -43,9 +44,11 @@ describe("admin student actions", () => {
     redirectMock.mockClear();
     revalidatePathMock.mockClear();
     saveStudentMock.mockReset();
+    saveLessonMock.mockReset();
     lookupStudentByEmailMock.mockReset();
     linkStudentToProducerMock.mockReset();
     saveStudentMock.mockResolvedValue({ linkedExisting: false });
+    saveLessonMock.mockResolvedValue({ count: 1 });
     lookupStudentByEmailMock.mockResolvedValue(null);
     linkStudentToProducerMock.mockResolvedValue({ id: "link-id" });
   });
@@ -181,6 +184,24 @@ describe("admin student actions", () => {
 
     await expect(saveStudentAction(studentForm())).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_auth_email",
+    );
+  });
+
+  it("returns a specific status for unexpected lesson failures", async () => {
+    const { saveLessonAction } = await import("@/server/actions/admin-actions");
+    const formData = new FormData();
+    formData.set("moduleId", "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633");
+    formData.set("title", "Aula");
+    formData.set("position", "1");
+    formData.set("status", "ACTIVE");
+    formData.set("youtubeUrl", "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    formData.set("youtubeVideoId", "");
+    formData.set("coverImageUrl", "");
+    formData.set("description", "");
+    saveLessonMock.mockRejectedValue(new Error("database unavailable"));
+
+    await expect(saveLessonAction(formData)).rejects.toThrow(
+      "REDIRECT:/admin/modules/2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633/lessons?status=lesson_save_error",
     );
   });
 

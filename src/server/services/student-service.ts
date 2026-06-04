@@ -87,6 +87,7 @@ export async function getStudentCourse(courseId: string) {
       modules: [],
       completedLessonIds: new Set<string>(),
       progress: calculateCourseProgress(0, 0),
+      continueLesson: null,
     };
   }
 
@@ -99,14 +100,19 @@ export async function getStudentCourse(courseId: string) {
       modules: [],
       completedLessonIds: new Set<string>(),
       progress: calculateCourseProgress(0, 0),
+      continueLesson: null,
     };
   }
 
-  const [totalLessons, completedLessons, completedLessonIds] = await Promise.all([
+  const [totalLessons, completedLessons, completedLessonIds, recentProgress] = await Promise.all([
     repository.countActiveLessonsByCourse(courseId),
     repository.countCompletedLessonsByCourse(studentId, courseId),
     repository.getCompletedLessonIds(studentId, courseId),
+    repository.findMostRecentLessonProgressForCourse(studentId, courseId),
   ]);
+  const continueLesson = recentProgress
+    ? buildContinueLessonCardFromRecentProgress(recentProgress)
+    : buildContinueLessonCardFromCourseModules(course.modules, completedLessonIds, courseId, course.title);
 
   return {
     status: "AVAILABLE" as const,
@@ -114,7 +120,8 @@ export async function getStudentCourse(courseId: string) {
     modules: course.modules,
     completedLessonIds,
     progress: calculateCourseProgress(completedLessons, totalLessons),
-    continueHref: buildContinueHrefFromCourseModules(course.modules, completedLessonIds, courseId),
+    continueHref: continueLesson?.href ?? buildContinueHrefFromCourseModules(course.modules, completedLessonIds, courseId),
+    continueLesson,
   };
 }
 
@@ -146,11 +153,13 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     notFound();
   }
 
-  const [totalLessons, completedLessons, progress, note, courseContent, completedLessonIds, materials] =
+  const progress = await repository.findLessonProgress(studentId, lessonId);
+  await repository.touchLessonProgress(studentId, lessonId, progress);
+
+  const [totalLessons, completedLessons, note, courseContent, completedLessonIds, materials] =
     await Promise.all([
     repository.countActiveLessonsByCourse(courseId),
     repository.countCompletedLessonsByCourse(studentId, courseId),
-    repository.findLessonProgress(studentId, lessonId),
     repository.findLessonNote(studentId, lessonId),
     repository.getCourseWithActiveContent(courseId),
     repository.getCompletedLessonIds(studentId, courseId),
@@ -341,6 +350,12 @@ async function resolveContinueLessonCard(
   studentId: string,
   courseIds: string[],
 ): Promise<ContinueLessonCard> {
+  const recentProgress = await repository.findMostRecentLessonProgress(studentId);
+
+  if (recentProgress) {
+    return buildContinueLessonCardFromRecentProgress(recentProgress);
+  }
+
   for (const courseId of courseIds) {
     const enrollment = await repository.findEnrollmentForCourse(studentId, courseId);
     if (!enrollment || getCourseAccessStatus(enrollment) !== "AVAILABLE") {
@@ -368,6 +383,20 @@ async function resolveContinueLessonCard(
   }
 
   return null;
+}
+
+function buildContinueLessonCardFromRecentProgress(
+  recentProgress: NonNullable<Awaited<ReturnType<typeof repository.findMostRecentLessonProgress>>>,
+): ContinueLessonCard {
+  return {
+    href: `/app/courses/${recentProgress.lesson.module.course.id}/lessons/${recentProgress.lesson.id}`,
+    courseTitle: recentProgress.lesson.module.course.title,
+    moduleTitle: recentProgress.lesson.module.title,
+    lessonTitle: recentProgress.lesson.title,
+    lessonPosition: recentProgress.lesson.position,
+    modulePosition: recentProgress.lesson.module.position,
+    mode: recentProgress.status === "COMPLETED" ? "REVIEW_LAST" : "NEXT_LESSON",
+  };
 }
 
 function buildContinueLessonCardFromCourseModules(

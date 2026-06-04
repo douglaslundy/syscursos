@@ -1879,6 +1879,271 @@ Executar `prompts/14_IMPLEMENT_PDF_LINKS.md` em etapa incremental, mantendo bloq
 
 ---
 
+### 2026-06-04 - Feedback especifico para salvar aula
+
+### Arquivos criados ou alterados
+
+- `src/server/actions/admin-actions.ts`
+- `src/components/admin/feedback.tsx`
+- `src/tests/integration/admin-actions.test.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/DECISIONS.md`
+
+### O que foi implementado
+
+- O salvamento de aula passou a usar um status especifico para falhas de `Lesson`, evitando o fallback generico de mutacao administrativa.
+- Foram adicionadas mensagens proprias para:
+  - conflito de posicao;
+  - falha de validacao/persistencia da aula;
+  - erro desconhecido no salvamento da aula;
+  - erro relacionado a auth/storage, quando aplicavel.
+- A cobertura de testes passou a verificar o redirecionamento de erro especifico para o fluxo de salvamento de aula.
+
+### Testes executados
+
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run test -- --run src/tests/integration/admin-actions.test.ts src/tests/unit/admin-validators.test.ts`
+
+### Resultado dos testes
+
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- `src/tests/integration/admin-actions.test.ts`: aprovado.
+- `src/tests/unit/admin-validators.test.ts`: falhou em teste preexistente de regra de senha inicial do aluno, sem relacao com o fluxo de aula.
+
+### Riscos encontrados
+
+- O fluxo de salvamento de aula ainda depende do estado real do banco e do `moduleId` informado pelo formulario.
+- A falha preexistente do validator de aluno continua registrada fora deste ajuste.
+
+### Pendencias
+
+- Nenhuma pendencia nova criada por esta correcao.
+
+### Proxima etapa recomendada
+
+Se o problema persistir em ambiente real, capturar o `status` retornado na URL ou o erro do servidor para fechar a causa raiz especifica do banco.
+
+---
+
+### 2026-06-04 - Home do aluno prioriza ultima progressao
+
+### Arquivos criados ou alterados
+
+- `src/server/repositories/student-repository.ts`
+- `src/server/services/student-service.ts`
+- `src/tests/integration/student-service.test.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/DECISIONS.md`
+
+### O que foi implementado
+
+- A home da area do aluno passou a escolher o bloco de continuidade com base na ultima progressao registrada no banco, em vez da ordem de criacao das matriculas.
+- O fallback continua ativo para usuarios sem progresso salvo.
+- A cobertura de testes foi ajustada para garantir que o curso exibido no bloco de continuidade corresponde ao ultimo curso realmente acessado.
+
+### Testes executados
+
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`
+
+### Resultado dos testes
+
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- `src/tests/integration/student-service.test.ts`: aprovado.
+
+### Riscos encontrados
+
+- O criterio ainda depende de `lesson_progress`; se o aluno nunca concluiu ou desmarcou nenhuma aula, o fallback continua sendo usado.
+- Se futuramente for necessario rastrear visita sem conclusao, sera preciso persistir novo evento de "ultima aula acessada".
+
+### Pendencias
+
+- Nenhuma pendencia nova criada por este ajuste.
+
+### Proxima etapa recomendada
+
+- Se o produto quiser rastrear visita sem conclusao, criar uma entidade/evento dedicado para "ultima aula acessada".
+
+---
+
+### 2026-06-04 - Curso Mestre co Claude cadastrado
+
+### Arquivos criados ou alterados
+
+- `prisma/create-mestre-com-claude-course.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/DECISIONS.md`
+
+### O que foi implementado
+
+- Curso `Mestre co Claude` cadastrado de forma idempotente e vinculado ao produtor `douglaslundy@gmail.com`.
+- Os modulos numerados do pedido foram gravados sem o prefixo numerico.
+- As aulas foram cadastradas na ordem informada, preservando os links enviados.
+- Duas aulas sem URL foram registradas como pendencia e nao foram inseridas no banco.
+
+### Testes executados
+
+- `npx tsx prisma/create-mestre-com-claude-course.ts`
+- Consulta de validacao via Prisma Client para o curso `mestre-co-claude`
+
+### Resultado dos testes
+
+- Script de carga: aprovado.
+- Verificacao em banco: curso localizado com 3 modulos e 27 aulas, produtor `douglaslundy@gmail.com`.
+
+### Riscos encontrados
+
+- As duas aulas sem URL continuam ausentes ate serem fornecidos os links corretos.
+- O script recria a arvore de modulos/aulas do curso a cada execucao, comportamento intencional para manter consistencia.
+
+### Pendencias
+
+- Receber as URLs faltantes das duas aulas pendentes, se elas existirem.
+
+### Proxima etapa recomendada
+
+- Validar visualmente a ordenacao final do curso no painel administrativo.
+
+---
+
+### 2026-06-04 - Conteudo extra do curso O PODER DO FLASH
+
+### Arquivos criados ou alterados
+
+- `prisma/create-o-poder-do-flash-extra-lessons.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+
+### O que foi implementado
+
+- Atualizacao idempotente do modulo `CONTEUDO EXTRA` do curso `O PODER DO FLASH`.
+- Remocao das aulas existentes apenas no modulo alvo antes da recriacao.
+- Gravacao de 15 aulas na ordem enviada, sem o prefixo numerico dos titulos.
+- Normalizacao dos links `shorts` para `watch?v=` para atender a constraint de `youtube_url` do banco.
+
+### Testes executados
+
+- `npx tsx prisma/create-o-poder-do-flash-extra-lessons.ts`
+- Consulta de validacao via Prisma Client para o modulo `CONTEUDO EXTRA`
+
+### Resultado dos testes
+
+- Script de carga: aprovado.
+- Verificacao em banco: modulo localizado com 15 aulas, titulos sem numeracao inicial e ordem preservada.
+
+### Riscos encontrados
+
+- A carga recria as aulas do modulo alvo a cada execucao, comportamento intencional para manter consistencia.
+- Os links foram convertidos de `shorts` para `watch?v=` para respeitar a constraint atual do schema.
+
+### Pendencias
+
+- Nenhuma pendencia nova criada por este ajuste.
+
+### Proxima etapa recomendada
+
+- Validar visualmente no painel administrativo a ordenacao final das aulas do modulo.
+
+---
+
+### 2026-06-04 - Home do aluno baseada na ultima aula tocada
+
+### Arquivos criados ou alterados
+
+- `src/server/services/student-service.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/tests/integration/student-service.test.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+
+### O que foi implementado
+
+- A abertura de uma aula agora atualiza `lesson_progress`, mesmo quando o aluno ainda nao marcou como concluida.
+- A home do aluno passou a usar a ultima interacao real com aula aberta como origem do card de continuidade.
+- O comportamento de curso totalmente concluido foi mantido como revisao da ultima aula.
+
+### Testes executados
+
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`
+- `npm.cmd run build`
+
+### Resultado dos testes
+
+- `lint`: aprovado.
+- `typecheck`: aprovado.
+- `student-service.test.ts`: aprovado.
+- `build`: aprovado.
+
+### Riscos encontrados
+
+- O sistema passa a registrar uma interacao de progresso ao abrir a aula, o que aumenta o volume de writes em relacao ao comportamento anterior.
+- O card de continuidade agora prioriza a ultima aula aberta, mesmo se o aluno ainda nao a concluiu, o que e coerente com "retomar de onde parou" mas pode diferir de uma expectativa de "proxima aula". 
+
+### Pendencias
+
+- Nenhuma pendencia nova criada por este ajuste.
+
+### Proxima etapa recomendada
+
+- Se quiser reduzir writes, avaliar uma estrategia de debounce ou tracking dedicado de visita de aula.
+
+---
+
+### 2026-06-04 - Card de continuidade na pagina do curso
+
+### Arquivos criados ou alterados
+
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/server/services/student-service.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/tests/integration/student-service.test.ts`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+
+### O que foi implementado
+
+- A pagina do curso passou a renderizar o card de continuidade a partir do `continueLesson` entregue pelo service.
+- O service passou a calcular o card do curso com base na ultima aula tocada naquele curso, em vez de recomputar apenas pelas aulas concluidas.
+- A regra ficou alinhada com a home do aluno para evitar divergencia entre telas.
+
+### Testes executados
+
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`
+- `npm.cmd run build`
+
+### Resultado dos testes
+
+- `lint`: aprovado.
+- `typecheck`: aprovado.
+- `student-service.test.ts`: aprovado.
+- `build`: aprovado.
+
+### Riscos encontrados
+
+- O service agora realiza uma consulta adicional para identificar a ultima aula tocada no curso.
+- A regra passa a depender de `lesson_progress` atualizado ao abrir a aula, o que aumenta writes mas deixa o comportamento previsivel.
+
+### Pendencias
+
+- Nenhuma pendencia nova criada por este ajuste.
+
+### Proxima etapa recomendada
+
+- Se o produto quiser reduzir writes, avaliar tracking dedicado de visita ou consolidacao do acesso em debounce.
+
+---
+
 ### 2026-05-16 - Implementacao inicial: materiais de aula e continuar ultima aula
 
 ### Arquivos criados ou alterados
@@ -2214,6 +2479,53 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ### Proxima etapa recomendada
 
 - Validar visualmente no painel administrativo a ordenacao final de modulos e aulas.
+
+---
+
+### 2026-05-22 - Cadastro do curso de boxe
+
+### Arquivos criados ou alterados
+
+- `prisma/create-boxing-course.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Criado script Prisma idempotente para cadastrar/atualizar o curso `CURSO DE BOXE`.
+- Curso vinculado ao produtor `douglaslundy@gmail.com`.
+- Modulos cadastrados removendo o prefixo antes de ` - ` nos nomes.
+- Aulas cadastradas em seus modulos conforme mapeamento da playlist.
+- `Aula 29 - Combinações Básicas` nao foi cadastrada porque o video nao foi identificado na playlist e o schema exige `youtubeUrl`.
+
+### Testes executados
+
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npx tsx prisma/create-boxing-course.ts`
+- Consulta de validacao via Prisma Client para curso `slug=curso-de-boxe`
+
+### Resultado dos testes
+
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- Script de carga: aprovado.
+- Verificacao em banco: curso `CURSO DE BOXE` localizado com 4 modulos e 93 aulas, produtor `douglaslundy@gmail.com`.
+
+### Riscos encontrados
+
+- O script recria modulos/aulas do curso `curso-de-boxe` a cada execucao, comportamento intencional para manter consistencia da trilha.
+- A aula 29 permanece pendente ate existir link de video confiavel.
+
+### Pendencias
+
+- Informar/cadastrar o link correto da `Aula 29 - Combinações Básicas`, se o video existir fora da playlist consultada.
+
+### Proxima etapa recomendada
+
+- Validar visualmente no painel administrativo a ordenacao final do curso.
 
 ### Proxima etapa recomendada
 

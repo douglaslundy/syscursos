@@ -397,3 +397,150 @@
 - `npm run typecheck`: aprovado.
 - `npm run test -- --run src/tests/integration/admin-service.test.ts src/tests/integration/student-service.test.ts src/tests/integration/admin-actions.test.ts src/tests/unit/student-components.test.tsx`: aprovado (35 testes).
 - `npm run build`: aprovado.
+
+## Atualizacao 2026-05-16 - Deploy de migration + ajustes UX de continuidade
+- Migration aplicada em producao:
+  - comando: `npx prisma migrate deploy`;
+  - migration: `20260516141000_add_lesson_materials`;
+  - validacao: `npx prisma migrate status` retornou `Database schema is up to date!`.
+- Hotfix aplicado apos erro de abertura de aula em producao:
+  - fallback de leitura para `lesson_materials` quando a tabela nao existir (P2021), evitando quebra de Server Components durante janela de rollout.
+- Ajuste de UX por solicitacao de produto:
+  - removido item `Continuar` do menu lateral/mobile;
+  - removido botao `Continuar ultima aula` ao lado de `Abrir cadernos` na home;
+  - mantidos bloco visual de continuidade (home e pagina do curso) e rota `/app/continue`.
+- `docs/TODO.md` atualizado com esses itens no bloco de evolucao.
+
+## Atualizacao 2026-05-22 - Cadastro do curso de boxe
+- Script adicionado: `prisma/create-boxing-course.ts`.
+- Execucao realizada com aprovacao explicita para escrita no banco de producao: `npx tsx prisma/create-boxing-course.ts`.
+- Resultado validado em banco: curso `CURSO DE BOXE` (slug `curso-de-boxe`) vinculado ao produtor `douglaslundy@gmail.com`.
+- Estrutura cadastrada:
+  - 4 modulos
+  - 93 aulas
+- Distribuicao validada:
+  - `Módulo 1 Introdução Box (Iniciante)`: 25 aulas
+  - `Módulo 2 Evoluindo no treinamento (Intermediario)`: 36 aulas
+  - `Módulo 3 Dominando o Boxe (Avançado)`: 27 aulas
+  - `Módulo Bônus Iniciando no Boxe`: 5 aulas
+- Excecao registrada: `Aula 29 - Combinações Básicas` nao foi cadastrada porque o video nao foi identificado na playlist e `youtubeUrl` e obrigatorio no schema.
+- Regra aplicada: nomes de modulos foram gravados usando somente o trecho apos ` - `.
+
+## Validacoes executadas nesta rodada (2026-05-22)
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- Consulta de validacao via Prisma Client: aprovada.
+
+## Atualizacao 2026-06-04 - Backup do banco gerado
+- Backup logico gerado a partir do schema `public` do banco conectado em producao.
+- Arquivo criado:
+  - `backups/syscursos-backup-2026-06-04T17-36-48-796Z.json`
+- Tabelas exportadas:
+  - `_prisma_migrations`
+  - `courses`
+  - `enrollments`
+  - `lesson_materials`
+  - `lesson_notes`
+  - `lesson_progress`
+  - `lessons`
+  - `modules`
+  - `organizations`
+  - `producer_students`
+  - `student_profiles`
+  - `users`
+- Observacao:
+  - o backup cobre apenas o schema `public`; o schema de Supabase Auth nao foi exportado nesta execucao.
+
+## Atualizacao 2026-06-04 - Backup completo com schema Auth
+- Backup logico completo gerado com os schemas `public` e `auth`.
+- Arquivo criado:
+  - `backups/syscursos-complete-backup-2026-06-04T17-39-06-777Z.json`
+- Escopo exportado:
+  - `public`: 517 registros
+  - `auth`: 220 registros
+- Observacao:
+  - o arquivo inclui metadados de tabelas, colunas, indices e constraints, alem das linhas exportadas.
+
+## Atualizacao 2026-06-04 - Restore SQL gerado
+- Script SQL de restore gerado a partir do backup logico completo.
+- Arquivo criado:
+  - `backups/syscursos-restore-2026-06-04.sql`
+- Observacao:
+  - o script assume um alvo PostgreSQL/Supabase com permissao para alternar `session_replication_role` durante a restauracao.
+
+## Atualizacao 2026-06-04 - ZIP enviado para Downloads
+- Arquivo compactado gerado e copiado para a pasta Downloads do usuario.
+- Arquivo criado:
+  - `C:\Users\dougl\Downloads\syscursos-backup-2026-06-04.zip`
+- Conteudo:
+  - `backups/syscursos-complete-backup-2026-06-04T17-39-06-777Z.json`
+  - `backups/syscursos-restore-2026-06-04.sql`
+
+## Atualizacao 2026-06-04 - Feedback especifico para salvar aula
+- O salvamento de aula deixou de cair no fallback generico do admin e passou a usar status especifico para falhas de lesson.
+- Arquivos alterados:
+  - `src/server/actions/admin-actions.ts`
+  - `src/components/admin/feedback.tsx`
+  - `src/tests/integration/admin-actions.test.ts`
+- Validacoes executadas nesta alteracao:
+  - `npm.cmd run lint`
+  - `npm.cmd run typecheck`
+  - `npm.cmd run test -- --run src/tests/integration/admin-actions.test.ts src/tests/unit/admin-validators.test.ts`
+- Resultado:
+  - `lint`: aprovado
+  - `typecheck`: aprovado
+  - `admin-actions.test.ts`: aprovado
+  - `admin-validators.test.ts`: falhou em teste preexistente de senha inicial do aluno, nao relacionado ao fluxo de aula
+
+## Atualizacao 2026-06-04 - Home do aluno prioriza ultima progressao
+- A home da area do aluno agora escolhe o bloco de continuidade pelo `lesson_progress` mais recente, em vez da matricula mais nova.
+- O fallback para alunos sem progresso foi mantido.
+- Arquivos alterados:
+  - `src/server/repositories/student-repository.ts`
+  - `src/server/services/student-service.ts`
+  - `src/tests/integration/student-service.test.ts`
+- Validacoes executadas nesta alteracao:
+  - `npm.cmd run lint`
+  - `npm.cmd run typecheck`
+  - `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`
+- Resultado:
+  - `lint`: aprovado
+  - `typecheck`: aprovado
+  - `student-service.test.ts`: aprovado
+
+## Atualizacao 2026-06-04 - Curso Mestre co Claude cadastrado
+- Script criado: `prisma/create-mestre-com-claude-course.ts`.
+- Execucao realizada com aprovacao explicita para escrita no banco de producao: `npx tsx prisma/create-mestre-com-claude-course.ts`.
+- Resultado validado em banco: curso `Mestre co Claude` (slug `mestre-co-claude`) vinculado ao produtor `douglaslundy@gmail.com`.
+- Estrutura cadastrada:
+  - 3 modulos
+  - 27 aulas
+- Distribuicao validada:
+  - `Mestre do Claude do Zero ao Avançado`: 13 aulas
+  - `CLAUDE Code e seu primeiro Squad de Agentes`: 9 aulas
+  - `Squad Audio Visual`: 5 aulas
+- Excecoes registradas:
+  - `Site em 5 Minutos com claude Chat + Gemini` nao foi cadastrada porque a URL nao foi fornecida.
+  - `Aulão como montar seu site em 5 minutos` nao foi cadastrada porque a URL nao foi fornecida.
+- Regra aplicada: modulos foram gravados sem o prefixo numerico inicial.
+- Validacoes executadas nesta rodada:
+  - `npx tsx prisma/create-mestre-com-claude-course.ts`
+  - `npm.cmd run lint`
+  - `npm.cmd run typecheck`
+
+## Atualizacao 2026-06-04 - Aulas de conteudo extra do curso O PODER DO FLASH
+- Script criado: `prisma/create-o-poder-do-flash-extra-lessons.ts`.
+- Execucao realizada com aprovacao explicita para escrita no banco de producao: `npx tsx prisma/create-o-poder-do-flash-extra-lessons.ts`.
+- Resultado validado em banco: modulo `CONTEUDO EXTRA` do curso `O PODER DO FLASH` atualizado com 15 aulas.
+- Regra aplicada: os titulos foram gravados sem a numeracao inicial informada no pedido.
+- Observacao tecnica: os links `youtube.com/shorts/...` precisaram ser convertidos para `https://www.youtube.com/watch?v=...` para atender a constraint `lessons_youtube_url_check` do banco.
+
+## Atualizacao 2026-06-04 - Home do aluno baseada na ultima aula tocada
+- O carregamento de uma aula agora registra `lesson_progress` mesmo quando a aula ainda nao foi marcada como concluida.
+- A home da area do aluno passou a usar a ultima interacao real com aula aberta para montar o card de continuidade.
+- Resultado prático: a pagina inicial deixa de ficar presa ao ultimo curso cadastrado quando o aluno assistiu outra aula mais recentemente.
+
+## Atualizacao 2026-06-04 - Card de continuidade na pagina do curso
+- A pagina do curso passou a usar a ultima aula tocada naquele proprio curso para montar o card de continuidade.
+- O card deixou de ser derivado apenas das aulas concluidas, o que alinhou a experiencia com a regra da home.
+- A regra agora e consistente entre home global e pagina do curso: a ultima aula aberta vira o ponto de retomada.

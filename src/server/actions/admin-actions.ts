@@ -108,7 +108,7 @@ export async function saveLessonAction(formData: FormData) {
     revalidatePath(path);
   } catch (error) {
     console.error("Admin mutation failed.", error);
-    redirect(`${path}?status=${adminErrorStatus(error)}`);
+    redirect(`${path}?status=${lessonMutationStatus(error)}`);
   }
 
   redirect(`${path}?status=saved&formReset=${Date.now()}`);
@@ -441,6 +441,32 @@ function studentConflictStatus(error: Prisma.PrismaClientKnownRequestError) {
   }
 
   return "student_conflict";
+}
+
+function lessonMutationStatus(error: unknown) {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === "P2002") {
+      return "lesson_conflict";
+    }
+
+    if (error.code === "P2003" || error.code === "P2021" || error.code === "P2025") {
+      return "lesson_invalid";
+    }
+  }
+
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+
+    if (message.includes("auth") || message.includes("supabase")) {
+      return "lesson_auth_error";
+    }
+
+    if (message.includes("storage") || message.includes("bucket")) {
+      return "lesson_storage_error";
+    }
+  }
+
+  return "lesson_save_error";
 }
 
 function requiredString(formData: FormData, key: string, errorPath: string) {

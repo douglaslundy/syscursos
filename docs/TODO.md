@@ -464,6 +464,21 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar testes relevantes (nao aplicavel para carga de dados sem alteracao de regras de negocio)
 - [x] Executar build (nao aplicavel para carga de dados sem alteracao de runtime)
 
+## Ajuste 2026-05-22 - Cadastro do curso de boxe
+
+- [x] Criar script idempotente para cadastrar curso `CURSO DE BOXE`.
+- [x] Vincular curso ao produtor `douglaslundy@gmail.com`.
+- [x] Remover prefixo antes de ` - ` nos nomes de modulos.
+- [x] Cadastrar 4 modulos conforme estrutura informada.
+- [x] Cadastrar aulas com links da playlist do YouTube no modulo correspondente.
+- [x] Registrar excecao da `Aula 29 - Combinações Básicas`, sem video identificado na playlist e sem cadastro por `youtubeUrl` obrigatorio.
+- [x] Executar `npx tsx prisma/create-boxing-course.ts`.
+- [x] Validar curso e totais no banco.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar testes relevantes (nao aplicavel para carga de dados sem alteracao de regras de negocio).
+- [x] Executar build (nao aplicavel para carga de dados sem alteracao de runtime).
+
 ## Ajuste 2026-05-09 - Correcao de update no cadastro de modulos
 
 - [x] Identificar causa raiz do fluxo de edicao de modulo virar criacao
@@ -565,6 +580,14 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [ ] Alinhar `src/tests/integration/admin-repository.test.ts` com o comportamento atual do escopo de vinculo por e-mail/Auth (sem expectativa obsoleta de filtro fixo por `organizationId`).
 - [ ] Executar `npm run test` completo sem falhas.
 
+## Ajuste 2026-06-04 - Feedback especifico para salvar aula
+
+- [x] Substituir o fallback generico do salvamento de aula por status especificos.
+- [x] Cobrir o novo redirecionamento de erro em teste de integracao.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar `npm.cmd run test -- --run src/tests/integration/admin-actions.test.ts src/tests/unit/admin-validators.test.ts` (com uma falha preexistente em validator de aluno fora deste ajuste).
+
 ## Evolucao 2026-05-16 - Materiais de aula (PDF/Links) e continuidade de estudo
 
 ### Descoberta tecnica obrigatoria (antes de implementar)
@@ -591,14 +614,72 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Criar entrada de navegacao "Continuar ultima aula" na area do aluno.
 - [x] Implementar redirecionamento seguro para a ultima aula elegivel, respeitando matricula ativa e status de curso/modulo/aula.
 - [x] Definir fallback UX quando nao houver aula elegivel para continuar.
+- [x] Ajustar UX final conforme decisao de produto:
+  - remover atalho "Continuar" do menu lateral/mobile;
+  - remover botao "Continuar ultima aula" no topo da home;
+  - manter bloco visual de continuidade na home e no curso, e rota `/app/continue`.
 
 ### Qualidade, rollout e documentacao
 
 - [ ] Criar testes unitarios para validators/regras de materiais e continuidade.
 - [ ] Criar testes de integracao para CRUD administrativo e acesso do aluno aos materiais.
 - [ ] Criar/ajustar testes de autorizacao para impedir acesso horizontal a materiais.
+- [x] Aplicar migration `20260516141000_add_lesson_materials` no banco de producao com `npx prisma migrate deploy`.
+- [x] Adicionar fallback seguro para aula/admin quando tabela `lesson_materials` nao existir (hotfix de compatibilidade de deploy).
 - [x] Executar `npm run lint`.
 - [x] Executar `npm run typecheck`.
 - [x] Executar testes relevantes.
 - [x] Executar `npm run build`.
 - [ ] Atualizar `docs/REVIEW.md` com riscos, impacto e cobertura.
+
+## Ajuste 2026-06-04 - Home do aluno guiada por ultima progressao
+
+- [x] Identificar que a home priorizava a ordem de matricula e nao a ultima progressao real.
+- [x] Priorizar o `lesson_progress` mais recente no bloco de continuidade da home.
+- [x] Manter fallback para alunos sem progresso salvo.
+- [x] Cobrir o novo comportamento em teste de integracao do service do aluno.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`.
+
+## Ajuste 2026-06-04 - Curso Mestre co Claude
+
+- [x] Criar script idempotente para cadastrar o curso `Mestre co Claude`.
+- [x] Remover o prefixo numerico dos modulos ao gravar.
+- [x] Cadastrar 3 modulos conforme a estrutura informada.
+- [x] Cadastrar 27 aulas com os links fornecidos.
+- [x] Registrar as 2 aulas sem URL como pendencia de origem, sem inventar links.
+- [x] Vincular o curso ao produtor `douglaslundy@gmail.com`.
+- [x] Executar `npx tsx prisma/create-mestre-com-claude-course.ts`.
+- [x] Validar curso e totais no banco.
+
+## Ajuste 2026-06-04 - Conteudo extra do curso O PODER DO FLASH
+
+- [x] Criar script idempotente para atualizar apenas o modulo `CONTEUDO EXTRA` do curso `O PODER DO FLASH`.
+- [x] Remover a numeracao inicial dos titulos das aulas antes de gravar.
+- [x] Preservar apenas o modulo alvo, sem alterar os demais modulos do curso.
+- [x] Converter URLs `shorts` para `watch?v=` para atender a constraint do banco.
+- [x] Executar `npx tsx prisma/create-o-poder-do-flash-extra-lessons.ts`.
+- [x] Validar no banco a gravacao de 15 aulas na ordem enviada.
+
+## Ajuste 2026-06-04 - Home do aluno baseada na ultima aula tocada
+
+- [x] Registrar acesso a aula aberta no `lesson_progress`, mesmo sem marcar como concluida.
+- [x] Fazer a home do aluno priorizar a ultima interacao real com aula aberta.
+- [x] Manter o comportamento de curso concluido como revisao da ultima aula.
+- [x] Cobrir o novo comportamento em teste de integracao do service do aluno.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`.
+- [x] Executar `npm.cmd run build`.
+
+## Ajuste 2026-06-04 - Card de continuidade na pagina do curso
+
+- [x] Fazer a pagina do curso usar a ultima aula tocada no proprio curso como card de continuidade.
+- [x] Remover a derivacao local do card baseada apenas em aulas concluidas.
+- [x] Centralizar a regra no service do aluno para evitar divergencia entre telas.
+- [x] Cobrir o novo comportamento em teste de integracao do service do aluno.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`.
+- [x] Executar `npm.cmd run build`.
