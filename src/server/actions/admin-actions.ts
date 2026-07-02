@@ -54,7 +54,7 @@ export async function saveCourseAction(formData: FormData) {
       throw error;
     }
     console.error("Failed to parse or upload course cover.", error);
-    redirect(`${path}?status=${adminErrorStatus(error)}`);
+    redirect(adminStatusPath(path, adminErrorStatus(error)));
   }
 
   await runAdminMutation(path, "saved", async () => {
@@ -92,32 +92,34 @@ export async function deleteModuleAction(formData: FormData) {
 }
 
 export async function saveLessonAction(formData: FormData) {
+  const redirectTo = safeAdminRedirect(formData.get("redirectTo"));
+  const fallbackPath = redirectTo ?? "/admin/courses";
   let input: z.output<typeof lessonSchema>;
   try {
-    input = await parseLessonForm(formData, "/admin/courses");
+    input = await parseLessonForm(formData, fallbackPath);
   } catch (error) {
     if (isRedirectError(error)) {
       throw error;
     }
     console.error("Failed to parse or upload lesson cover.", error);
-    redirect("/admin/courses?status=invalid");
+    redirect(adminStatusPath(fallbackPath, "invalid"));
   }
-  const path = `/admin/modules/${input.moduleId}/lessons`;
+  const path = redirectTo ?? `/admin/modules/${input.moduleId}/lessons`;
   try {
     await saveLesson(input);
     revalidatePath(path);
   } catch (error) {
     console.error("Admin mutation failed.", error);
-    redirect(`${path}?status=${lessonMutationStatus(error)}`);
+    redirect(adminStatusPath(path, lessonMutationStatus(error)));
   }
 
-  redirect(`${path}?status=saved&formReset=${Date.now()}`);
+  redirect(adminStatusPath(path, "saved", { formReset: String(Date.now()) }));
 }
 
 export async function deleteLessonAction(formData: FormData) {
   const { id } = parseForm(idSchema, formData, "/admin/courses");
   const moduleId = requiredString(formData, "moduleId", "/admin/courses");
-  const path = `/admin/modules/${moduleId}/lessons`;
+  const path = safeAdminRedirect(formData.get("redirectTo")) ?? `/admin/modules/${moduleId}/lessons`;
   await runAdminMutation(path, "deleted", async () => {
     await removeLesson(id);
     revalidatePath(path);
@@ -299,6 +301,7 @@ async function parseLessonForm(formData: FormData, errorPath: string) {
   const draft = Object.fromEntries(formData.entries());
   const coverFile = formData.get("coverImageFile");
   delete draft.coverImageFile;
+  delete draft.redirectTo;
 
   if (coverFile instanceof File && coverFile.size > 0) {
     assertValidImageCover(coverFile, errorPath);
@@ -309,7 +312,7 @@ async function parseLessonForm(formData: FormData, errorPath: string) {
 
   if (!parsed.success) {
     console.error("Invalid admin lesson input.", parsed.error.flatten());
-    redirect(`${errorPath}?status=invalid`);
+    redirect(adminStatusPath(errorPath, "invalid"));
   }
 
   return parsed.data;
@@ -469,6 +472,19 @@ function lessonMutationStatus(error: unknown) {
   return "lesson_save_error";
 }
 
+function adminStatusPath(path: string, status: string, extra?: Record<string, string>) {
+  const params = new URLSearchParams(extra ?? {});
+  params.set("status", status);
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}${params.toString()}`;
+}
+function safeAdminRedirect(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.startsWith("/admin") || value.includes("://")) {
+    return null;
+  }
+
+  return value;
+}
 function requiredString(formData: FormData, key: string, errorPath: string) {
   const value = formData.get(key);
 
@@ -487,10 +503,10 @@ async function runAdminMutation(path: string, successStatus: string, mutation: (
       throw error;
     }
     console.error("Admin mutation failed.", error);
-    redirect(`${path}?status=${adminErrorStatus(error)}`);
+    redirect(adminStatusPath(path, adminErrorStatus(error)));
   }
 
-  redirect(`${path}?status=${successStatus}`);
+  redirect(adminStatusPath(path, successStatus));
 }
 
 function adminErrorStatus(error: unknown) {

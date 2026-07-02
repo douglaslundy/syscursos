@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   extractYouTubeVideoId,
+  getLessonVideoEmbed,
   getYouTubeEmbedUrl,
   getYouTubeThumbnailUrl,
 } from "@/server/services/youtube-service";
 
-describe("youtube service", () => {
+describe("video platform service", () => {
   it("extracts video id from watch URLs", () => {
     expect(extractYouTubeVideoId("https://www.youtube.com/watch?v=dQw4w9WgXcQ")).toBe(
       "dQw4w9WgXcQ",
@@ -44,7 +45,34 @@ describe("youtube service", () => {
     );
   });
 
-  it("rejects non YouTube URLs", () => {
+  it("builds a Google Drive preview embed", () => {
+    expect(
+      getLessonVideoEmbed(
+        "https://drive.google.com/file/d/1CYHOYHWbRl2JRs8sVCEDDNI6zImOAZ64/view?usp=sharing",
+        null,
+      ),
+    ).toEqual({
+      provider: "GOOGLE_DRIVE",
+      url: "https://drive.google.com/file/d/1CYHOYHWbRl2JRs8sVCEDDNI6zImOAZ64/preview",
+      supportsCompletionTracking: false,
+    });
+  });
+
+  it("accepts OneDrive video share URLs", () => {
+    expect(
+      getLessonVideoEmbed(
+        "https://1drv.ms/v/c/8d1fc101d88357bb/IQC7V4PYAcEfIICN6rEAAAAAAUhadaDsqqjIGHfMFJfnDwM?e=y5x3X0",
+        null,
+      ),
+    ).toEqual({
+      provider: "ONEDRIVE",
+      url: "https://1drv.ms/v/c/8d1fc101d88357bb/IQC7V4PYAcEfIICN6rEAAAAAAUhadaDsqqjIGHfMFJfnDwM?e=y5x3X0",
+      supportsCompletionTracking: false,
+    });
+  });
+
+  it("rejects unsupported URLs", () => {
     expect(extractYouTubeVideoId("https://example.com/video")).toBeNull();
+    expect(getLessonVideoEmbed("https://example.com/video", null)).toBeNull();
   });
 });

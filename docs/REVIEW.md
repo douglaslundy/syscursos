@@ -24,6 +24,193 @@ Este arquivo deve ser atualizado ao final de cada etapa.
 
 ## Historico
 
+### 2026-06-20 - Configuracao do SysCursos para a VPS Supabase
+
+### Arquivos criados ou alterados
+
+- `.env`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `docs/TODO.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Identificada a instancia correta da VPS como `supabase-syscursos`.
+- Confirmado no banco remoto o inventario esperado do projeto:
+  - `organizations = 10`
+  - `users = 9`
+  - `courses = 11`
+  - `modules = 71`
+  - `lessons = 555`
+  - `enrollments = 17`
+  - `lesson_progress = 68`
+  - `lesson_notes = 6`
+  - `lesson_materials = 0`
+- `.env` local passou a apontar para o Supavisor da VPS usando `options=reference=your-tenant-id`.
+- `DATABASE_URL` e `DIRECT_URL` foram alinhadas para o mesmo endpoint do pooler, que e o formato aceito pela instancia atual.
+
+### Testes executados
+
+- `npx prisma validate`
+- `npm.cmd run typecheck`
+- `npx prisma migrate status`
+
+### Resultado dos testes
+
+- `npx prisma validate`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- `npx prisma migrate status`: aprovado com o `DATABASE_URL` ajustado para o tenant da VPS.
+
+### Riscos encontrados
+
+- O tenant do Supavisor esta configurado como `your-tenant-id`; se a VPS for recriada com outro `POOLER_TENANT_ID`, a URL local precisara ser atualizada.
+- O listener do pooler nao usa TLS nesse host, entao `sslmode=require` nao funciona para essa instancia.
+
+### Pendencias
+
+- Nenhuma pendencia tecnica imediata para a conexao local.
+
+### Proxima etapa recomendada
+
+- Rodar a aplicacao local apontando para a VPS e validar login e leitura das paginas principais.
+
+### 2026-06-20 - Verificacao de acesso do sistema ao banco
+
+### Arquivos criados ou alterados
+
+- `.codex/context/CURRENT_STATE.md`
+- `docs/REVIEW.md`
+- `docs/TODO.md`
+
+### O que foi implementado
+
+- Executada consulta real com `PrismaClient` usando a `DATABASE_URL` configurada no workspace.
+- Confirmado que o cliente do projeto consegue ler dados reais do banco da VPS.
+- Resultado observado:
+  - `organizations = 10`
+  - `users = 9`
+  - `courses = 11`
+  - `modules = 71`
+  - `lessons = 555`
+  - `enrollments = 17`
+  - curso mais recente: `CURSO RUDAH MASSAGEM` (`curso-rudah-massagem`)
+
+### Testes executados
+
+- Consulta direta com `PrismaClient` na `DATABASE_URL` do workspace.
+
+### Resultado dos testes
+
+- Acesso ao banco confirmado com retorno de dados reais.
+
+### Riscos encontrados
+
+- A consulta validou a conectividade e a leitura de dados, mas nao validou um fluxo autenticado completo no navegador.
+
+### Pendencias
+
+- Validar login e navegação autenticada no ambiente publicado, se necessario.
+
+### Proxima etapa recomendada
+
+- Abrir a aplicacao com uma conta valida e confirmar leitura das telas protegidas.
+
+### 2026-06-20 - Redefinicao das credenciais dos usuarios principais
+
+### Arquivos criados ou alterados
+
+- `.codex/context/CURRENT_STATE.md`
+- `docs/REVIEW.md`
+- `docs/TODO.md`
+
+### O que foi implementado
+
+- As contas `dlsistemas100@gmail.com`, `douglaslundy100@gmail.com` e `douglaslundy@gmail.com` tiveram a senha redefinida para o valor informado pelo usuario.
+- Como os `authUserId` antigos nao existiam mais na instancia atual do Supabase Auth, os registros foram recriados no Auth e os `authUserId` da tabela `users` foram alinhados.
+- O login foi validado com sucesso para as tres contas apos a redefinicao.
+
+### Testes executados
+
+- `supabase.auth.admin.createUser` / `supabase.auth.admin.updateUserById`
+- `supabase.auth.signInWithPassword` para cada conta
+- Atualizacao da tabela `users` no banco da aplicacao
+
+### Resultado dos testes
+
+- Redefinicao concluida e validada com login bem-sucedido.
+
+### Riscos encontrados
+
+- A operacao alterou os `authUserId` vinculados aos usuarios no banco da aplicacao, o que era necessario porque os IDs anteriores nao existiam mais no Auth atual.
+
+### Pendencias
+
+- Nenhuma pendencia imediata para essas tres contas.
+
+### Proxima etapa recomendada
+
+- Se necessario, repetir a mesma abordagem para outras contas que ainda estejam com Auth desalinhado.
+
+### 2026-06-19 - Backup e restore do Supabase em VPS
+
+### Arquivos criados ou alterados
+
+- `backups/syscursos-full-backup-2026-06-19T20-49-54.547Z.sql`
+- `backups/syscursos-public-restore-2026-06-19.sql`
+- `backups/syscursos-auth-restore-2026-06-19.ordered.sql`
+- `backups/syscursos-auth-restore-2026-06-19.nosrl.sql`
+- `backups/syscursos-storage-restore-2026-06-19.nosrl.sql`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`
+
+### O que foi implementado
+
+- Backup logico completo do banco de origem gerado com os schemas `public`, `auth` e `storage`.
+- Schema `public` inicializado na VPS com as migrations do projeto.
+- Restore aplicado na VPS em tres etapas, respeitando os roles corretos de cada schema.
+- Validacoes finais confirmaram contagens principais em `public`, `auth` e `storage`.
+
+### Testes executados
+
+- `npx tsx` para exportacao do backup e geracao dos restores.
+- `docker exec ... psql` para aplicacao das migrations e dos restores na VPS.
+- consultas de validacao por contagem em `public`, `auth` e `storage`.
+
+### Resultado dos testes
+
+- Backup gerado com sucesso.
+- Migrations aplicadas com sucesso no banco da VPS.
+- Restores de `public`, `auth` e `storage` aplicados com sucesso.
+- Validacoes finais:
+  - `public._prisma_migrations = 9`
+  - `public.users = 9`
+  - `public.courses = 11`
+  - `public.lessons = 555`
+  - `auth.users = 11`
+  - `auth.identities = 11`
+  - `auth.sessions = 26`
+  - `auth.refresh_tokens = 35`
+  - `storage.buckets = 1`
+  - `storage.objects = 21`
+  - `storage.migrations = 61`
+
+### Riscos encontrados
+
+- O backup inclui dados sensiveis de `auth` e `storage`; os arquivos devem permanecer protegidos.
+- A string externa direta de Prisma/Supavisor nao ficou completamente identificada no repositório ou na VPS; apenas as credenciais publicas e internas ficaram confirmadas.
+- `storage.objects` foi restaurado apenas como metadado do banco; arquivos binarios de storage nao foram transferidos.
+
+### Pendencias
+
+- Definir, fora desta operacao, a `DATABASE_URL`/`DIRECT_URL` externa exata para uso do Prisma fora da rede interna do Supabase.
+
+### Proxima etapa recomendada
+
+- Configurar a aplicação para consumir as chaves publicas da VPS e validar login e leitura dos dados em ambiente de integracao.
+
 ### 2026-05-04 - Fase 1: Planejamento
 
 ### Arquivos criados ou alterados
@@ -1820,6 +2007,56 @@ px prisma migrate deploy`n
 
 ---
 
+### 2026-06-05 - Cadastro do curso RUDAH Massagem
+
+### Arquivos criados ou alterados
+
+- `prisma/create-rudah-massagem-course.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Criado script idempotente para cadastrar/atualizar o curso `CURSO RUDAH MASSAGEM` com slug `curso-rudah-massagem`.
+- Curso vinculado ao produtor `douglaslundy@gmail.com`.
+- Modulos e aulas tiveram o trecho antes de ` - ` removido antes da gravacao.
+- Submodulos foram cadastrados como modulos sequenciais por nao existir entidade de submodulo no schema.
+- Itens com URL diretamente abaixo do modulo/submodulo foram cadastrados como aula unica com o mesmo titulo limpo.
+- Foram cadastrados 11 modulos e 61 aulas.
+
+### Testes executados
+
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run build`
+- `npx tsx prisma/create-rudah-massagem-course.ts`
+- Consulta de validacao via Prisma Client para curso `slug=curso-rudah-massagem`
+
+### Resultado dos testes
+
+- `lint`: aprovado.
+- `typecheck`: aprovado.
+- `build`: aprovado.
+- Script de carga: aprovado.
+- Verificacao em banco: curso `CURSO RUDAH MASSAGEM` localizado com 11 modulos, 61 aulas e produtor `douglaslundy@gmail.com`.
+
+### Riscos encontrados
+
+- O script recria modulos/aulas do curso `curso-rudah-massagem` a cada execucao, comportamento intencional para manter consistencia da trilha.
+- A estrutura de submodulo foi achatada como modulo sequencial porque o schema identificado nao possui submodulos.
+
+### Pendencias
+
+- Nao identificadas no escopo desta etapa.
+
+### Proxima etapa recomendada
+
+- Validar visualmente no painel administrativo a ordenacao final dos modulos e aulas.
+
+---
+
 ### 2026-05-16 - Discovery: PDF, links de aula e continuar ultima aula
 
 ### Arquivos criados ou alterados
@@ -2533,6 +2770,53 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 
 ---
 
+### 2026-06-04 - Cadastro do curso de fotografia
+
+### Arquivos criados ou alterados
+
+- `prisma/create-fotografia-course.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Criado script idempotente para cadastrar o curso `CURSO DE FOTOGRAFIA` com slug `curso-de-fotografia`.
+- Curso vinculado ao produtor `douglaslundy@gmail.com`.
+- Prefixos dos modulos removidos antes da gravacao.
+- Foram cadastrados 7 modulos e 84 aulas com URLs confiaveis.
+- 30 aulas sem URL confiavel identificada foram registradas como pendencia de origem, sem inventar links.
+- O nome formal do curso nao estava identificado no repositório; foi adotado um titulo operacional consistente com o conteudo enviado.
+
+### Testes executados
+
+- `npx tsx prisma/create-fotografia-course.ts`
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run build`
+
+### Resultado dos testes
+
+- Script de carga: aprovado.
+- `lint`: aprovado.
+- `typecheck`: aprovado.
+- `build`: aprovado.
+
+### Riscos encontrados
+
+- As 30 aulas sem URL confiavel continuam pendentes para entrada futura, caso o material original seja localizado.
+- Os modulos 1 e 6 ficaram sem aulas porque nao houve link seguro identificado no repositório ou na extracao enviada.
+
+### Pendencias
+
+- Se o material original das aulas faltantes aparecer depois, o script pode ser reexecutado com os links corretos.
+
+### Proxima etapa recomendada
+
+- Validar visualmente no painel administrativo a estrutura do curso e, se necessario, ajustar o titulo operacional.
+
+---
+
 ### 2026-05-08 - Performance de consultas no dashboard
 
 ### Arquivos criados ou alterados
@@ -2565,3 +2849,61 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ### Pendencias
 
 - Nao identificadas no escopo desta etapa.
+
+---
+
+### 2026-07-02 - Cadastro de aulas com Google Drive/OneDrive e menu dedicado
+
+### Arquivos criados ou alterados
+
+- `src/server/services/video-platform-service.ts`
+- `src/server/services/youtube-service.ts`
+- `src/server/validators/admin.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/server/repositories/admin-repository.ts`
+- `src/server/services/admin-service.ts`
+- `src/server/services/student-service.ts`
+- `src/components/student/lesson-video-player.tsx`
+- `src/components/admin/lesson-form.tsx`
+- `src/components/admin/admin-shell.tsx`
+- `src/components/admin/pagination.tsx`
+- `src/app/admin/lessons/page.tsx`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- `src/tests/unit/admin-validators.test.ts`
+- `src/tests/unit/youtube-service.test.ts`
+- `prisma/migrations/20260702120000_expand_lesson_video_url_platforms/migration.sql`
+
+### O que foi implementado
+
+- Cadastro de aula passou a aceitar URLs suportadas de YouTube, Google Drive e OneDrive.
+- Google Drive e OneDrive passaram a renderizar no player da aula do aluno via iframe.
+- O redirecionamento de salvar/remover aula passou a aceitar `redirectTo` interno seguro para preservar o contexto da tela atual.
+- Criada a pagina `/admin/lessons`, acessivel pelo menu `Cadastrar aulas`, com selecao de curso e modulo para criar ou editar aulas sem navegar por curso > modulo.
+- Criada migration para trocar a constraint antiga de YouTube por constraint de plataformas suportadas.
+
+### Testes executados
+
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run prisma:validate`
+- `npm.cmd run test -- --run src/tests/unit/admin-validators.test.ts src/tests/unit/youtube-service.test.ts src/tests/integration/admin-actions.test.ts`
+- `npm.cmd run build`
+
+### Resultado dos testes
+
+- Todos aprovados.
+
+### Riscos encontrados
+
+- A migration foi aplicada no banco configurado apos aprovacao operacional.
+- Marcacao automatica de conclusao por fim de video permanece disponivel apenas para YouTube.
+- OneDrive e renderizado a partir do link compartilhado; se a permissao do arquivo bloquear iframe, o arquivo precisara estar compartilhado corretamente na origem.
+
+### Pendencias
+
+- Nenhuma pendencia imediata identificada para este ajuste.
+
+### Proxima etapa recomendada
+
+- Validar visualmente o cadastro real com os links de Google Drive e OneDrive informados.

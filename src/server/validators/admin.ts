@@ -10,6 +10,8 @@ import {
 } from "@prisma/client";
 import { z } from "zod";
 
+import { isSupportedLessonVideoUrl } from "@/server/services/video-platform-service";
+
 const uuidSchema = z.string().uuid();
 const optionalTextSchema = z.string().trim().max(2000).optional().transform(emptyToNull);
 const optionalHttpsUrlSchema = z
@@ -55,7 +57,7 @@ export const lessonSchema = z.object({
     .trim()
     .url()
     .max(500)
-    .refine(isYouTubeUrl, "Informe um link valido do YouTube."),
+    .refine(isSupportedLessonVideoUrl, "Informe um link valido do YouTube, Google Drive ou OneDrive."),
   youtubeVideoId: z.string().trim().max(32).optional().transform(emptyToNull),
   coverImageUrl: optionalHttpsUrlSchema,
   position: z.coerce.number().int().min(1),
@@ -191,23 +193,6 @@ function normalizeSlug(value: string) {
     .replace(/[^a-z0-9-]/g, "")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
-}
-
-function isYouTubeUrl(value: string) {
-  try {
-    const url = new URL(value);
-    const host = url.hostname.replace(/^www\./, "");
-    return (
-      (host === "youtube.com" &&
-        (url.pathname === "/watch" ||
-          url.pathname.startsWith("/embed/") ||
-          url.pathname.startsWith("/shorts/") ||
-          url.pathname.startsWith("/live/"))) ||
-      host === "youtu.be"
-    );
-  } catch {
-    return false;
-  }
 }
 
 function isHttpsUrl(value: string) {

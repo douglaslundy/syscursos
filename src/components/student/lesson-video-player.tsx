@@ -5,7 +5,7 @@ import { useEffect, useId, useMemo, useRef } from "react";
 import { completeLessonAction } from "@/server/actions/student-actions";
 
 type LessonVideoPlayerProps = {
-  embedUrl: string | null;
+  videoEmbed: { url: string; supportsCompletionTracking: boolean } | null;
   title: string;
   courseId: string;
   lessonId: string;
@@ -40,7 +40,7 @@ declare global {
 const ENDED_STATE = 0;
 
 export function LessonVideoPlayer({
-  embedUrl,
+  videoEmbed,
   title,
   courseId,
   lessonId,
@@ -49,22 +49,26 @@ export function LessonVideoPlayer({
   const formRef = useRef<HTMLFormElement | null>(null);
   const hasSubmittedRef = useRef(false);
   const playerUrl = useMemo(() => {
-    if (!embedUrl) {
+    if (!videoEmbed) {
       return null;
     }
 
+    if (!videoEmbed.supportsCompletionTracking) {
+      return videoEmbed.url;
+    }
+
     try {
-      const url = new URL(embedUrl);
+      const url = new URL(videoEmbed.url);
       url.searchParams.set("enablejsapi", "1");
       url.searchParams.set("origin", window.location.origin);
       return url.toString();
     } catch {
-      return embedUrl;
+      return videoEmbed.url;
     }
-  }, [embedUrl]);
+  }, [videoEmbed]);
 
   useEffect(() => {
-    if (!embedUrl) {
+    if (!videoEmbed?.supportsCompletionTracking) {
       return;
     }
 
@@ -113,12 +117,12 @@ export function LessonVideoPlayer({
     return () => {
       player?.destroy();
     };
-  }, [embedUrl, iframeId]);
+  }, [videoEmbed?.supportsCompletionTracking, iframeId]);
 
   if (!playerUrl) {
     return (
       <div className="flex aspect-video items-center justify-center bg-surface px-4 text-center text-sm text-copy-muted">
-        Link do YouTube invalido.
+        Link de video invalido.
       </div>
     );
   }
@@ -134,11 +138,13 @@ export function LessonVideoPlayer({
         src={playerUrl}
         title={title}
       />
-      <form action={completeLessonAction} className="hidden" ref={formRef}>
-        <input name="courseId" type="hidden" value={courseId} />
-        <input name="lessonId" type="hidden" value={lessonId} />
-        <input name="isCompleted" type="hidden" value="true" />
-      </form>
+      {videoEmbed?.supportsCompletionTracking ? (
+        <form action={completeLessonAction} className="hidden" ref={formRef}>
+          <input name="courseId" type="hidden" value={courseId} />
+          <input name="lessonId" type="hidden" value={lessonId} />
+          <input name="isCompleted" type="hidden" value="true" />
+        </form>
+      ) : null}
     </>
   );
 }

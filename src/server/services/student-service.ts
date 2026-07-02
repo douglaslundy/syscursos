@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { requireAnyRole } from "@/server/auth/guards";
 import * as repository from "@/server/repositories/student-repository";
 import { calculateCourseProgress } from "@/server/services/progress-service";
-import { getYouTubeEmbedUrl } from "@/server/services/youtube-service";
+import { getLessonVideoEmbed } from "@/server/services/video-platform-service";
 import type { CompleteLessonInput } from "@/server/validators/student";
 import type {
   LessonNoteInput,
@@ -140,7 +140,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
       status: accessStatus,
       course: enrollment.course,
       lesson: null,
-      embedUrl: null,
+      videoEmbed: null,
       isCompleted: false,
       navigation: null,
       progress: calculateCourseProgress(0, 0),
@@ -177,7 +177,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
       ...lesson,
       materials,
     },
-    embedUrl: getYouTubeEmbedUrl(lesson.youtubeUrl, lesson.youtubeVideoId),
+    videoEmbed: getLessonVideoEmbed(lesson.youtubeUrl, lesson.youtubeVideoId),
     isCompleted: progress?.status === "COMPLETED",
     note,
     navigation: buildLessonNavigation(courseContent.modules, lessonId, completedLessonIds),

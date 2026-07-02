@@ -5,10 +5,17 @@ type PaginationProps = {
   pageCount: number;
   basePath: string;
   query?: string;
+  params?: Record<string, string | null | undefined>;
 };
 
-export function Pagination({ page, pageCount, basePath, query }: PaginationProps) {
+export function Pagination({ page, pageCount, basePath, query, params: extraParams }: PaginationProps) {
   const params = new URLSearchParams();
+
+  Object.entries(extraParams ?? {}).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
 
   if (query) {
     params.set("query", query);

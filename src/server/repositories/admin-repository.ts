@@ -156,6 +156,21 @@ export async function listCourseOptions(
   });
 }
 
+export async function listModuleOptions(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  courseId: string,
+) {
+  return prisma.module.findMany({
+    where: {
+      courseId,
+      course: scopedCourseWhere(organizationId, actorUserId, actorRole),
+    },
+    orderBy: [{ position: "asc" }, { title: "asc" }],
+    select: { id: true, title: true, position: true },
+  });
+}
 export async function upsertCourse(
   organizationId: string,
   actorUserId: string,

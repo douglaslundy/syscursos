@@ -544,3 +544,148 @@
 - A pagina do curso passou a usar a ultima aula tocada naquele proprio curso para montar o card de continuidade.
 - O card deixou de ser derivado apenas das aulas concluidas, o que alinhou a experiencia com a regra da home.
 - A regra agora e consistente entre home global e pagina do curso: a ultima aula aberta vira o ponto de retomada.
+
+## Atualizacao 2026-06-04 - Lista da playlist publica extraida
+- A playlist publica `PLsYCuHGr6Gm3PZPUCfnzY6AEGVPs4qpGN` foi lida e consolidada em:
+  - `docs/youtube-playlist-PLsYCuHGr6Gm3PZPUCfnzY6AEGVPs4qpGN.md`
+- A leitura usou os titulos expostos publicamente pelo YouTube e os links diretos de cada video.
+- O arquivo gerado registra que videos repetidos na playlist foram consolidados por `videoId` para evitar duplicacao do mesmo link.
+
+## Atualizacao 2026-06-04 - Curso de fotografia cadastrado
+- Script criado: `prisma/create-fotografia-course.ts`.
+- Execucao realizada com aprovacao explicita para escrita no banco de producao: `npx tsx prisma/create-fotografia-course.ts`.
+- Resultado validado em banco: curso `CURSO DE FOTOGRAFIA` (slug `curso-de-fotografia`) vinculado ao produtor `douglaslundy@gmail.com`.
+- Estrutura cadastrada:
+  - 7 modulos
+  - 84 aulas
+- Excecoes registradas:
+  - 30 aulas nao foram cadastradas porque nao havia URL confiavel identificada no repositório ou na extracao enviada.
+  - Modulos `Comece Por Aqui` e `Encerramento` ficaram sem aulas cadastradas por falta de link seguro.
+- Regra aplicada: prefixos dos modulos foram removidos ao gravar e as aulas foram mantidas apenas quando o link do YouTube estava confiavel.
+- Validacoes executadas nesta rodada:
+- `npx tsx prisma/create-fotografia-course.ts`
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run build`
+
+## Atualizacao 2026-06-05 - Curso RUDAH Massagem cadastrado
+- Script criado: `prisma/create-rudah-massagem-course.ts`.
+- Execucao realizada com aprovacao explicita para escrita no banco de producao: `npx tsx prisma/create-rudah-massagem-course.ts`.
+- Resultado validado em banco: curso `CURSO RUDAH MASSAGEM` (slug `curso-rudah-massagem`) vinculado ao produtor `douglaslundy@gmail.com`.
+- Estrutura cadastrada:
+  - 11 modulos
+  - 61 aulas
+- Distribuicao validada:
+  - `Boas Vindas ao Curso RUDAH de Massagem`: 3 aulas
+  - `Estrutura e Método RUDAH de Massagem`: 5 aulas
+  - `O Alicerce de um Massagista RUDAH`: 8 aulas
+  - `A Técnica RUDAH de Massagem`: 4 aulas
+  - `Manobras para os Membros Inferiores`: 4 aulas
+  - `Manobras para os Membros Superiores`: 7 aulas
+  - `Manobras para o Pescoço, Cabeça e Rosto`: 3 aulas
+  - `Manobras de Alongamento`: 1 aula
+  - `Manobras de Conexão`: 1 aula
+  - `Criando sua Sessão Autoral RUDAH`: 10 aulas
+  - `Preparando Você para Iniciar seus Atendimentos`: 15 aulas
+- Regra aplicada:
+  - nomes de modulos e aulas foram gravados removendo o trecho antes de ` - `;
+  - submodulos foram cadastrados como modulos sequenciais porque nao ha entidade de submodulo no schema;
+  - itens com URL diretamente abaixo do modulo/submodulo foram cadastrados como aula unica com o mesmo titulo limpo.
+- Validacoes executadas nesta rodada:
+  - `npm.cmd run lint`
+  - `npm.cmd run typecheck`
+  - `npm.cmd run build`
+  - `npx tsx prisma/create-rudah-massagem-course.ts`
+  - consulta de validacao via Prisma Client
+
+## Atualizacao 2026-06-19 - Backup e restore do Supabase em VPS
+- Credenciais lidas com seguranca a partir de:
+  - `.env` local do projeto SysCursos;
+  - `/opt/supabase-corridas/.env` e `/opt/supabase-corridas/CREDENTIALS.txt` na VPS.
+- Backup logico gerado a partir do banco atual do projeto:
+  - `backups/syscursos-full-backup-2026-06-19T20-49-54.547Z.sql`
+- Restores separados gerados para a VPS:
+  - `backups/syscursos-public-restore-2026-06-19.sql`
+  - `backups/syscursos-auth-restore-2026-06-19.ordered.sql`
+  - `backups/syscursos-storage-restore-2026-06-19.nosrl.sql`
+- Etapas executadas na VPS:
+  - inicializacao do schema public do projeto com as migrations versionadas;
+  - restore do schema `public`;
+  - restore do schema `auth` usando `supabase_auth_admin`;
+  - restore do schema `storage` usando `supabase_storage_admin`.
+- Validacoes finais no banco da VPS:
+  - `public._prisma_migrations = 9`
+  - `public.users = 9`
+  - `public.courses = 11`
+  - `public.lessons = 555`
+  - `auth.users = 11`
+  - `auth.identities = 11`
+  - `auth.sessions = 26`
+- `auth.refresh_tokens = 35`
+- `storage.buckets = 1`
+- `storage.objects = 21`
+- `storage.migrations = 61`
+
+## Atualizacao 2026-06-19 - Inventario de cursos, modulos e aulas
+- Consulta somente leitura executada no banco conectado ao workspace para listar a arvore `Course -> Module -> Lesson`.
+- Ordenacao aplicada no relatorio:
+  - cursos por `title` asc;
+  - modulos por `position` asc;
+  - aulas por `position` asc.
+- Arquivo gerado:
+  - `course-lessons-inventory.md`
+- Totais retornados pela consulta:
+  - `courses = 11`
+  - `modules = 71`
+  - `lessons = 555`
+- Nenhuma escrita no banco foi realizada.
+
+## Atualizacao 2026-06-20 - Conexao do SysCursos com a VPS Supabase
+- Instancia correta identificada na VPS: `supabase-syscursos`.
+- Banco remoto validado com contagens:
+  - `organizations = 10`
+  - `users = 9`
+  - `courses = 11`
+  - `modules = 71`
+  - `lessons = 555`
+  - `enrollments = 17`
+  - `lesson_progress = 68`
+  - `lesson_notes = 6`
+  - `lesson_materials = 0`
+- `.env` local atualizado para apontar o app ao Supavisor da VPS.
+- A conexao Prisma passou a usar `options=reference=your-tenant-id`, que e o formato aceito pelo Supavisor self-hosted para resolver o tenant sem TLS.
+- Validacoes executadas:
+  - `npx prisma validate`: aprovado.
+  - `npx prisma migrate status`: aprovado com a URL ajustada.
+  - `npm.cmd run typecheck`: aprovado.
+- Verificacao adicional executada com `PrismaClient` apontando para a `DATABASE_URL` do workspace:
+  - `organizations = 10`
+  - `users = 9`
+  - `courses = 11`
+  - `modules = 71`
+  - `lessons = 555`
+  - `enrollments = 17`
+  - curso mais recente: `CURSO RUDAH MASSAGEM` (`curso-rudah-massagem`)
+- As contas `dlsistemas100@gmail.com`, `douglaslundy100@gmail.com` e `douglaslundy@gmail.com` tiveram a senha redefinida para `12345678`.
+- Os registros Auth dessas tres contas foram recriados na instancia atual e os `authUserId` na tabela `users` foram atualizados.
+- Login validado com sucesso nas tres contas apos a redefinicao.
+
+## Atualizacao 2026-07-02 - Cadastro de aulas com Drive/OneDrive e menu dedicado
+
+- Causa raiz identificada: `lessonSchema` aceitava apenas YouTube e o banco tinha constraint `lessons_youtube_url_check`, rejeitando Google Drive/OneDrive antes ou durante a gravacao.
+- Correcao aplicada:
+  - camada `video-platform-service` para YouTube, Google Drive e OneDrive;
+  - validator de aula aceita as tres plataformas;
+  - player do aluno renderiza Drive/OneDrive por iframe e preserva tracking automatico apenas para YouTube;
+  - Server Action de aula preserva contexto via `redirectTo` interno seguro;
+  - novo menu/pagina `/admin/lessons` para cadastrar/editar aula selecionando curso e modulo;
+  - migration criada e aplicada: `20260702120000_expand_lesson_video_url_platforms`.
+
+## Validacoes executadas nesta rodada (2026-07-02)
+
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- `npm.cmd run prisma:validate`: aprovado.
+- `npm.cmd run test -- --run src/tests/unit/admin-validators.test.ts src/tests/unit/youtube-service.test.ts src/tests/integration/admin-actions.test.ts`: aprovado (36 testes).
+- `npm.cmd run build`: aprovado.
+- `npx prisma migrate deploy`: aprovado; migration `20260702120000_expand_lesson_video_url_platforms` aplicada no banco configurado.

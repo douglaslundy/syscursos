@@ -18,6 +18,75 @@ Impacto:
 Arquivos afetados:
 ```
 
+## 2026-06-19 - Restore da VPS por schema e role
+
+Decisao:
+
+Gerar o backup logico do banco de origem e restaurar a VPS Supabase em tres etapas separadas, por schema:
+
+- `public` com a role `postgres`;
+- `auth` com a role `supabase_auth_admin`;
+- `storage` com a role `supabase_storage_admin`.
+
+Motivo:
+
+A tentativa de restore unico falhou por restricoes de permissao e de ordem entre tabelas do schema `auth`. Separar o restore por schema e por role permitiu respeitar as permissoes do Supabase self-hosted sem desabilitar protecoes de banco que nao estavam acessiveis para os papes usados.
+
+Alternativas consideradas:
+
+1. Restaurar tudo como `postgres` e ignorar as restricoes de permissao.
+2. Alterar a configuracao do banco para liberar `session_replication_role`.
+3. Restaurar apenas `public` e deixar `auth`/`storage` fora do backup.
+
+Impacto:
+
+- O schema aplicacional `public` foi restaurado com sucesso.
+- O schema `auth` foi restaurado com ordem manual para respeitar dependencias entre `users`, `identities`, `sessions` e `refresh_tokens`.
+- O schema `storage` foi restaurado com os buckets e objetos metadados.
+- A abordagem ficou reexecutavel e alinhada com o modelo de permissao do Supabase self-hosted.
+
+Arquivos afetados:
+
+- `backups/syscursos-full-backup-2026-06-19T20-49-54.547Z.sql`
+- `backups/syscursos-public-restore-2026-06-19.sql`
+- `backups/syscursos-auth-restore-2026-06-19.ordered.sql`
+- `backups/syscursos-auth-restore-2026-06-19.nosrl.sql`
+- `backups/syscursos-storage-restore-2026-06-19.nosrl.sql`
+- `.codex/context/CURRENT_STATE.md`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `docs/DECISIONS.md`
+
+## 2026-06-20 - Conexao local do SysCursos com o Supavisor da VPS
+
+Decisao:
+
+Configurar o ambiente local do SysCursos para consumir o banco da VPS `supabase-syscursos` via Supavisor usando `DATABASE_URL` e `DIRECT_URL` com `options=reference=your-tenant-id`, mantendo `sslmode=disable` porque o listener do pooler nao oferece TLS nesse host.
+
+Motivo:
+
+O acesso direto ao IP em `55432` falhou sem tenant identifier. A documentacao oficial do Supavisor mostra que o `external_id` pode ser fornecido pelos `options` da string de conexao. A validacao com Prisma confirmou que essa forma resolve o tenant e que o schema do banco esta sincronizado.
+
+Alternativas consideradas:
+
+1. Usar SNI/TLS com o hostname publico.
+2. Criar um tunel SSH local permanente.
+3. Alterar a stack da VPS para expor outro listener apenas para o app.
+
+Impacto:
+
+- O projeto local passou a apontar para a VPS correta do SysCursos.
+- Prisma consegue consultar o banco sem erro de tenant.
+- O banco validado contem `11` cursos, `71` modulos e `555` aulas.
+
+Arquivos afetados:
+
+- `.env`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `docs/TODO.md`
+- `.codex/context/CURRENT_STATE.md`
+
 ## 2026-05-04 - Validacao da stack oficial
 
 Decisao:
@@ -1179,3 +1248,95 @@ Arquivos afetados:
 - `src/server/repositories/student-repository.ts`
 - `src/tests/integration/student-service.test.ts`
 - `.codex/context/CURRENT_STATE.md`
+
+## 2026-06-04 - Carga idempotente do curso de fotografia
+
+Decisao:
+
+Criar o script idempotente `prisma/create-fotografia-course.ts` para cadastrar o curso como `CURSO DE FOTOGRAFIA` com slug `curso-de-fotografia`, vinculado ao produtor `douglaslundy@gmail.com`, removendo os prefixos dos modulos e preservando apenas as aulas com URL confiavel identificada no repositório ou na lista enviada.
+
+Motivo:
+
+A solicitacao trouxe uma estrutura extensa de modulos e aulas, mas parte do material nao tinha URL confiavel identificada. Como o schema exige `youtubeUrl`, a alternativa segura e reproduzivel e gravar apenas as aulas com link confirmado, registrar as ausentes como pendencia e manter a carga idempotente por `slug`.
+
+Alternativas consideradas:
+
+1. Inventar URLs para completar as aulas faltantes.
+2. Criar os modulos manualmente pela interface administrativa.
+3. Gravar lessons sem `youtubeUrl`, contrariando o schema do banco.
+
+Impacto:
+
+- O curso fica reexecutavel por script sem duplicar dados.
+- Foram cadastrados 7 modulos e 84 aulas.
+- 30 aulas ficaram como pendencia de origem por nao haver link confiavel identificado.
+- O nome formal do curso nao estava identificado no repositório; a carga foi persistida como `CURSO DE FOTOGRAFIA` para manter consistencia operacional.
+
+Arquivos afetados:
+
+- `prisma/create-fotografia-course.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+## 2026-06-05 - Carga idempotente do curso RUDAH Massagem
+
+Decisao:
+
+Criar o script idempotente `prisma/create-rudah-massagem-course.ts` para cadastrar o curso `CURSO RUDAH MASSAGEM` com slug `curso-rudah-massagem`, vinculado ao produtor `douglaslundy@gmail.com`, removendo dos titulos o trecho anterior a ` - `.
+
+Motivo:
+
+A solicitacao trouxe uma estrutura longa de modulos, submodulos e aulas com links YouTube. O script idempotente reduz risco operacional, evita duplicacao em reexecucoes e mantem a carga alinhada ao schema atual, onde `Lesson.youtubeUrl` e obrigatorio.
+
+Alternativas consideradas:
+
+1. Cadastro manual pela interface administrativa.
+2. Insercoes SQL avulsas diretamente no banco.
+3. Criar uma hierarquia especial para submodulos, nao identificada no schema atual.
+
+Impacto:
+
+- O curso passa a existir com 11 modulos e 61 aulas.
+- Submodulos foram cadastrados como modulos sequenciais, porque o schema identificado possui apenas `Course -> Module -> Lesson`.
+- Itens com URL diretamente abaixo do modulo/submodulo, sem linha `Aula`, foram gravados como aula unica com o mesmo titulo limpo do modulo/submodulo.
+
+Arquivos afetados:
+
+- `prisma/create-rudah-massagem-course.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+## 2026-07-02 - Plataformas de video suportadas em aulas
+
+Decisao:
+
+Manter o campo legado `Lesson.youtubeUrl` como armazenamento da URL de video da aula, mas ampliar a semantica de validacao/renderizacao para aceitar YouTube, Google Drive e OneDrive. A compatibilidade com codigo existente foi preservada por meio de `youtube-service.ts` reexportando a nova camada `video-platform-service.ts`.
+
+Motivo:
+
+A solicitacao exige aceitar links de Google Drive e OneDrive sem introduzir uma migration ampla de rename de coluna em uma tabela ja usada em producao. A constraint de banco antiga aceitava apenas YouTube, entao foi criada migration pequena para substituir a regra por uma constraint de plataformas suportadas.
+
+Alternativas consideradas:
+
+1. Renomear `youtube_url` para `video_url` no banco e no Prisma nesta etapa.
+2. Tratar Google Drive e OneDrive como materiais extras, sem player principal.
+3. Remover a constraint de URL do banco e confiar apenas no Zod.
+
+Impacto:
+
+- O cadastro de aula passa a aceitar URLs de YouTube, Google Drive e OneDrive.
+- Google Drive usa URL `/preview` no iframe da area do aluno.
+- OneDrive usa o link HTTPS compartilhado de video em iframe.
+- Marcacao automatica de conclusao ao finalizar video permanece restrita ao YouTube, porque Drive/OneDrive nao expoem a mesma API de estado no codigo atual.
+- Migration aplicada no banco configurado apos aprovacao operacional.
+
+Arquivos afetados:
+
+- `src/server/services/video-platform-service.ts`
+- `src/server/services/youtube-service.ts`
+- `src/server/validators/admin.ts`
+- `src/components/student/lesson-video-player.tsx`
+- `src/server/services/student-service.ts`
+- `prisma/migrations/20260702120000_expand_lesson_video_url_platforms/migration.sql`

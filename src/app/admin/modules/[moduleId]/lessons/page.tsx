@@ -3,11 +3,11 @@ import Link from "next/link";
 import { Feedback } from "@/components/admin/feedback";
 import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
+import { LessonForm } from "@/components/admin/lesson-form";
 import { SubmitButton } from "@/components/admin/submit-button";
 import {
   deleteLessonAction,
   deleteLessonMaterialAction,
-  saveLessonAction,
   saveLessonMaterialAction,
 } from "@/server/actions/admin-actions";
 import { getLessonMaterials, getLessons } from "@/server/services/admin-service";
@@ -40,7 +40,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
       </Link>
       <div className="mb-6 mt-2">
         <h2 className="text-2xl font-semibold tracking-normal">Aulas de {module.title}</h2>
-        <p className="text-sm text-muted-foreground">Cadastre aulas usando links do YouTube.</p>
+        <p className="text-sm text-muted-foreground">Cadastre aulas usando links do YouTube, Google Drive ou OneDrive.</p>
       </div>
       <Feedback status={status} />
       <div className="mb-6 rounded-md border bg-background p-4">
@@ -141,7 +141,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
                         <div>
                           <p className="text-sm font-medium">{material.title}</p>
                           <p className="text-xs text-muted-foreground">
-                            {material.type} • posicao {material.position} • {material.status}
+                            {material.type} - posicao {material.position} - {material.status}
                           </p>
                         </div>
                         <form action={deleteLessonMaterialAction}>
@@ -247,96 +247,4 @@ function adminEditHref(
   params.set("editId", editId);
 
   return `${basePath}?${params.toString()}`;
-}
-
-type LessonFormProps = {
-  moduleId: string;
-  suggestedPosition: number;
-  formResetToken: string;
-  lesson?: {
-    id: string;
-    title: string;
-    description: string;
-    youtubeUrl: string;
-    youtubeVideoId: string;
-    coverImageUrl: string;
-    position: number;
-    status: string;
-  };
-};
-
-function LessonForm({ moduleId, lesson, suggestedPosition, formResetToken }: LessonFormProps) {
-  const baseKey = `${moduleId}-${lesson?.id ?? "new"}-${formResetToken}`;
-  return (
-    <form
-      action={saveLessonAction}
-      autoComplete="off"
-      className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]"
-      key={baseKey}
-    >
-      <input name="moduleId" type="hidden" value={moduleId} />
-      {lesson ? <input name="id" type="hidden" value={lesson.id} /> : null}
-      <input
-        className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={lesson?.title ?? ""}
-        key={`${baseKey}-title`}
-        name="title"
-        placeholder="Titulo"
-      />
-      <input
-        className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={lesson?.position ?? suggestedPosition}
-        key={`${baseKey}-position`}
-        min={1}
-        name="position"
-        type="number"
-      />
-      <select
-        className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={lesson?.status ?? "ACTIVE"}
-        key={`${baseKey}-status`}
-        name="status"
-      >
-        <option value="ACTIVE">Ativo</option>
-        <option value="INACTIVE">Inativo</option>
-      </select>
-      <SubmitButton>{lesson ? "Salvar" : "Criar"}</SubmitButton>
-      <input
-        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-2"
-        defaultValue={lesson?.youtubeUrl ?? ""}
-        key={`${baseKey}-youtubeUrl`}
-        name="youtubeUrl"
-        placeholder="https://www.youtube.com/watch?v=..."
-      />
-      <input
-        className="rounded-md border px-3 py-2 text-sm outline-none"
-        defaultValue={lesson?.youtubeVideoId ?? ""}
-        key={`${baseKey}-youtubeVideoId`}
-        name="youtubeVideoId"
-        placeholder="Video ID"
-      />
-      <input
-        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
-        defaultValue={lesson?.coverImageUrl ?? ""}
-        key={`${baseKey}-coverImageUrl`}
-        name="coverImageUrl"
-        placeholder="URL HTTPS da capa da aula (opcional)"
-        type="url"
-      />
-      <input
-        accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
-        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
-        key={`${baseKey}-coverImageFile`}
-        name="coverImageFile"
-        type="file"
-      />
-      <textarea
-        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
-        defaultValue={lesson?.description ?? ""}
-        key={`${baseKey}-description`}
-        name="description"
-        placeholder="Descricao"
-      />
-    </form>
-  );
 }

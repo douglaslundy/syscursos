@@ -73,7 +73,7 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
         <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
           <LessonVideoPlayer
             courseId={courseId}
-            embedUrl={data.embedUrl}
+            videoEmbed={data.videoEmbed}
             lessonId={lessonId}
             title={data.lesson.title}
           />
@@ -110,7 +110,7 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
               >
                 <p className="text-sm font-medium text-copy-primary">{material.title}</p>
                 <p className="text-xs text-copy-muted">
-                  {material.type === "PDF" ? "PDF" : "Link externo"} • material {material.position}
+                  {material.type === "PDF" ? "PDF" : "Link externo"} - material {material.position}
                 </p>
               </a>
             ))}

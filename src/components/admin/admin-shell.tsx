@@ -8,6 +8,7 @@ const navItems = [
   { href: "/admin/users", label: "Novo usuario" },
   { href: "/admin/me", label: "Meus dados" },
   { href: "/admin/courses", label: "Cursos" },
+  { href: "/admin/lessons", label: "Cadastrar aulas" },
   { href: "/admin/students", label: "Alunos" },
   { href: "/admin/enrollments", label: "Matriculas" },
 ];

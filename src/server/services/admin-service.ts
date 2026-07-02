@@ -68,6 +68,10 @@ export async function removeCourse(id: string) {
   return repository.deleteCourse(producer.organizationId, producer.id, producer.role, id);
 }
 
+export async function getModuleOptions(courseId: string) {
+  const producer = await requireProducer();
+  return repository.listModuleOptions(producer.organizationId, producer.id, producer.role, courseId);
+}
 export async function getModules(courseId: string, input: PaginationInput) {
   const producer = await requireProducer();
   return repository.listModules(producer.organizationId, producer.id, producer.role, courseId, input);

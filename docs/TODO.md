@@ -683,3 +683,77 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm.cmd run typecheck`.
 - [x] Executar `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`.
 - [x] Executar `npm.cmd run build`.
+
+## Ajuste 2026-06-04 - Cadastro do curso de fotografia
+
+- [x] Criar script idempotente para cadastrar o curso `CURSO DE FOTOGRAFIA`.
+- [x] Remover os prefixos dos titulos dos modulos antes de gravar.
+- [x] Cadastrar 7 modulos conforme a estrutura informada.
+- [x] Cadastrar 84 aulas com links confiaveis informados.
+- [x] Vincular o curso ao produtor `douglaslundy@gmail.com`.
+- [x] Executar `npx tsx prisma/create-fotografia-course.ts`.
+- [x] Validar o curso no banco.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar `npm.cmd run build`.
+- [x] Registrar 30 aulas sem URL confiavel como pendencia de origem, sem inventar links.
+
+## Ajuste 2026-06-05 - Cadastro do curso RUDAH Massagem
+
+- [x] Criar script idempotente para cadastrar o curso `CURSO RUDAH MASSAGEM`.
+- [x] Vincular o curso ao produtor `douglaslundy@gmail.com`.
+- [x] Remover dos titulos de modulos e aulas o trecho antes de ` - `.
+- [x] Cadastrar 11 modulos conforme a estrutura informada, incluindo submodulos como modulos sequenciais.
+- [x] Cadastrar 61 aulas com os links YouTube fornecidos.
+- [x] Tratar itens com URL diretamente abaixo do modulo/submodulo como aula unica com o mesmo titulo limpo.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar `npm.cmd run build`.
+- [x] Executar `npx tsx prisma/create-rudah-massagem-course.ts` com aprovacao explicita para escrita em producao.
+- [x] Validar curso e totais no banco.
+
+## Operacao 2026-06-19 - Backup e restore da VPS Supabase
+
+- [x] Ler as credenciais do Supabase do projeto local e da VPS.
+- [x] Gerar backup logico completo do banco de origem.
+- [x] Inicializar o schema do projeto na VPS com as migrations versionadas.
+- [x] Restaurar `public`, `auth` e `storage` na VPS com as roles corretas.
+- [x] Validar contagens principais apos o restore.
+
+## Operacao 2026-06-20 - Conexao local com a VPS Supabase do SysCursos
+
+- [x] Identificar a instancia correta da VPS como `supabase-syscursos`.
+- [x] Validar contagens do banco remoto para confirmar o inventario do projeto.
+- [x] Configurar `.env` local para apontar `DATABASE_URL` e `DIRECT_URL` ao Supavisor da VPS.
+- [x] Ajustar a string de conexao com `options=reference=your-tenant-id`.
+- [x] Validar `npx prisma validate`.
+- [x] Validar `npx prisma migrate status`.
+- [x] Validar `npm.cmd run typecheck`.
+
+## Operacao 2026-06-20 - Verificacao de acesso do sistema ao banco
+
+- [x] Executar consulta real com `PrismaClient` usando a `DATABASE_URL` do workspace.
+- [x] Confirmar leitura de dados reais do banco da VPS.
+- [x] Registrar o resultado da verificacao na documentacao do projeto.
+
+## Operacao 2026-06-20 - Redefinicao das credenciais dos usuarios principais
+
+- [x] Redefinir a senha das contas `dlsistemas100@gmail.com`, `douglaslundy100@gmail.com` e `douglaslundy@gmail.com`.
+- [x] Recriar os registros correspondentes no Supabase Auth quando os IDs antigos nao estavam mais presentes.
+- [x] Atualizar `authUserId` na tabela `users` para refletir os novos usuarios Auth.
+- [x] Validar login com a nova senha em todas as tres contas.
+
+## Ajuste 2026-07-02 - Cadastro de aulas por Google Drive/OneDrive e menu dedicado
+
+- [x] Identificar causa da mensagem generica no cadastro de aula com Google Drive.
+- [x] Ampliar validacao server-side de aula para YouTube, Google Drive e OneDrive.
+- [x] Criar camada de embed para Google Drive e OneDrive na area do aluno.
+- [x] Criar migration para substituir a constraint antiga `lessons_youtube_url_check`.
+- [x] Preservar contexto de redirecionamento ao salvar/remover aula.
+- [x] Criar menu/pagina `/admin/lessons` para cadastrar ou editar aula selecionando curso e modulo.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar `npm.cmd run prisma:validate`.
+- [x] Executar testes focados de validators, video service e admin actions.
+- [x] Executar `npm.cmd run build`.
+- [x] Aplicar a migration `20260702120000_expand_lesson_video_url_platforms` no banco de producao apos aprovacao operacional.
