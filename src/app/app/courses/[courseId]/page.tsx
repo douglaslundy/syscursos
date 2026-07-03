@@ -5,7 +5,7 @@ import { CourseBlocked } from "@/components/student/course-blocked";
 import { EmptyState } from "@/components/student/empty-state";
 import { ProgressBar } from "@/components/student/progress-bar";
 import { getStudentCourse } from "@/server/services/student-service";
-import { getYouTubeThumbnailUrl } from "@/server/services/youtube-service";
+import { getLessonThumbnailUrl } from "@/server/services/youtube-service";
 import { studentCourseParamsSchema } from "@/server/validators/student";
 
 type StudentCoursePageProps = {
@@ -105,7 +105,7 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
                       const completed = data.completedLessonIds.has(lesson.id);
                       const imageUrl =
                         lesson.coverImageUrl ??
-                        getYouTubeThumbnailUrl(lesson.youtubeUrl, lesson.youtubeVideoId);
+                        getLessonThumbnailUrl(lesson.youtubeUrl, lesson.youtubeVideoId);
 
                       return (
                         <Link

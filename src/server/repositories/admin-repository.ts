@@ -11,6 +11,7 @@ import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import { prisma } from "@/lib/db/prisma";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { extractYouTubeVideoId } from "@/server/services/video-platform-service";
 import type {
   CourseInput,
   EnrollmentInput,
@@ -348,6 +349,8 @@ export async function upsertLesson(
   input: LessonInput,
 ) {
   const courseScope = scopedCourseWhere(organizationId, actorUserId, actorRole);
+  const youtubeVideoId = normalizeLessonYouTubeVideoId(input.youtubeUrl);
+
   if (input.id) {
     return prisma.lesson.updateMany({
       where: { id: input.id, module: { course: courseScope } },
@@ -355,7 +358,7 @@ export async function upsertLesson(
         title: input.title,
         description: input.description,
         youtubeUrl: input.youtubeUrl,
-        youtubeVideoId: input.youtubeVideoId,
+        youtubeVideoId,
         coverImageUrl: input.coverImageUrl,
         position: input.position,
         status: input.status,
@@ -374,7 +377,7 @@ export async function upsertLesson(
       title: input.title,
       description: input.description,
       youtubeUrl: input.youtubeUrl,
-      youtubeVideoId: input.youtubeVideoId,
+      youtubeVideoId,
       coverImageUrl: input.coverImageUrl,
       position: input.position,
       status: input.status ?? LessonStatus.ACTIVE,
@@ -1302,6 +1305,10 @@ export async function deleteStudentHard(organizationId: string, userId: string) 
   }
 
   return deletedUser;
+}
+
+function normalizeLessonYouTubeVideoId(videoUrl: string) {
+  return extractYouTubeVideoId(videoUrl);
 }
 
 function offset(args: PageArgs) {

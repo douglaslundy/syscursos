@@ -1,6 +1,7 @@
 export {
   extractYouTubeVideoId,
   getLessonVideoEmbed,
+  getLessonThumbnailUrl,
   getYouTubeEmbedUrl,
   getYouTubeThumbnailUrl,
   isSupportedLessonVideoUrl,

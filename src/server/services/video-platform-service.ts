@@ -7,16 +7,6 @@ export type LessonVideoEmbed = {
 };
 
 export function getLessonVideoEmbed(videoUrl: string, youtubeVideoId: string | null): LessonVideoEmbed | null {
-  const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl, youtubeVideoId);
-
-  if (youtubeEmbedUrl) {
-    return {
-      provider: "YOUTUBE",
-      url: youtubeEmbedUrl,
-      supportsCompletionTracking: true,
-    };
-  }
-
   const googleDriveEmbedUrl = getGoogleDriveEmbedUrl(videoUrl);
 
   if (googleDriveEmbedUrl) {
@@ -37,11 +27,30 @@ export function getLessonVideoEmbed(videoUrl: string, youtubeVideoId: string | n
     };
   }
 
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(videoUrl, youtubeVideoId);
+
+  if (youtubeEmbedUrl) {
+    return {
+      provider: "YOUTUBE",
+      url: youtubeEmbedUrl,
+      supportsCompletionTracking: true,
+    };
+  }
+
   return null;
 }
 
+export function getLessonThumbnailUrl(videoUrl: string, youtubeVideoId: string | null) {
+  return (
+    getYouTubeThumbnailUrl(videoUrl, youtubeVideoId) ??
+    getGoogleDriveThumbnailUrl(videoUrl) ??
+    getOneDriveThumbnailUrl(videoUrl)
+  );
+}
+
 export function getYouTubeEmbedUrl(youtubeUrl: string, youtubeVideoId: string | null) {
-  const videoId = normalizeYouTubeVideoId(youtubeVideoId) || extractYouTubeVideoId(youtubeUrl);
+  const urlVideoId = extractYouTubeVideoId(youtubeUrl);
+  const videoId = isYouTubeUrl(youtubeUrl) ? urlVideoId ?? normalizeYouTubeVideoId(youtubeVideoId) : null;
 
   if (!videoId) {
     return null;
@@ -51,7 +60,8 @@ export function getYouTubeEmbedUrl(youtubeUrl: string, youtubeVideoId: string | 
 }
 
 export function getYouTubeThumbnailUrl(youtubeUrl: string, youtubeVideoId: string | null) {
-  const videoId = normalizeYouTubeVideoId(youtubeVideoId) || extractYouTubeVideoId(youtubeUrl);
+  const urlVideoId = extractYouTubeVideoId(youtubeUrl);
+  const videoId = isYouTubeUrl(youtubeUrl) ? urlVideoId ?? normalizeYouTubeVideoId(youtubeVideoId) : null;
 
   if (!videoId) {
     return null;
@@ -92,6 +102,52 @@ export function extractYouTubeVideoId(youtubeUrl: string) {
 }
 
 export function getGoogleDriveEmbedUrl(videoUrl: string) {
+  const fileId = getGoogleDriveFileId(videoUrl);
+
+  if (!fileId) {
+    return null;
+  }
+
+  return `https://drive.google.com/file/d/${fileId}/preview`;
+}
+
+export function getGoogleDriveThumbnailUrl(videoUrl: string) {
+  const fileId = getGoogleDriveFileId(videoUrl);
+
+  if (!fileId) {
+    return null;
+  }
+
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+}
+
+export function getOneDriveEmbedUrl(videoUrl: string) {
+  return isSupportedOneDriveUrl(videoUrl) ? videoUrl : null;
+}
+
+export function getOneDriveThumbnailUrl(videoUrl: string) {
+  if (!isSupportedOneDriveUrl(videoUrl)) {
+    return null;
+  }
+
+  return `https://api.onedrive.com/v1.0/shares/${getOneDriveShareId(videoUrl)}/root/thumbnails/0/large/content`;
+}
+
+export function isSupportedLessonVideoUrl(value: string) {
+  return getLessonVideoEmbed(value, null) !== null;
+}
+
+function isYouTubeUrl(videoUrl: string) {
+  try {
+    const url = new URL(videoUrl);
+    const host = url.hostname.replace(/^www\./, "");
+    return host === "youtube.com" || host === "youtu.be";
+  } catch {
+    return false;
+  }
+}
+
+function getGoogleDriveFileId(videoUrl: string) {
   try {
     const url = new URL(videoUrl);
 
@@ -108,33 +164,29 @@ export function getGoogleDriveEmbedUrl(videoUrl: string) {
       return null;
     }
 
-    return `https://drive.google.com/file/d/${fileId}/preview`;
+    return fileId;
   } catch {
     return null;
   }
 }
 
-export function getOneDriveEmbedUrl(videoUrl: string) {
+function isSupportedOneDriveUrl(videoUrl: string) {
   try {
     const url = new URL(videoUrl);
     const host = url.hostname.replace(/^www\./, "");
 
     if (url.protocol !== "https:" || (host !== "1drv.ms" && host !== "onedrive.live.com")) {
-      return null;
+      return false;
     }
 
-    if (host === "1drv.ms" && !url.pathname.startsWith("/v/")) {
-      return null;
-    }
-
-    return url.toString();
+    return host !== "1drv.ms" || url.pathname.startsWith("/v/");
   } catch {
-    return null;
+    return false;
   }
 }
 
-export function isSupportedLessonVideoUrl(value: string) {
-  return getLessonVideoEmbed(value, null) !== null;
+function getOneDriveShareId(videoUrl: string) {
+  return `u!${Buffer.from(videoUrl).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
 }
 
 function normalizeYouTubeVideoId(value: string | null | undefined) {

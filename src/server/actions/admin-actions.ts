@@ -108,6 +108,7 @@ export async function saveLessonAction(formData: FormData) {
   try {
     await saveLesson(input);
     revalidatePath(path);
+    revalidatePath("/app", "layout");
   } catch (error) {
     console.error("Admin mutation failed.", error);
     redirect(adminStatusPath(path, lessonMutationStatus(error)));
