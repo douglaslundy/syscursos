@@ -106,13 +106,13 @@ describe("video platform service", () => {
     });
   });
 
-  it("builds a OneDrive thumbnail URL", () => {
+  it("does not build a OneDrive thumbnail URL without an authenticated thumbnail source", () => {
     expect(
       getLessonThumbnailUrl(
         "https://1drv.ms/v/c/8d1fc101d88357bb/IQC7V4PYAcEfIICN6rEAAAAAAUhadaDsqqjIGHfMFJfnDwM?e=y5x3X0",
         "dQw4w9WgXcQ",
       ),
-    ).toBe("https://api.onedrive.com/v1.0/shares/u!aHR0cHM6Ly8xZHJ2Lm1zL3YvYy84ZDFmYzEwMWQ4ODM1N2JiL0lRQzdWNFBZQWNFZklJQ042ckVBQUFBQUFVaGFkYURzcXFqSUdIZk1GSmZuRHdNP2U9eTV4M1gw/root/thumbnails/0/large/content");
+    ).toBeNull();
   });
 
   it("rejects unsupported URLs", () => {

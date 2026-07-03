@@ -1340,3 +1340,35 @@ Arquivos afetados:
 - `src/components/student/lesson-video-player.tsx`
 - `src/server/services/student-service.ts`
 - `prisma/migrations/20260702120000_expand_lesson_video_url_platforms/migration.sql`
+
+## 2026-07-03 - Fallback de thumbnail para videos OneDrive
+
+Decisao:
+
+Nao gerar mais URL automatica de thumbnail para videos OneDrive a partir do link publico compartilhado. Quando a aula nao tiver `coverImageUrl`, a vitrine do curso exibira fallback visual com o provedor do video.
+
+Motivo:
+
+Consulta somente leitura encontrou 2 aulas OneDrive cadastradas e ambas sem capa manual. O endpoint publico anteriormente montado para thumbnail (`api.onedrive.com/v1.0/shares/.../root/thumbnails/0/large/content`) retornou `400 Bad Request` para link real cadastrado. O endpoint Microsoft Graph equivalente exige token de autenticacao (`401 Unauthorized`) em chamada sem credenciais. Portanto nao ha fonte publica confiavel identificada no repositorio para gerar thumbnail OneDrive automaticamente.
+
+Alternativas consideradas:
+
+1. Manter a URL automatica quebrada e deixar o card tentar carregar uma imagem invalida.
+2. Integrar Microsoft Graph autenticado para buscar thumbnails.
+3. Exigir/uploadar capa manual para aulas OneDrive quando o produtor quiser imagem especifica.
+
+Impacto:
+
+- Aulas YouTube continuam usando thumbnail automatica.
+- Aulas Google Drive continuam usando thumbnail publica do Drive.
+- Aulas OneDrive sem capa manual passam a mostrar fallback visual em vez de URL quebrada.
+- Uma integracao futura com Microsoft Graph pode ser avaliada se houver requisito de thumbnail real automatica para OneDrive.
+
+Arquivos afetados:
+
+- `src/server/services/video-platform-service.ts`
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/tests/unit/youtube-service.test.ts`
+- `docs/TODO.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`

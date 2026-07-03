@@ -2907,3 +2907,58 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ### Proxima etapa recomendada
 
 - Validar visualmente o cadastro real com os links de Google Drive e OneDrive informados.
+
+---
+
+### 2026-07-03 - Modal de cadastro/edicao de aulas e diagnostico OneDrive
+
+### Arquivos criados ou alterados
+
+- `src/components/admin/admin-modal.tsx`
+- `src/app/admin/lessons/page.tsx`
+- `src/app/admin/modules/[moduleId]/lessons/page.tsx`
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/server/services/video-platform-service.ts`
+- `src/tests/unit/youtube-service.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Criado modal administrativo reutilizavel para formularios.
+- O botao `Cadastrar aula` agora abre modal em `/admin/lessons` usando `create=1`.
+- A edicao de aula em `/admin/lessons` abre o mesmo modal usando `editId`.
+- A tela `/admin/modules/[moduleId]/lessons` recebeu o mesmo comportamento para cadastro e edicao.
+- Verificacao somente leitura no banco confirmou 2 aulas OneDrive cadastradas, ambas sem `coverImageUrl`.
+- Teste real do endpoint de thumbnail OneDrive usado pelo codigo retornou `400 Bad Request` para URL cadastrada.
+- Teste do endpoint Microsoft Graph sem token retornou `401 Unauthorized`, confirmando que nao ha thumbnail publica automatica confiavel identificada no repositorio.
+- O fallback de thumbnail OneDrive deixou de gerar URL invalida; o card do aluno mostra um fallback visual com `OneDrive` quando nao ha capa manual.
+
+### Testes executados
+
+- `npm.cmd run typecheck`
+- `npm.cmd run lint`
+- `npm.cmd run test -- --run src/tests/unit/youtube-service.test.ts src/tests/unit/admin-validators.test.ts src/tests/integration/admin-actions.test.ts`
+- `npm.cmd run build`
+
+### Resultado dos testes
+
+- `typecheck`: aprovado.
+- `lint`: aprovado, sem warnings.
+- Testes focados: aprovados, 41 testes.
+- `build`: aprovado.
+
+### Riscos encontrados
+
+- OneDrive nao fornece thumbnail publica confiavel para os links cadastrados sem integracao autenticada com Microsoft Graph.
+- Produtores que quiserem capa real em aula OneDrive precisam informar URL HTTPS de capa ou fazer upload manual da capa no formulario.
+
+### Pendencias
+
+- Nao identificadas no escopo desta etapa.
+
+### Proxima etapa recomendada
+
+- Validar visualmente `/admin/lessons?create=1` e uma edicao por `editId` no navegador com usuario produtor/admin.

@@ -757,3 +757,17 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar testes focados de validators, video service e admin actions.
 - [x] Executar `npm.cmd run build`.
 - [x] Aplicar a migration `20260702120000_expand_lesson_video_url_platforms` no banco de producao apos aprovacao operacional.
+
+## Ajuste 2026-07-03 - Modal de aulas e fallback OneDrive
+
+- [x] Transformar o cadastro de aula em modal aberto por `create=1` na tela `/admin/lessons`.
+- [x] Transformar a edicao de aula em modal aberto por `editId` na tela `/admin/lessons`.
+- [x] Aplicar o mesmo comportamento na tela legada `/admin/modules/[moduleId]/lessons`.
+- [x] Verificar aulas OneDrive cadastradas no banco por consulta somente leitura.
+- [x] Identificar que as 2 aulas OneDrive atuais nao possuem `coverImageUrl` manual.
+- [x] Confirmar que o endpoint publico de thumbnail OneDrive usado anteriormente retorna `400 Bad Request` para link real cadastrado.
+- [x] Remover a geracao de URL invalida de thumbnail OneDrive e exibir fallback visual no card quando nao houver capa.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar testes focados de video validators/actions.
+- [x] Executar `npm.cmd run build`.

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AdminModal } from "@/components/admin/admin-modal";
 import { Feedback } from "@/components/admin/feedback";
 import { LessonForm } from "@/components/admin/lesson-form";
 import { Pagination } from "@/components/admin/pagination";
@@ -17,6 +18,7 @@ export default async function AdminLessonsPage({ searchParams }: AdminLessonsPag
   const status = getStringParam(searchParams, "status");
   const formReset = getStringParam(searchParams, "formReset") ?? "idle";
   const editId = getStringParam(searchParams, "editId");
+  const create = getStringParam(searchParams, "create");
   const courses = await getCourseOptions();
   const selectedCourseId = getStringParam(searchParams, "courseId") ?? courses[0]?.id ?? null;
   const modules = selectedCourseId ? await getModuleOptions(selectedCourseId) : [];
@@ -26,6 +28,8 @@ export default async function AdminLessonsPage({ searchParams }: AdminLessonsPag
   const currentPath = selectedCourseId && selectedModuleId
     ? `/admin/lessons?courseId=${encodeURIComponent(selectedCourseId)}&moduleId=${encodeURIComponent(selectedModuleId)}`
     : "/admin/lessons";
+  const showLessonModal = Boolean(selectedCourseId && selectedModuleId && (create === "1" || editingLesson));
+  const createLessonHref = addQueryParam(currentPath, "create", "1");
 
   return (
     <section>
@@ -48,42 +52,50 @@ export default async function AdminLessonsPage({ searchParams }: AdminLessonsPag
 
       {lessonData && selectedCourseId && selectedModuleId ? (
         <>
-          <div className="mb-6 rounded-md border bg-background p-4">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 className="font-medium">{editingLesson ? "Editar aula" : "Nova aula"}</h3>
-                <p className="text-xs text-muted-foreground">
-                  {lessonData.module.course.title} / {lessonData.module.title}
-                </p>
-              </div>
-              {editingLesson ? (
-                <Link className="text-sm text-muted-foreground hover:text-foreground" href={currentPath}>
-                  Cancelar edicao
-                </Link>
-              ) : null}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-medium">Aulas cadastradas</h3>
+              <p className="text-xs text-muted-foreground">
+                {lessonData.module.course.title} / {lessonData.module.title}
+              </p>
             </div>
-            <LessonForm
-              formResetToken={formReset}
-              key={`${selectedModuleId}-${editingLesson?.id ?? "new"}-${formReset}`}
-              lesson={
-                editingLesson
-                  ? {
-                      id: editingLesson.id,
-                      title: editingLesson.title,
-                      description: editingLesson.description ?? "",
-                      youtubeUrl: editingLesson.youtubeUrl,
-                      youtubeVideoId: editingLesson.youtubeVideoId ?? "",
-                      coverImageUrl: editingLesson.coverImageUrl ?? "",
-                      position: editingLesson.position,
-                      status: editingLesson.status,
-                    }
-                  : undefined
-              }
-              moduleId={selectedModuleId}
-              redirectTo={currentPath}
-              suggestedPosition={lessonData.lessons.total + 1}
-            />
+            <Link
+              className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
+              href={createLessonHref}
+            >
+              Cadastrar aula
+            </Link>
           </div>
+
+          {showLessonModal ? (
+            <AdminModal
+              closeHref={currentPath}
+              description={`${lessonData.module.course.title} / ${lessonData.module.title}`}
+              title={editingLesson ? "Editar aula" : "Cadastrar aula"}
+            >
+              <LessonForm
+                formResetToken={formReset}
+                key={`${selectedModuleId}-${editingLesson?.id ?? "new"}-${formReset}`}
+                lesson={
+                  editingLesson
+                    ? {
+                        id: editingLesson.id,
+                        title: editingLesson.title,
+                        description: editingLesson.description ?? "",
+                        youtubeUrl: editingLesson.youtubeUrl,
+                        youtubeVideoId: editingLesson.youtubeVideoId ?? "",
+                        coverImageUrl: editingLesson.coverImageUrl ?? "",
+                        position: editingLesson.position,
+                        status: editingLesson.status,
+                      }
+                    : undefined
+                }
+                moduleId={selectedModuleId}
+                redirectTo={currentPath}
+                suggestedPosition={lessonData.lessons.total + 1}
+              />
+            </AdminModal>
+          ) : null}
 
           <LessonSearchForm
             courseId={selectedCourseId}
@@ -256,3 +268,7 @@ function getStringParam(
   return typeof value === "string" ? value : undefined;
 }
 
+function addQueryParam(path: string, key: string, value: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}

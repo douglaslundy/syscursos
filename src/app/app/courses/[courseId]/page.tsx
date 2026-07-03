@@ -5,7 +5,7 @@ import { CourseBlocked } from "@/components/student/course-blocked";
 import { EmptyState } from "@/components/student/empty-state";
 import { ProgressBar } from "@/components/student/progress-bar";
 import { getStudentCourse } from "@/server/services/student-service";
-import { getLessonThumbnailUrl } from "@/server/services/youtube-service";
+import { getLessonThumbnailUrl, getLessonVideoEmbed } from "@/server/services/youtube-service";
 import { studentCourseParamsSchema } from "@/server/validators/student";
 
 type StudentCoursePageProps = {
@@ -106,6 +106,14 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
                       const imageUrl =
                         lesson.coverImageUrl ??
                         getLessonThumbnailUrl(lesson.youtubeUrl, lesson.youtubeVideoId);
+                      const videoEmbed = imageUrl
+                        ? null
+                        : getLessonVideoEmbed(lesson.youtubeUrl, lesson.youtubeVideoId);
+                      const fallbackProvider = videoEmbed?.provider === "ONEDRIVE"
+                        ? "OneDrive"
+                        : videoEmbed?.provider === "GOOGLE_DRIVE"
+                          ? "Google Drive"
+                          : "Video";
 
                       return (
                         <Link
@@ -121,6 +129,13 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
                                 : undefined
                             }
                           >
+                            {!imageUrl ? (
+                              <div className="absolute inset-0 flex items-center justify-center bg-surface-hover px-3 text-center">
+                                <span className="rounded-sm border border-white/15 bg-black/35 px-3 py-2 text-xs font-semibold text-white/85">
+                                  {fallbackProvider}
+                                </span>
+                              </div>
+                            ) : null}
                             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/15 to-black/75" />
                             <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-sm bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-normal text-white">
                               {completed ? (

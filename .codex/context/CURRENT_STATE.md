@@ -689,3 +689,26 @@
 - `npm.cmd run test -- --run src/tests/unit/admin-validators.test.ts src/tests/unit/youtube-service.test.ts src/tests/integration/admin-actions.test.ts`: aprovado (36 testes).
 - `npm.cmd run build`: aprovado.
 - `npx prisma migrate deploy`: aprovado; migration `20260702120000_expand_lesson_video_url_platforms` aplicada no banco configurado.
+
+## Atualizacao 2026-07-03 - Modal de aulas e thumbnails OneDrive
+
+- Cadastro de aulas alterado para modal:
+  - `/admin/lessons` abre cadastro com `create=1` e edicao com `editId`;
+  - `/admin/modules/[moduleId]/lessons` recebeu o mesmo comportamento.
+- Componente criado:
+  - `src/components/admin/admin-modal.tsx`.
+- Diagnostico OneDrive:
+  - consulta somente leitura encontrou 2 aulas com URL `1drv.ms`;
+  - as 2 aulas estavam sem `coverImageUrl` manual;
+  - o endpoint publico de thumbnail OneDrive usado anteriormente retornou `400 Bad Request` para link real cadastrado;
+  - endpoint Microsoft Graph equivalente sem token retornou `401 Unauthorized`.
+- Ajuste aplicado:
+  - `getOneDriveThumbnailUrl` deixou de gerar URL automatica invalida;
+  - card do aluno mostra fallback visual com o provedor quando nao ha capa/thumbnail real.
+
+## Validacoes executadas nesta rodada (2026-07-03)
+
+- `npm.cmd run typecheck`: aprovado.
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run test -- --run src/tests/unit/youtube-service.test.ts src/tests/unit/admin-validators.test.ts src/tests/integration/admin-actions.test.ts`: aprovado (41 testes).
+- `npm.cmd run build`: aprovado.

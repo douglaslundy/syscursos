@@ -130,7 +130,9 @@ export function getOneDriveThumbnailUrl(videoUrl: string) {
     return null;
   }
 
-  return `https://api.onedrive.com/v1.0/shares/${getOneDriveShareId(videoUrl)}/root/thumbnails/0/large/content`;
+  // Public OneDrive share links do not expose an unauthenticated thumbnail endpoint consistently.
+  // Keep the lesson card on the local fallback unless the producer uploads a cover image.
+  return null;
 }
 
 export function isSupportedLessonVideoUrl(value: string) {
@@ -185,9 +187,6 @@ function isSupportedOneDriveUrl(videoUrl: string) {
   }
 }
 
-function getOneDriveShareId(videoUrl: string) {
-  return `u!${Buffer.from(videoUrl).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_")}`;
-}
 
 function normalizeYouTubeVideoId(value: string | null | undefined) {
   if (!value) {

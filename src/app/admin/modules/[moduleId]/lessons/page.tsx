@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { AdminModal } from "@/components/admin/admin-modal";
 import { Feedback } from "@/components/admin/feedback";
 import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
@@ -28,7 +29,10 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const formReset = getStringParam(searchParams, "formReset") ?? "idle";
   const editId = getStringParam(searchParams, "editId");
+  const create = getStringParam(searchParams, "create");
   const editingLesson = lessons.items.find((lesson) => lesson.id === editId);
+  const currentPath = `/admin/modules/${module.id}/lessons`;
+  const showLessonModal = create === "1" || Boolean(editingLesson);
 
   return (
     <section>
@@ -43,39 +47,46 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
         <p className="text-sm text-muted-foreground">Cadastre aulas usando links do YouTube, Google Drive ou OneDrive.</p>
       </div>
       <Feedback status={status} />
-      <div className="mb-6 rounded-md border bg-background p-4">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-medium">{editingLesson ? "Editar aula" : "Nova aula"}</h3>
-          {editingLesson ? (
-            <Link
-              className="text-sm text-muted-foreground hover:text-foreground"
-              href={`/admin/modules/${module.id}/lessons`}
-            >
-              Cancelar edicao
-            </Link>
-          ) : null}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="font-medium">Aulas cadastradas</h3>
+          <p className="text-xs text-muted-foreground">Modulo {module.title}</p>
         </div>
-        <LessonForm
-          key={`${module.id}-${editingLesson?.id ?? "new"}-${formReset}`}
-          formResetToken={formReset}
-          lesson={
-            editingLesson
-              ? {
-                  id: editingLesson.id,
-                  title: editingLesson.title,
-                  description: editingLesson.description ?? "",
-                  youtubeUrl: editingLesson.youtubeUrl,
-                  youtubeVideoId: editingLesson.youtubeVideoId ?? "",
-                  coverImageUrl: editingLesson.coverImageUrl ?? "",
-                  position: editingLesson.position,
-                  status: editingLesson.status,
-                }
-              : undefined
-          }
-          moduleId={module.id}
-          suggestedPosition={lessons.total + 1}
-        />
+        <Link
+          className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
+          href={addQueryParam(currentPath, "create", "1")}
+        >
+          Cadastrar aula
+        </Link>
       </div>
+      {showLessonModal ? (
+        <AdminModal
+          closeHref={currentPath}
+          description={`Modulo ${module.title}`}
+          title={editingLesson ? "Editar aula" : "Cadastrar aula"}
+        >
+          <LessonForm
+            key={`${module.id}-${editingLesson?.id ?? "new"}-${formReset}`}
+            formResetToken={formReset}
+            lesson={
+              editingLesson
+                ? {
+                    id: editingLesson.id,
+                    title: editingLesson.title,
+                    description: editingLesson.description ?? "",
+                    youtubeUrl: editingLesson.youtubeUrl,
+                    youtubeVideoId: editingLesson.youtubeVideoId ?? "",
+                    coverImageUrl: editingLesson.coverImageUrl ?? "",
+                    position: editingLesson.position,
+                    status: editingLesson.status,
+                  }
+                : undefined
+            }
+            moduleId={module.id}
+            suggestedPosition={lessons.total + 1}
+          />
+        </AdminModal>
+      ) : null}
       <SearchForm query={pagination.query} />
       <div className="space-y-3">
         {lessons.items.map((lesson) => (
@@ -106,16 +117,16 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
                 className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
-                href={adminEditHref(`/admin/modules/${module.id}/lessons`, searchParams, lesson.id)}
+                href={adminEditHref(currentPath, searchParams, lesson.id)}
               >
                 Editar
               </Link>
               <form action={deleteLessonAction}>
-              <input name="id" type="hidden" value={lesson.id} />
-              <input name="moduleId" type="hidden" value={module.id} />
-              <SubmitButton destructive confirmMessage="Remover esta aula?">
-                Remover
-              </SubmitButton>
+                <input name="id" type="hidden" value={lesson.id} />
+                <input name="moduleId" type="hidden" value={module.id} />
+                <SubmitButton destructive confirmMessage="Remover esta aula?">
+                  Remover
+                </SubmitButton>
               </form>
             </div>
             <div className="mt-4 rounded-md border border-stroke-subtle bg-surface-elevated p-3">
@@ -170,7 +181,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
         ))}
       </div>
       <Pagination
-        basePath={`/admin/modules/${module.id}/lessons`}
+        basePath={currentPath}
         page={lessons.page}
         pageCount={lessons.pageCount}
         query={pagination.query}
@@ -247,4 +258,9 @@ function adminEditHref(
   params.set("editId", editId);
 
   return `${basePath}?${params.toString()}`;
+}
+
+function addQueryParam(path: string, key: string, value: string) {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${path}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }
