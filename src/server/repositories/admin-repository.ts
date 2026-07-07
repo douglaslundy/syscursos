@@ -696,6 +696,7 @@ export async function upsertStudent(
   const existingStudent = await prisma.studentProfile.findFirst({
     where: {
       user: {
+        organizationId,
         role: UserRole.STUDENT,
         OR: [{ email: input.email }, ...(input.document ? [{ studentProfile: { document: input.document } }] : [])],
       },
@@ -742,6 +743,7 @@ export async function upsertStudent(
     const existingStudentByAuth = await prisma.studentProfile.findFirst({
       where: {
         user: {
+          organizationId,
           role: UserRole.STUDENT,
           authUserId: existingAuthUser.id,
         },
