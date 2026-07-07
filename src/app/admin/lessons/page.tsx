@@ -26,7 +26,13 @@ export default async function AdminLessonsPage({ searchParams }: AdminLessonsPag
   const lessonData = selectedModuleId ? await getLessons(selectedModuleId, pagination) : null;
   const editingLesson = lessonData?.lessons.items.find((lesson) => lesson.id === editId) ?? null;
   const currentPath = selectedCourseId && selectedModuleId
-    ? `/admin/lessons?courseId=${encodeURIComponent(selectedCourseId)}&moduleId=${encodeURIComponent(selectedModuleId)}`
+    ? buildLessonsPath({
+        courseId: selectedCourseId,
+        moduleId: selectedModuleId,
+        page: pagination.page,
+        pageSize: pagination.pageSize,
+        query: pagination.query,
+      })
     : "/admin/lessons";
   const showLessonModal = Boolean(selectedCourseId && selectedModuleId && (create === "1" || editingLesson));
   const createLessonHref = addQueryParam(currentPath, "create", "1");
@@ -62,6 +68,7 @@ export default async function AdminLessonsPage({ searchParams }: AdminLessonsPag
             <Link
               className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
               href={createLessonHref}
+              scroll={false}
             >
               Cadastrar aula
             </Link>
@@ -133,6 +140,7 @@ export default async function AdminLessonsPage({ searchParams }: AdminLessonsPag
                     <Link
                       className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
                       href={`${currentPath}&editId=${encodeURIComponent(lesson.id)}`}
+                      scroll={false}
                     >
                       Editar
                     </Link>
@@ -271,4 +279,20 @@ function getStringParam(
 function addQueryParam(path: string, key: string, value: string) {
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}
+
+function buildLessonsPath(params: {
+  courseId: string;
+  moduleId: string;
+  page: number;
+  pageSize: number;
+  query: string;
+}) {
+  const search = new URLSearchParams();
+  search.set("courseId", params.courseId);
+  search.set("moduleId", params.moduleId);
+  if (params.query) search.set("query", params.query);
+  if (params.pageSize !== 10) search.set("pageSize", String(params.pageSize));
+  if (params.page > 1) search.set("page", String(params.page));
+  return `/admin/lessons?${search.toString()}`;
 }

@@ -31,7 +31,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
   const editId = getStringParam(searchParams, "editId");
   const create = getStringParam(searchParams, "create");
   const editingLesson = lessons.items.find((lesson) => lesson.id === editId);
-  const currentPath = `/admin/modules/${module.id}/lessons`;
+  const currentPath = buildLessonsPath(`/admin/modules/${module.id}/lessons`, searchParams);
   const showLessonModal = create === "1" || Boolean(editingLesson);
 
   return (
@@ -55,6 +55,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
         <Link
           className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
           href={addQueryParam(currentPath, "create", "1")}
+          scroll={false}
         >
           Cadastrar aula
         </Link>
@@ -83,6 +84,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
                 : undefined
             }
             moduleId={module.id}
+            redirectTo={currentPath}
             suggestedPosition={lessons.total + 1}
           />
         </AdminModal>
@@ -118,6 +120,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
               <Link
                 className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
                 href={adminEditHref(currentPath, searchParams, lesson.id)}
+                scroll={false}
               >
                 Editar
               </Link>
@@ -263,4 +266,18 @@ function adminEditHref(
 function addQueryParam(path: string, key: string, value: string) {
   const separator = path.includes("?") ? "&" : "?";
   return `${path}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}
+
+function buildLessonsPath(basePath: string, searchParams: LessonsPageProps["searchParams"]) {
+  const params = new URLSearchParams();
+  const page = getStringParam(searchParams, "page");
+  const pageSize = getStringParam(searchParams, "pageSize");
+  const query = getStringParam(searchParams, "query");
+
+  if (page) params.set("page", page);
+  if (pageSize) params.set("pageSize", pageSize);
+  if (query) params.set("query", query);
+
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
 }

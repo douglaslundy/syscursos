@@ -30,6 +30,7 @@ export function AdminModal({ title, description, closeHref, children }: AdminMod
               aria-label="Fechar"
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-stroke-subtle text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
               href={closeHref}
+              scroll={false}
             >
               <X aria-hidden="true" className="h-4 w-4" />
             </Link>
