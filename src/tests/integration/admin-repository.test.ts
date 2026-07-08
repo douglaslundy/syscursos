@@ -13,6 +13,12 @@ const userCreateMock = vi.hoisted(() => vi.fn());
 const listUsersMock = vi.hoisted(() => vi.fn());
 const updateUserByIdMock = vi.hoisted(() => vi.fn());
 const createUserMock = vi.hoisted(() => vi.fn());
+const moduleFindFirstOrThrowMock = vi.hoisted(() => vi.fn());
+const moduleCountMock = vi.hoisted(() => vi.fn());
+const moduleFindManyMock = vi.hoisted(() => vi.fn());
+const moduleUpdateMock = vi.hoisted(() => vi.fn());
+const moduleCreateMock = vi.hoisted(() => vi.fn());
+const transactionMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
@@ -36,6 +42,14 @@ vi.mock("@/lib/db/prisma", () => ({
     user: {
       create: userCreateMock,
     },
+    module: {
+      findFirstOrThrow: moduleFindFirstOrThrowMock,
+      count: moduleCountMock,
+      findMany: moduleFindManyMock,
+      update: moduleUpdateMock,
+      create: moduleCreateMock,
+    },
+    $transaction: transactionMock,
   },
 }));
 
@@ -50,6 +64,8 @@ vi.mock("@/lib/supabase/admin", () => ({
     },
   }),
 }));
+
+import { prisma } from "@/lib/db/prisma";
 
 describe("admin repository", () => {
   beforeEach(() => {
@@ -66,6 +82,12 @@ describe("admin repository", () => {
     listUsersMock.mockReset();
     updateUserByIdMock.mockReset();
     createUserMock.mockReset();
+    moduleFindFirstOrThrowMock.mockReset();
+    moduleCountMock.mockReset();
+    moduleFindManyMock.mockReset();
+    moduleUpdateMock.mockReset();
+    moduleCreateMock.mockReset();
+    transactionMock.mockReset();
 
     findCourseMock.mockResolvedValue({ id: "course-id" });
     findStudentOrThrowMock.mockResolvedValue({ id: "student-id" });
@@ -75,6 +97,8 @@ describe("admin repository", () => {
     producerStudentFindUniqueMock.mockResolvedValue(null);
     producerStudentCreateMock.mockResolvedValue({ id: "producer-link-id" });
     producerStudentDeleteManyMock.mockResolvedValue({ count: 1 });
+    moduleFindManyMock.mockResolvedValue([]);
+    transactionMock.mockImplementation(async (callback: (tx: typeof prisma) => unknown) => callback(prisma));
   });
 
   it("updates an enrollment by id when editing an existing record", async () => {
@@ -191,6 +215,175 @@ describe("admin repository", () => {
       email: "student@example.com",
       name: "Student",
       alreadyLinked: false,
+    });
+  });
+});
+
+describe("upsertModule position reordering", () => {
+  const baseInput = {
+    id: "module-being-edited",
+    courseId: "course-id",
+    title: "Modulo",
+    description: null,
+    status: "ACTIVE" as const,
+  };
+
+  beforeEach(() => {
+    moduleFindFirstOrThrowMock.mockReset();
+    moduleCountMock.mockReset();
+    moduleFindManyMock.mockReset();
+    moduleUpdateMock.mockReset();
+    moduleCreateMock.mockReset();
+    transactionMock.mockReset();
+    moduleFindManyMock.mockResolvedValue([]);
+    transactionMock.mockImplementation(async (callback: (tx: typeof prisma) => unknown) => callback(prisma));
+  });
+
+  it("moving a module to an earlier position shifts the in-between siblings forward", async () => {
+    const { upsertModule } = await import("@/server/repositories/admin-repository");
+
+    moduleFindFirstOrThrowMock.mockResolvedValue({ position: 5, courseId: "course-id" });
+    moduleCountMock.mockResolvedValue(5);
+    moduleFindManyMock.mockResolvedValue([
+      { id: "module-1", position: 1 },
+      { id: "module-2", position: 2 },
+      { id: "module-3", position: 3 },
+      { id: "module-4", position: 4 },
+    ]);
+
+    await upsertModule("org-id", "admin-id", "ADMIN", { ...baseInput, position: 1 });
+
+    expect(moduleFindFirstOrThrowMock).toHaveBeenCalledWith({
+      where: { id: "module-being-edited", course: { organizationId: "org-id" } },
+      select: { position: true, courseId: true },
+    });
+    expect(moduleCountMock).toHaveBeenCalledWith({ where: { courseId: "course-id" } });
+    expect(moduleFindManyMock).toHaveBeenCalledWith({
+      where: {
+        courseId: "course-id",
+        id: { not: "module-being-edited" },
+        position: { gte: 1, lt: 5 },
+      },
+      select: { id: true, position: true },
+    });
+
+    expect(moduleUpdateMock.mock.calls).toEqual([
+      [{ where: { id: "module-1" }, data: { position: -1 } }],
+      [{ where: { id: "module-2" }, data: { position: -2 } }],
+      [{ where: { id: "module-3" }, data: { position: -3 } }],
+      [{ where: { id: "module-4" }, data: { position: -4 } }],
+      [{ where: { id: "module-being-edited" }, data: { position: -5 } }],
+      [{ where: { id: "module-1" }, data: { position: 2 } }],
+      [{ where: { id: "module-2" }, data: { position: 3 } }],
+      [{ where: { id: "module-3" }, data: { position: 4 } }],
+      [{ where: { id: "module-4" }, data: { position: 5 } }],
+      [{ where: { id: "module-being-edited" }, data: { position: 1 } }],
+      [
+        {
+          where: { id: "module-being-edited" },
+          data: { title: "Modulo", description: null, position: 1, status: "ACTIVE" },
+        },
+      ],
+    ]);
+  });
+
+  it("moving a module to a position beyond the total clamps it to the last position", async () => {
+    const { upsertModule } = await import("@/server/repositories/admin-repository");
+
+    moduleFindFirstOrThrowMock.mockResolvedValue({ position: 3, courseId: "course-id" });
+    moduleCountMock.mockResolvedValue(4);
+    moduleFindManyMock.mockResolvedValue([{ id: "module-4", position: 4 }]);
+
+    await upsertModule("org-id", "admin-id", "ADMIN", { ...baseInput, position: 99 });
+
+    expect(moduleFindManyMock).toHaveBeenCalledWith({
+      where: {
+        courseId: "course-id",
+        id: { not: "module-being-edited" },
+        position: { gt: 3, lte: 4 },
+      },
+      select: { id: true, position: true },
+    });
+
+    expect(moduleUpdateMock.mock.calls).toEqual([
+      [{ where: { id: "module-4" }, data: { position: -1 } }],
+      [{ where: { id: "module-being-edited" }, data: { position: -2 } }],
+      [{ where: { id: "module-4" }, data: { position: 3 } }],
+      [{ where: { id: "module-being-edited" }, data: { position: 4 } }],
+      [
+        {
+          where: { id: "module-being-edited" },
+          data: { title: "Modulo", description: null, position: 4, status: "ACTIVE" },
+        },
+      ],
+    ]);
+  });
+
+  it("does not shift any sibling when the position does not change", async () => {
+    const { upsertModule } = await import("@/server/repositories/admin-repository");
+
+    moduleFindFirstOrThrowMock.mockResolvedValue({ position: 2, courseId: "course-id" });
+    moduleCountMock.mockResolvedValue(5);
+
+    await upsertModule("org-id", "admin-id", "ADMIN", { ...baseInput, position: 2 });
+
+    expect(moduleFindManyMock).not.toHaveBeenCalled();
+    expect(moduleUpdateMock).toHaveBeenCalledTimes(1);
+    expect(moduleUpdateMock).toHaveBeenCalledWith({
+      where: { id: "module-being-edited" },
+      data: { title: "Modulo", description: null, position: 2, status: "ACTIVE" },
+    });
+  });
+
+  it("throws when editing a module that does not exist or is out of scope", async () => {
+    const { upsertModule } = await import("@/server/repositories/admin-repository");
+
+    moduleFindFirstOrThrowMock.mockRejectedValue(new Error("not found"));
+
+    await expect(upsertModule("org-id", "admin-id", "ADMIN", { ...baseInput, position: 1 })).rejects.toThrow(
+      "not found",
+    );
+    expect(moduleUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("creating a module in the middle of the list shifts the following siblings forward", async () => {
+    const { upsertModule } = await import("@/server/repositories/admin-repository");
+
+    findCourseMock.mockResolvedValue({ id: "course-id" });
+    moduleCountMock.mockResolvedValue(3);
+    moduleFindManyMock.mockResolvedValue([
+      { id: "module-2", position: 2 },
+      { id: "module-3", position: 3 },
+    ]);
+    moduleCreateMock.mockResolvedValue({ id: "new-module-id" });
+
+    await upsertModule("org-id", "admin-id", "ADMIN", {
+      courseId: "course-id",
+      title: "Novo modulo",
+      description: null,
+      position: 2,
+      status: "ACTIVE" as const,
+    });
+
+    expect(moduleCountMock).toHaveBeenCalledWith({ where: { courseId: "course-id" } });
+    expect(moduleFindManyMock).toHaveBeenCalledWith({
+      where: { courseId: "course-id", position: { gte: 2 } },
+      select: { id: true, position: true },
+    });
+    expect(moduleUpdateMock.mock.calls).toEqual([
+      [{ where: { id: "module-2" }, data: { position: -1 } }],
+      [{ where: { id: "module-3" }, data: { position: -2 } }],
+      [{ where: { id: "module-2" }, data: { position: 3 } }],
+      [{ where: { id: "module-3" }, data: { position: 4 } }],
+    ]);
+    expect(moduleCreateMock).toHaveBeenCalledWith({
+      data: {
+        courseId: "course-id",
+        title: "Novo modulo",
+        description: null,
+        position: 2,
+        status: "ACTIVE",
+      },
     });
   });
 });

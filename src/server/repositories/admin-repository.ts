@@ -268,6 +268,31 @@ export async function findModuleById(
   });
 }
 
+type PositionEntry = { id: string; position: number };
+
+function positionRangeFilter(oldPosition: number, newPosition: number): Prisma.IntFilter {
+  return newPosition < oldPosition
+    ? { gte: newPosition, lt: oldPosition }
+    : { gt: oldPosition, lte: newPosition };
+}
+
+function shiftedSiblingPosition(position: number, oldPosition: number, newPosition: number): number {
+  return newPosition < oldPosition ? position + 1 : position - 1;
+}
+
+function clampPosition(position: number, maxPosition: number): number {
+  return Math.min(Math.max(position, 1), maxPosition);
+}
+
+async function shiftModulePositions(tx: Prisma.TransactionClient, entries: PositionEntry[]): Promise<void> {
+  for (const [index, entry] of entries.entries()) {
+    await tx.module.update({ where: { id: entry.id }, data: { position: -(index + 1) } });
+  }
+  for (const entry of entries) {
+    await tx.module.update({ where: { id: entry.id }, data: { position: entry.position } });
+  }
+}
+
 export async function upsertModule(
   organizationId: string,
   actorUserId: string,
@@ -275,31 +300,76 @@ export async function upsertModule(
   input: ModuleInput,
 ) {
   const courseScope = scopedCourseWhere(organizationId, actorUserId, actorRole);
-  if (input.id) {
-    return prisma.module.updateMany({
-      where: { id: input.id, course: courseScope },
+
+  return prisma.$transaction(async (tx) => {
+    if (input.id) {
+      const current = await tx.module.findFirstOrThrow({
+        where: { id: input.id, course: courseScope },
+        select: { position: true, courseId: true },
+      });
+
+      const total = await tx.module.count({ where: { courseId: current.courseId } });
+      const position = clampPosition(input.position, total);
+
+      if (position !== current.position) {
+        const siblings = await tx.module.findMany({
+          where: {
+            courseId: current.courseId,
+            id: { not: input.id },
+            position: positionRangeFilter(current.position, position),
+          },
+          select: { id: true, position: true },
+        });
+
+        await shiftModulePositions(tx, [
+          ...siblings.map((sibling) => ({
+            id: sibling.id,
+            position: shiftedSiblingPosition(sibling.position, current.position, position),
+          })),
+          { id: input.id, position },
+        ]);
+      }
+
+      return tx.module.update({
+        where: { id: input.id },
+        data: {
+          title: input.title,
+          description: input.description,
+          position,
+          status: input.status,
+        },
+      });
+    }
+
+    const course = await tx.course.findFirstOrThrow({
+      where: { id: input.courseId, ...courseScope },
+      select: { id: true },
+    });
+
+    const total = await tx.module.count({ where: { courseId: course.id } });
+    const position = clampPosition(input.position, total + 1);
+
+    const siblings = await tx.module.findMany({
+      where: { courseId: course.id, position: { gte: position } },
+      select: { id: true, position: true },
+    });
+
+    if (siblings.length > 0) {
+      await shiftModulePositions(
+        tx,
+        siblings.map((sibling) => ({ id: sibling.id, position: sibling.position + 1 })),
+      );
+    }
+
+    return tx.module.create({
       data: {
+        courseId: course.id,
         title: input.title,
         description: input.description,
-        position: input.position,
-        status: input.status,
+        position,
+        status: input.status ?? ModuleStatus.ACTIVE,
       },
     });
-  }
-
-  await prisma.course.findFirstOrThrow({
-    where: { id: input.courseId, ...courseScope },
-    select: { id: true },
-  });
-
-  return prisma.module.create({
-    data: {
-      courseId: input.courseId,
-      title: input.title,
-      description: input.description,
-      position: input.position,
-      status: input.status ?? ModuleStatus.ACTIVE,
-    },
   });
 }
 
