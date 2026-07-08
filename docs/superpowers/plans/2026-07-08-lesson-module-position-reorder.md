@@ -15,6 +15,33 @@
 - Moving an item between parents (different module/course) is out of scope — the existing forms don't expose that, and this plan doesn't add it.
 - Follow the spec at `docs/superpowers/specs/2026-07-08-lesson-module-position-reorder-design.md` for the exact algorithm.
 
+**Addendum (post-Task-2, during execution):** Task 1 and Task 2 originally
+each defined their own two-phase shift helper (`shiftModulePositions`,
+`shiftLessonPositions`), duplicating the same 6-line loop per entity. Task
+review flagged this as contradicting spec Rule 4 ("Reuso"), which mandates
+one generic helper parametrized by Prisma delegate. A generic version was
+verified to typecheck cleanly against the real Prisma client and the two
+functions were consolidated (commit `5d118e2`) into:
+
+```ts
+type PositionUpdateDelegate = {
+  update: (args: { where: { id: string }; data: { position: number } }) => Promise<unknown>;
+};
+
+async function shiftPositions(delegate: PositionUpdateDelegate, entries: PositionEntry[]): Promise<void> {
+  for (const [index, entry] of entries.entries()) {
+    await delegate.update({ where: { id: entry.id }, data: { position: -(index + 1) } });
+  }
+  for (const entry of entries) {
+    await delegate.update({ where: { id: entry.id }, data: { position: entry.position } });
+  }
+}
+```
+
+Called as `shiftPositions(tx.module, entries)` / `shiftPositions(tx.lesson, entries)`.
+Task 3 (below) has been updated to use this shared helper directly instead
+of defining a third duplicate.
+
 ---
 
 ### Task 1: Shared position-shift helpers + module reorder
@@ -717,8 +744,7 @@ git commit -m "feat(admin): shift sibling positions when reordering lessons"
 - Modify: `src/tests/integration/admin-repository.test.ts` (extend mocks, add material reorder tests)
 
 **Interfaces:**
-- Consumes (from Task 1): `PositionEntry`, `positionRangeFilter`, `shiftedSiblingPosition`, `clampPosition`.
-- Produces (used only within this task): `function shiftLessonMaterialPositions(tx: Prisma.TransactionClient, entries: PositionEntry[]): Promise<void>`
+- Consumes (from Task 1, refactored post-Task-2 into one generic helper per the design spec's Rule 4 — see addendum at the top of this file): `PositionEntry`, `positionRangeFilter`, `shiftedSiblingPosition`, `clampPosition`, `shiftPositions(delegate: PositionUpdateDelegate, entries: PositionEntry[]): Promise<void>`. Call as `shiftPositions(tx.lessonMaterial, entries)` — do not add a new `shiftLessonMaterialPositions` function.
 
 - [ ] **Step 1: Write the failing tests (including mock scaffolding)**
 
@@ -867,20 +893,9 @@ describe("upsertLessonMaterial position reordering", () => {
 Run: `npx vitest run src/tests/integration/admin-repository.test.ts`
 Expected: FAIL — `upsertLessonMaterial` still uses `updateMany` directly.
 
-- [ ] **Step 3: Implement `shiftLessonMaterialPositions` and rewrite `upsertLessonMaterial`**
+- [ ] **Step 3: Rewrite `upsertLessonMaterial` using the shared `shiftPositions` helper**
 
-In `src/server/repositories/admin-repository.ts`, add this helper right after `shiftLessonPositions` (added in Task 2):
-
-```ts
-async function shiftLessonMaterialPositions(tx: Prisma.TransactionClient, entries: PositionEntry[]): Promise<void> {
-  for (const [index, entry] of entries.entries()) {
-    await tx.lessonMaterial.update({ where: { id: entry.id }, data: { position: -(index + 1) } });
-  }
-  for (const entry of entries) {
-    await tx.lessonMaterial.update({ where: { id: entry.id }, data: { position: entry.position } });
-  }
-}
-```
+No new helper function is needed — Task 1/2 already consolidated `shiftModulePositions`/`shiftLessonPositions` into one generic `shiftPositions(delegate: PositionUpdateDelegate, entries: PositionEntry[])`, defined once in the file (right after `clampPosition`). Reuse it directly, passing `tx.lessonMaterial` as the delegate.
 
 Replace the existing `upsertLessonMaterial` function (currently at lines 430-477) with:
 
@@ -913,7 +928,7 @@ export async function upsertLessonMaterial(
           select: { id: true, position: true },
         });
 
-        await shiftLessonMaterialPositions(tx, [
+        await shiftPositions(tx.lessonMaterial, [
           ...siblings.map((sibling) => ({
             id: sibling.id,
             position: shiftedSiblingPosition(sibling.position, current.position, position),
@@ -948,8 +963,8 @@ export async function upsertLessonMaterial(
     });
 
     if (siblings.length > 0) {
-      await shiftLessonMaterialPositions(
-        tx,
+      await shiftPositions(
+        tx.lessonMaterial,
         siblings.map((sibling) => ({ id: sibling.id, position: sibling.position + 1 })),
       );
     }
