@@ -771,3 +771,13 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm.cmd run lint`.
 - [x] Executar testes focados de video validators/actions.
 - [x] Executar `npm.cmd run build`.
+
+## Ajuste 2026-07-08 - Reordenacao de aulas por posicao
+
+- [x] Identificar causa da aula nao reordenar ao salvar pelo modal.
+- [x] Corrigir deslocamento temporario para respeitar `position > 0` do banco.
+- [x] Atualizar testes de reordenacao de modulos, aulas e materiais.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar testes relevantes.
+- [x] Executar `npm.cmd run build`.

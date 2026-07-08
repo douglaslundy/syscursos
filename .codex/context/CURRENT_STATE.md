@@ -712,3 +712,11 @@
 - `npm.cmd run lint`: aprovado.
 - `npm.cmd run test -- --run src/tests/unit/youtube-service.test.ts src/tests/unit/admin-validators.test.ts src/tests/integration/admin-actions.test.ts`: aprovado (41 testes).
 - `npm.cmd run build`: aprovado.
+
+## Atualizacao 2026-07-08 - Correcao de reordenacao de aulas no modal
+
+- Causa raiz identificada: a rotina de reordenacao usava posicoes temporarias negativas para liberar a constraint unica de posicao, mas o banco possui checks `position > 0` em `modules` e `lessons`.
+- Correcao aplicada: `shiftPositions` passou a usar posicoes temporarias positivas altas durante a transacao, antes de gravar as posicoes finais.
+- Impacto: reordenacao de modulos, aulas e materiais continua transacional e sem migration nova.
+- Teste focado executado: `npm.cmd run test -- --run src/tests/integration/admin-repository.test.ts` aprovado com 15 testes.
+- Validacoes finais: `npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run test` (108 testes) e `npm.cmd run build` aprovados.

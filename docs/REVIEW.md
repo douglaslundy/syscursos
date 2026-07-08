@@ -2962,3 +2962,51 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ### Proxima etapa recomendada
 
 - Validar visualmente `/admin/lessons?create=1` e uma edicao por `editId` no navegador com usuario produtor/admin.
+
+---
+
+### 2026-07-08 - Correcao de reordenacao de aulas pelo modal
+
+### Arquivos criados ou alterados
+
+- `src/server/repositories/admin-repository.ts`
+- `src/tests/integration/admin-repository.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Identificada a causa da falha de reordenacao: a rotina usava posicoes temporarias negativas, mas o banco exige `position > 0` em `modules` e `lessons`.
+- A rotina `shiftPositions` passou a usar posicoes temporarias positivas altas antes de aplicar as posicoes finais.
+- Testes de reordenacao foram atualizados para cobrir a nova sequencia temporaria positiva.
+- Nao houve migration nova.
+
+### Testes executados
+
+- `npm.cmd run test -- --run src/tests/integration/admin-repository.test.ts`
+- `npm.cmd run lint`
+- `npm.cmd run typecheck`
+- `npm.cmd run test`
+- `npm.cmd run build`
+
+### Resultado dos testes
+
+- Teste focado aprovado: 15 testes.
+- `lint`: aprovado.
+- `typecheck`: aprovado.
+- Suite completa: aprovada, 108 testes.
+- `build`: aprovado.
+
+### Riscos encontrados
+
+- A falha anterior podia fechar o modal apos submit e nao alterar a ordenacao por erro de constraint no banco real.
+
+### Pendencias
+
+- Nenhuma pendencia identificada para esta correcao.
+
+### Proxima etapa recomendada
+
+- Validar deploy automatico na Vercel apos o push e retestar a edicao de posicao de aula no painel.

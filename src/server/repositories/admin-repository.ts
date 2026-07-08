@@ -289,9 +289,11 @@ type PositionUpdateDelegate = {
   update: (args: { where: { id: string }; data: { position: number } }) => Promise<unknown>;
 };
 
+const TEMPORARY_POSITION_BASE = 1_000_000_000;
+
 async function shiftPositions(delegate: PositionUpdateDelegate, entries: PositionEntry[]): Promise<void> {
   for (const [index, entry] of entries.entries()) {
-    await delegate.update({ where: { id: entry.id }, data: { position: -(index + 1) } });
+    await delegate.update({ where: { id: entry.id }, data: { position: TEMPORARY_POSITION_BASE + index } });
   }
   for (const entry of entries) {
     await delegate.update({ where: { id: entry.id }, data: { position: entry.position } });

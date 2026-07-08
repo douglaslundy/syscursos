@@ -304,11 +304,11 @@ describe("upsertModule position reordering", () => {
     });
 
     expect(moduleUpdateMock.mock.calls).toEqual([
-      [{ where: { id: "module-1" }, data: { position: -1 } }],
-      [{ where: { id: "module-2" }, data: { position: -2 } }],
-      [{ where: { id: "module-3" }, data: { position: -3 } }],
-      [{ where: { id: "module-4" }, data: { position: -4 } }],
-      [{ where: { id: "module-being-edited" }, data: { position: -5 } }],
+      [{ where: { id: "module-1" }, data: { position: 1000000000 } }],
+      [{ where: { id: "module-2" }, data: { position: 1000000001 } }],
+      [{ where: { id: "module-3" }, data: { position: 1000000002 } }],
+      [{ where: { id: "module-4" }, data: { position: 1000000003 } }],
+      [{ where: { id: "module-being-edited" }, data: { position: 1000000004 } }],
       [{ where: { id: "module-1" }, data: { position: 2 } }],
       [{ where: { id: "module-2" }, data: { position: 3 } }],
       [{ where: { id: "module-3" }, data: { position: 4 } }],
@@ -342,8 +342,8 @@ describe("upsertModule position reordering", () => {
     });
 
     expect(moduleUpdateMock.mock.calls).toEqual([
-      [{ where: { id: "module-4" }, data: { position: -1 } }],
-      [{ where: { id: "module-being-edited" }, data: { position: -2 } }],
+      [{ where: { id: "module-4" }, data: { position: 1000000000 } }],
+      [{ where: { id: "module-being-edited" }, data: { position: 1000000001 } }],
       [{ where: { id: "module-4" }, data: { position: 3 } }],
       [{ where: { id: "module-being-edited" }, data: { position: 4 } }],
       [
@@ -407,8 +407,8 @@ describe("upsertModule position reordering", () => {
       select: { id: true, position: true },
     });
     expect(moduleUpdateMock.mock.calls).toEqual([
-      [{ where: { id: "module-2" }, data: { position: -1 } }],
-      [{ where: { id: "module-3" }, data: { position: -2 } }],
+      [{ where: { id: "module-2" }, data: { position: 1000000000 } }],
+      [{ where: { id: "module-3" }, data: { position: 1000000001 } }],
       [{ where: { id: "module-2" }, data: { position: 3 } }],
       [{ where: { id: "module-3" }, data: { position: 4 } }],
     ]);
@@ -474,9 +474,9 @@ describe("upsertLesson position reordering", () => {
       select: { id: true, position: true },
     });
     expect(lessonUpdateMock.mock.calls).toEqual([
-      [{ where: { id: "lesson-1" }, data: { position: -1 } }],
-      [{ where: { id: "lesson-2" }, data: { position: -2 } }],
-      [{ where: { id: "lesson-being-edited" }, data: { position: -3 } }],
+      [{ where: { id: "lesson-1" }, data: { position: 1000000000 } }],
+      [{ where: { id: "lesson-2" }, data: { position: 1000000001 } }],
+      [{ where: { id: "lesson-being-edited" }, data: { position: 1000000002 } }],
       [{ where: { id: "lesson-1" }, data: { position: 2 } }],
       [{ where: { id: "lesson-2" }, data: { position: 3 } }],
       [{ where: { id: "lesson-being-edited" }, data: { position: 1 } }],
@@ -515,8 +515,8 @@ describe("upsertLesson position reordering", () => {
       select: { id: true, position: true },
     });
     expect(lessonUpdateMock.mock.calls).toEqual([
-      [{ where: { id: "lesson-2" }, data: { position: -1 } }],
-      [{ where: { id: "lesson-being-edited" }, data: { position: -2 } }],
+      [{ where: { id: "lesson-2" }, data: { position: 1000000000 } }],
+      [{ where: { id: "lesson-being-edited" }, data: { position: 1000000001 } }],
       [{ where: { id: "lesson-2" }, data: { position: 1 } }],
       [{ where: { id: "lesson-being-edited" }, data: { position: 2 } }],
       [
@@ -566,7 +566,7 @@ describe("upsertLesson position reordering", () => {
       select: { id: true, position: true },
     });
     expect(lessonUpdateMock.mock.calls).toEqual([
-      [{ where: { id: "lesson-1" }, data: { position: -1 } }],
+      [{ where: { id: "lesson-1" }, data: { position: 1000000000 } }],
       [{ where: { id: "lesson-1" }, data: { position: 2 } }],
     ]);
     expect(lessonCreateMock).toHaveBeenCalledWith({
@@ -642,9 +642,9 @@ describe("upsertLessonMaterial position reordering", () => {
       select: { id: true, position: true },
     });
     expect(lessonMaterialUpdateMock.mock.calls).toEqual([
-      [{ where: { id: "material-1" }, data: { position: -1 } }],
-      [{ where: { id: "material-2" }, data: { position: -2 } }],
-      [{ where: { id: "material-being-edited" }, data: { position: -3 } }],
+      [{ where: { id: "material-1" }, data: { position: 1000000000 } }],
+      [{ where: { id: "material-2" }, data: { position: 1000000001 } }],
+      [{ where: { id: "material-being-edited" }, data: { position: 1000000002 } }],
       [{ where: { id: "material-1" }, data: { position: 2 } }],
       [{ where: { id: "material-2" }, data: { position: 3 } }],
       [{ where: { id: "material-being-edited" }, data: { position: 1 } }],
@@ -689,7 +689,7 @@ describe("upsertLessonMaterial position reordering", () => {
       select: { id: true, position: true },
     });
     expect(lessonMaterialUpdateMock.mock.calls).toEqual([
-      [{ where: { id: "material-1" }, data: { position: -1 } }],
+      [{ where: { id: "material-1" }, data: { position: 1000000000 } }],
       [{ where: { id: "material-1" }, data: { position: 2 } }],
     ]);
     expect(lessonMaterialCreateMock).toHaveBeenCalledWith({

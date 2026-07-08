@@ -1372,3 +1372,28 @@ Arquivos afetados:
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `.codex/context/CURRENT_STATE.md`
+
+## 2026-07-08 - Posicoes temporarias positivas em reordenacao
+
+Decisao:
+
+Usar posicoes temporarias positivas altas durante a reordenacao transacional de modulos, aulas e materiais, em vez de posicoes negativas.
+
+Motivo:
+
+O banco possui constraints `modules_position_positive_check` e `lessons_position_positive_check`, exigindo `position > 0`. A estrategia anterior usava valores negativos temporarios para liberar a constraint unica de `(parent_id, position)`, o que falhava no banco real durante a edicao de posicao pelo modal.
+
+Alternativas consideradas:
+
+1. Remover as checks de posicao positiva do banco.
+2. Fazer a reordenacao em multiplas etapas fora de transacao.
+3. Manter a estrategia negativa e tratar erro de constraint como feedback.
+
+Impacto:
+
+A reordenacao preserva a transacao e continua evitando conflito de unicidade, mas agora respeita as constraints existentes do banco. Nao ha migration nova.
+
+Arquivos afetados:
+
+- `src/server/repositories/admin-repository.ts`
+- `src/tests/integration/admin-repository.test.ts`
