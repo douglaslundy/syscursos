@@ -271,7 +271,7 @@ export async function updateOwnStudentProfile(input: StudentProfileInput) {
 }
 
 async function requireStudentProfileId() {
-  const user = await requireAnyRole(["STUDENT", "ADMIN", "PRODUCER"]);
+  const user = await requireAnyRole(["STUDENT"]);
 
   if (!user.studentProfileId) {
     redirect("/app/forbidden");

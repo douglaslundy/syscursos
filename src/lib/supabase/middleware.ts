@@ -2,21 +2,28 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest, NextResponse } from "next/server";
 
 import { getSupabasePublicKey, getSupabaseUrl } from "@/lib/supabase/env";
+import type { SupabaseAuthAudience } from "@/lib/supabase/session";
+import { getSupabaseCookieOptions } from "@/lib/supabase/session";
 
-export function createSupabaseMiddlewareClient(request: NextRequest, response: NextResponse) {
+export function createSupabaseMiddlewareClient(
+  request: NextRequest,
+  response: NextResponse,
+  audience: SupabaseAuthAudience,
+) {
   return createServerClient(
     getSupabaseUrl(),
     getSupabasePublicKey(),
     {
+      cookieOptions: getSupabaseCookieOptions(audience),
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
+        getAll() {
+          return request.cookies.getAll();
         },
-        set(name: string, value: string, options) {
-          response.cookies.set({ name, value, ...options });
-        },
-        remove(name: string, options) {
-          response.cookies.set({ name, value: "", ...options });
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            request.cookies.set(name, value);
+            response.cookies.set(name, value, options);
+          });
         },
       },
     },

@@ -63,6 +63,7 @@ export function StudentShell({ user, children }: StudentShellProps) {
           </p>
           <p className="mt-2 truncate text-sm font-medium text-copy-primary">{user.email}</p>
           <form action={logoutAction} className="mt-4">
+            <input name="audience" type="hidden" value="client" />
             <button
               className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-stroke-subtle bg-transparent px-3 text-sm font-medium text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
               type="submit"
@@ -87,6 +88,7 @@ export function StudentShell({ user, children }: StudentShellProps) {
             />
           </Link>
           <form action={logoutAction}>
+            <input name="audience" type="hidden" value="client" />
             <button
               aria-label="Sair"
               className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-stroke-subtle bg-transparent text-copy-secondary transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"

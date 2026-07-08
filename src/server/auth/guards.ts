@@ -1,6 +1,7 @@
 import type { UserRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 
+import type { SupabaseAuthAudience } from "@/lib/supabase/session";
 import { getCurrentUser } from "@/server/auth/session";
 import { getDefaultPathForRole } from "@/server/permissions/rbac";
 
@@ -9,7 +10,8 @@ export async function requireRole(role: UserRole) {
 }
 
 export async function requireAnyRole(roles: UserRole[]) {
-  const result = await getCurrentUser();
+  const audience = resolveAuthAudience(roles);
+  const result = await getCurrentUser(audience);
   const loginPath = resolveLoginPath(roles);
 
   if (!result.ok) {
@@ -25,6 +27,11 @@ export async function requireAnyRole(roles: UserRole[]) {
   }
 
   return result.user;
+}
+
+function resolveAuthAudience(roles: UserRole[]): SupabaseAuthAudience {
+  const adminOnly = roles.every((role) => role === "ADMIN" || role === "PRODUCER");
+  return adminOnly ? "admin" : "client";
 }
 
 function resolveLoginPath(roles: UserRole[]) {

@@ -781,3 +781,17 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm.cmd run typecheck`.
 - [x] Executar testes relevantes.
 - [x] Executar `npm.cmd run build`.
+
+## Ajuste 2026-07-08 - Sessoes separadas e duracao de login
+
+- [x] Identificar que produtor/admin e aluno compartilhavam o mesmo cookie Supabase.
+- [x] Separar cookies de autenticacao para area admin/produtor e area do aluno.
+- [x] Configurar cookie de sessao para 15 dias.
+- [x] Migrar cliente SSR Supabase de `get/set/remove` para `getAll/setAll`.
+- [x] Reduzir custo do middleware removendo consulta de usuario/banco em toda navegacao protegida.
+- [x] Fazer logout atuar somente sobre a audiencia solicitada.
+- [x] Restringir a area do aluno ao cookie/sessao de aluno.
+- [x] Executar `npm.cmd run lint`.
+- [x] Executar `npm.cmd run typecheck`.
+- [x] Executar testes relevantes.
+- [x] Executar `npm.cmd run build`.

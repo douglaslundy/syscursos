@@ -720,3 +720,14 @@
 - Impacto: reordenacao de modulos, aulas e materiais continua transacional e sem migration nova.
 - Teste focado executado: `npm.cmd run test -- --run src/tests/integration/admin-repository.test.ts` aprovado com 15 testes.
 - Validacoes finais: `npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run test` (108 testes) e `npm.cmd run build` aprovados.
+
+## Atualizacao 2026-07-08 - Sessoes separadas admin/aluno e middleware mais leve
+
+- Causa identificada: a aplicacao usava um unico cookie Supabase para admin/produtor e aluno, entao um login substituia o outro no mesmo navegador.
+- Causa complementar: o cliente SSR usava API antiga de cookies (`get/set/remove`), associada pela propria biblioteca a logout aleatorio, expiracao precoce e refresh excessivo.
+- Causa de lentidao em troca de paginas: o middleware fazia verificacao Auth e consulta de usuario/banco em toda rota protegida, antes dos guards server-side repetirem a validacao.
+- Correcao aplicada: criados cookies separados `syscursos-admin-auth` e `syscursos-client-auth`, com `maxAge` de 15 dias.
+- Middleware passou a verificar apenas a existencia de sessao da audiencia correta; autorizacao de role/status segue nos guards server-side.
+- Logout passou a sair apenas da audiencia atual.
+- Area do aluno passou a exigir sessao `STUDENT` pelo cookie de aluno.
+- Validacoes finais: `npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run test` (110 testes), `npm.cmd run build` e `git diff --check` aprovados nesta rodada.

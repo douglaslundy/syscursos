@@ -6,6 +6,7 @@ const redirectMock = vi.hoisted(() =>
   }),
 );
 
+const createSupabaseServerClientMock = vi.hoisted(() => vi.fn());
 const signInWithPasswordMock = vi.hoisted(() => vi.fn());
 const signOutMock = vi.hoisted(() => vi.fn());
 const findFirstMock = vi.hoisted(() => vi.fn());
@@ -16,12 +17,15 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
-  createSupabaseServerClient: () => ({
-    auth: {
-      signInWithPassword: signInWithPasswordMock,
-      signOut: signOutMock,
-    },
-  }),
+  createSupabaseServerClient: (audience?: string) => {
+    createSupabaseServerClientMock(audience);
+    return {
+      auth: {
+        signInWithPassword: signInWithPasswordMock,
+        signOut: signOutMock,
+      },
+    };
+  },
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -36,6 +40,7 @@ vi.mock("@/lib/db/prisma", () => ({
 describe("loginAction", () => {
   beforeEach(() => {
     redirectMock.mockClear();
+    createSupabaseServerClientMock.mockClear();
     signInWithPasswordMock.mockReset();
     signOutMock.mockReset();
     findFirstMock.mockReset();
@@ -59,6 +64,7 @@ describe("loginAction", () => {
     await expect(loginAction(loginForm("admin@example.com", "admin"))).rejects.toThrow(
       "REDIRECT:/admin",
     );
+    expect(createSupabaseServerClientMock).toHaveBeenCalledWith("admin");
     expect(signInWithPasswordMock).toHaveBeenCalledWith({
       email: "admin@example.com",
       password: "password123",
@@ -81,6 +87,7 @@ describe("loginAction", () => {
     await expect(loginAction(loginForm("producer@example.com", "admin"))).rejects.toThrow(
       "REDIRECT:/admin",
     );
+    expect(createSupabaseServerClientMock).toHaveBeenCalledWith("admin");
   });
 
   it("redirects an active student to the student area", async () => {
@@ -97,6 +104,7 @@ describe("loginAction", () => {
     });
 
     await expect(loginAction(loginForm("student@example.com"))).rejects.toThrow("REDIRECT:/app");
+    expect(createSupabaseServerClientMock).toHaveBeenCalledWith("client");
   });
 
   it("blocks admin area login when authenticated user is student", async () => {
@@ -115,6 +123,7 @@ describe("loginAction", () => {
     await expect(loginAction(loginForm("student@example.com", "admin"))).rejects.toThrow(
       "REDIRECT:/login/admin?error=forbidden",
     );
+    expect(createSupabaseServerClientMock).toHaveBeenCalledWith("admin");
     expect(signOutMock).toHaveBeenCalledOnce();
   });
 
@@ -134,6 +143,7 @@ describe("loginAction", () => {
     await expect(loginAction(loginForm("admin@example.com", "client"))).rejects.toThrow(
       "REDIRECT:/login/client?error=forbidden",
     );
+    expect(createSupabaseServerClientMock).toHaveBeenCalledWith("client");
     expect(signOutMock).toHaveBeenCalledOnce();
   });
 
@@ -153,6 +163,28 @@ describe("loginAction", () => {
     await expect(loginAction(loginForm("inactive@example.com"))).rejects.toThrow(
       "REDIRECT:/login/client?error=forbidden",
     );
+    expect(signOutMock).toHaveBeenCalledOnce();
+  });
+
+  it("signs out only the requested admin audience", async () => {
+    const { logoutAction } = await import("@/server/actions/auth-actions");
+    const formData = new FormData();
+    formData.set("audience", "admin");
+
+    await expect(logoutAction(formData)).rejects.toThrow("REDIRECT:/login/admin");
+
+    expect(createSupabaseServerClientMock).toHaveBeenCalledWith("admin");
+    expect(signOutMock).toHaveBeenCalledOnce();
+  });
+
+  it("signs out only the requested client audience", async () => {
+    const { logoutAction } = await import("@/server/actions/auth-actions");
+    const formData = new FormData();
+    formData.set("audience", "client");
+
+    await expect(logoutAction(formData)).rejects.toThrow("REDIRECT:/login/client");
+
+    expect(createSupabaseServerClientMock).toHaveBeenCalledWith("client");
     expect(signOutMock).toHaveBeenCalledOnce();
   });
 

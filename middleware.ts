@@ -1,98 +1,49 @@
-import type { UserRole, UserStatus } from "@prisma/client";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { createSupabaseMiddlewareClient } from "@/lib/supabase/middleware";
-import { decideRouteAccess, getDefaultPathForRole } from "@/server/permissions/rbac";
-
-type UserAccessContext = {
-  role: UserRole;
-  status: UserStatus;
-} | null;
+import { getSupabaseAudienceForPath } from "@/lib/supabase/session";
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
     request,
   });
-  let supabase;
-  let supabaseUser;
+  const audience = getSupabaseAudienceForPath(request.nextUrl.pathname);
 
   try {
-    supabase = createSupabaseMiddlewareClient(request, response);
+    const supabase = createSupabaseMiddlewareClient(request, response, audience);
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    supabaseUser = user;
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session && isProtectedPath(request.nextUrl.pathname)) {
+      return redirectToLogin(request);
+    }
   } catch (error) {
     console.error("Failed to resolve Supabase middleware session.", error);
     return handleMiddlewareFailure(request, response);
   }
 
-  const user = await resolveAccessContext(
-    supabase,
-    supabaseUser?.id ?? null,
-    supabaseUser?.email ?? null,
-  );
-
-  const isLoginPath =
-    request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname === "/login/client" ||
-    request.nextUrl.pathname === "/login/admin" ||
-    request.nextUrl.pathname === "/login/client/register" ||
-    request.nextUrl.pathname === "/login/admin/register";
-
-  if (isLoginPath && user?.status === "ACTIVE") {
-    return NextResponse.redirect(new URL(getDefaultPathForRole(user.role), request.url));
-  }
-
-  const decision = decideRouteAccess(request.nextUrl.pathname, user);
-
-  if (!decision.allowed) {
-    return NextResponse.redirect(new URL(decision.redirectTo, request.url));
-  }
-
   return response;
 }
 
-function handleMiddlewareFailure(request: NextRequest, response: NextResponse) {
-  const isLoginPath =
-    request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname === "/login/client" ||
-    request.nextUrl.pathname === "/login/admin" ||
-    request.nextUrl.pathname === "/login/client/register" ||
-    request.nextUrl.pathname === "/login/admin/register";
+function isProtectedPath(pathname: string) {
+  return pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/app" || pathname.startsWith("/app/");
+}
 
-  if (isLoginPath) {
+function redirectToLogin(request: NextRequest) {
+  const loginPath = request.nextUrl.pathname.startsWith("/admin") ? "/login/admin" : "/login/client";
+  const url = new URL(loginPath, request.url);
+  url.searchParams.set("next", request.nextUrl.pathname);
+  return NextResponse.redirect(url);
+}
+
+function handleMiddlewareFailure(request: NextRequest, response: NextResponse) {
+  if (!isProtectedPath(request.nextUrl.pathname)) {
     return response;
   }
 
   const loginPath = request.nextUrl.pathname.startsWith("/admin") ? "/login/admin" : "/login/client";
   return NextResponse.redirect(new URL(`${loginPath}?error=server`, request.url));
-}
-
-async function resolveAccessContext(
-  supabase: SupabaseClient,
-  authUserId: string | null,
-  email: string | null,
-): Promise<UserAccessContext> {
-  if (!authUserId && !email) {
-    return null;
-  }
-
-  const query = authUserId
-    ? supabase.from("users").select("role,status").eq("auth_user_id", authUserId)
-    : supabase
-        .from("users")
-        .select("role,status")
-        .eq("email", email ?? "");
-  const { data: user, error } = await query.limit(1).maybeSingle();
-
-  if (error) {
-    console.error("Failed to resolve middleware access context.", error);
-    return null;
-  }
-
-  return user;
 }
 
 export const config = {

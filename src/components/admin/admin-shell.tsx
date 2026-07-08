@@ -51,6 +51,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
             ))}
           </nav>
           <form action={logoutAction}>
+            <input name="audience" type="hidden" value="admin" />
             <button
               className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-sm text-copy-secondary transition duration-200 hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
               type="submit"

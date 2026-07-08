@@ -1397,3 +1397,42 @@ Arquivos afetados:
 
 - `src/server/repositories/admin-repository.ts`
 - `src/tests/integration/admin-repository.test.ts`
+
+## 2026-07-08 - Sessoes separadas por audiencia
+
+Decisao:
+
+Separar a sessao Supabase em dois cookies: um para admin/produtor e outro para aluno. O middleware passa a escolher o cookie pela rota acessada e deixa a autorizacao completa para os guards server-side.
+
+Motivo:
+
+O cookie unico fazia o login de aluno substituir a sessao de produtor no mesmo navegador. Alem disso, o cliente SSR usava os metodos antigos `get/set/remove`, que a propria biblioteca aponta como fonte de logout aleatorio, expiracao precoce e refresh excessivo. O middleware tambem fazia chamada de Auth e consulta de usuario a cada troca de pagina protegida, aumentando latencia.
+
+Alternativas consideradas:
+
+1. Exigir navegadores/perfis diferentes para produtor e aluno.
+2. Manter cookie unico e aceitar alternancia manual de conta.
+3. Criar subdominios separados para admin e aluno.
+
+Impacto:
+
+- Produtor/admin e aluno podem ficar logados simultaneamente no mesmo navegador.
+- Logout de uma area nao derruba a outra.
+- O cookie de sessao fica configurado para 15 dias.
+- O middleware faz apenas a verificacao de existencia da sessao da audiencia correta; role/status seguem validados nos guards server-side.
+- Usuarios com cookie antigo precisarao fazer login novamente uma vez apos o deploy.
+
+Arquivos afetados:
+
+- `middleware.ts`
+- `src/lib/supabase/session.ts`
+- `src/lib/supabase/server.ts`
+- `src/lib/supabase/middleware.ts`
+- `src/server/auth/session.ts`
+- `src/server/auth/guards.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/app/app/layout.tsx`
+- `src/server/services/student-service.ts`
+- `src/components/admin/admin-shell.tsx`
+- `src/components/student/student-shell.tsx`
+- `src/tests/integration/auth-actions.test.ts`

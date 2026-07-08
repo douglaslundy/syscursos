@@ -7,7 +7,6 @@ import { prisma } from "@/lib/db/prisma";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loginSchema, registerSchema } from "@/server/auth/schemas";
-import { getCurrentUser } from "@/server/auth/session";
 import { withDbRetry } from "@/server/db/retry";
 import { getDefaultPathForRole } from "@/server/permissions/rbac";
 
@@ -23,7 +22,7 @@ export async function loginAction(formData: FormData) {
     redirect(`${loginPath}?error=invalid_input`);
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = createSupabaseServerClient(audience);
   let authResult;
 
   try {
@@ -106,12 +105,10 @@ export async function loginAction(formData: FormData) {
   redirect(getDefaultPathForRole(appUser.role));
 }
 
-export async function logoutAction() {
-  const currentUser = await getCurrentUser();
-  const loginPath = currentUser.ok && (currentUser.user.role === "ADMIN" || currentUser.user.role === "PRODUCER")
-    ? "/login/admin"
-    : "/login/client";
-  const supabase = createSupabaseServerClient();
+export async function logoutAction(formData?: FormData) {
+  const audience = parseAudience(formData?.get("audience") ?? null);
+  const loginPath = audience === "admin" ? "/login/admin" : "/login/client";
+  const supabase = createSupabaseServerClient(audience);
   await supabase.auth.signOut();
   redirect(loginPath);
 }
@@ -186,7 +183,7 @@ export async function registerAction(formData: FormData) {
     redirect(`${registerPath}?error=server`);
   }
 
-  const supabase = createSupabaseServerClient();
+  const supabase = createSupabaseServerClient("client");
   const signIn = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,

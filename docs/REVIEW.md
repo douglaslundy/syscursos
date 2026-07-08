@@ -3010,3 +3010,66 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ### Proxima etapa recomendada
 
 - Validar deploy automatico na Vercel apos o push e retestar a edicao de posicao de aula no painel.
+
+---
+
+### 2026-07-08 - Sessoes separadas e desempenho de middleware
+
+### Arquivos criados ou alterados
+
+- `middleware.ts`
+- `src/lib/supabase/session.ts`
+- `src/lib/supabase/server.ts`
+- `src/lib/supabase/middleware.ts`
+- `src/server/auth/session.ts`
+- `src/server/auth/guards.ts`
+- `src/server/actions/auth-actions.ts`
+- `src/app/app/layout.tsx`
+- `src/server/services/student-service.ts`
+- `src/components/admin/admin-shell.tsx`
+- `src/components/student/student-shell.tsx`
+- `src/tests/integration/auth-actions.test.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Criada configuracao de cookies por audiencia: `syscursos-admin-auth` e `syscursos-client-auth`.
+- Sessao configurada com `maxAge` de 15 dias.
+- Cliente Supabase SSR atualizado para `getAll/setAll`.
+- Middleware deixou de consultar usuario/banco a cada navegacao; agora verifica apenas se ha sessao da audiencia correta em rotas protegidas.
+- Guards server-side passaram a ler o cookie correto conforme os papeis exigidos.
+- Logout recebeu audiencia explicita para sair somente da area atual.
+- Area do aluno passou a exigir sessao/papel `STUDENT`.
+- Testes de login/logout cobrem o uso do cookie correto por audiencia.
+
+### Testes executados
+
+- `npm.cmd run test -- --run src/tests/integration/auth-actions.test.ts src/tests/unit/rbac.test.ts`
+- `npm.cmd run typecheck`
+- `npm.cmd run lint`
+- `npm.cmd run test`
+- `npm.cmd run build`
+
+### Resultado dos testes
+
+- Testes focados: aprovados, 17 testes.
+- `typecheck`: aprovado.
+- `lint`: aprovado.
+- Suite completa: aprovada, 110 testes.
+- `build`: aprovado.
+
+### Riscos encontrados
+
+- Como o nome do cookie mudou, sessoes antigas no navegador nao serao reaproveitadas; sera necessario logar novamente uma vez apos o deploy.
+- Se o Supabase Auth da VPS tiver expiracao de refresh token menor que 15 dias, a configuracao do servidor Auth tambem precisara ser ajustada fora do codigo.
+
+### Pendencias
+
+- Nenhuma pendencia identificada para esta correcao.
+
+### Proxima etapa recomendada
+
+- Apos deploy, testar no mesmo navegador: login produtor em `/login/admin`, login aluno em `/login/client`, alternancia entre `/admin` e `/app` e logout independente em cada area.

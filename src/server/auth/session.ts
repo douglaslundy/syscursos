@@ -2,11 +2,12 @@ import { cache } from "react";
 
 import { prisma } from "@/lib/db/prisma";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { SupabaseAuthAudience } from "@/lib/supabase/session";
 import { withDbRetry } from "@/server/db/retry";
 import type { AuthenticatedUser, AuthResult } from "@/server/auth/types";
 
-export const getCurrentUser = cache(async (): Promise<AuthResult> => {
-  const supabase = createSupabaseServerClient();
+export const getCurrentUser = cache(async (audience: SupabaseAuthAudience = "client"): Promise<AuthResult> => {
+  const supabase = createSupabaseServerClient(audience);
   let supabaseUser;
 
   try {

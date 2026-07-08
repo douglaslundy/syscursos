@@ -6,7 +6,7 @@ type StudentLayoutProps = Readonly<{
 }>;
 
 export default async function StudentLayout({ children }: StudentLayoutProps) {
-  const user = await requireAnyRole(["STUDENT", "ADMIN"]);
+  const user = await requireAnyRole(["STUDENT"]);
 
   return <StudentShell user={user}>{children}</StudentShell>;
 }
