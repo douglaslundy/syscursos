@@ -18,6 +18,11 @@ const moduleCountMock = vi.hoisted(() => vi.fn());
 const moduleFindManyMock = vi.hoisted(() => vi.fn());
 const moduleUpdateMock = vi.hoisted(() => vi.fn());
 const moduleCreateMock = vi.hoisted(() => vi.fn());
+const lessonFindFirstOrThrowMock = vi.hoisted(() => vi.fn());
+const lessonCountMock = vi.hoisted(() => vi.fn());
+const lessonFindManyMock = vi.hoisted(() => vi.fn());
+const lessonUpdateMock = vi.hoisted(() => vi.fn());
+const lessonCreateMock = vi.hoisted(() => vi.fn());
 const transactionMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -48,6 +53,13 @@ vi.mock("@/lib/db/prisma", () => ({
       findMany: moduleFindManyMock,
       update: moduleUpdateMock,
       create: moduleCreateMock,
+    },
+    lesson: {
+      findFirstOrThrow: lessonFindFirstOrThrowMock,
+      count: lessonCountMock,
+      findMany: lessonFindManyMock,
+      update: lessonUpdateMock,
+      create: lessonCreateMock,
     },
     $transaction: transactionMock,
   },
@@ -87,6 +99,11 @@ describe("admin repository", () => {
     moduleFindManyMock.mockReset();
     moduleUpdateMock.mockReset();
     moduleCreateMock.mockReset();
+    lessonFindFirstOrThrowMock.mockReset();
+    lessonCountMock.mockReset();
+    lessonFindManyMock.mockReset();
+    lessonUpdateMock.mockReset();
+    lessonCreateMock.mockReset();
     transactionMock.mockReset();
 
     findCourseMock.mockResolvedValue({ id: "course-id" });
@@ -98,6 +115,7 @@ describe("admin repository", () => {
     producerStudentCreateMock.mockResolvedValue({ id: "producer-link-id" });
     producerStudentDeleteManyMock.mockResolvedValue({ count: 1 });
     moduleFindManyMock.mockResolvedValue([]);
+    lessonFindManyMock.mockResolvedValue([]);
     transactionMock.mockImplementation(async (callback: (tx: typeof prisma) => unknown) => callback(prisma));
   });
 
@@ -382,6 +400,166 @@ describe("upsertModule position reordering", () => {
         title: "Novo modulo",
         description: null,
         position: 2,
+        status: "ACTIVE",
+      },
+    });
+  });
+});
+
+describe("upsertLesson position reordering", () => {
+  const youtubeUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+  const baseInput = {
+    id: "lesson-being-edited",
+    moduleId: "module-id",
+    title: "Aula",
+    description: null,
+    youtubeUrl,
+    youtubeVideoId: null,
+    coverImageUrl: null,
+    status: "ACTIVE" as const,
+  };
+
+  beforeEach(() => {
+    lessonFindFirstOrThrowMock.mockReset();
+    lessonCountMock.mockReset();
+    lessonFindManyMock.mockReset();
+    lessonUpdateMock.mockReset();
+    lessonCreateMock.mockReset();
+    moduleFindFirstOrThrowMock.mockReset();
+    transactionMock.mockReset();
+    lessonFindManyMock.mockResolvedValue([]);
+    transactionMock.mockImplementation(async (callback: (tx: typeof prisma) => unknown) => callback(prisma));
+  });
+
+  it("moving a lesson to an earlier position shifts the in-between siblings forward", async () => {
+    const { upsertLesson } = await import("@/server/repositories/admin-repository");
+    const { extractYouTubeVideoId } = await import("@/server/services/video-platform-service");
+    const expectedVideoId = extractYouTubeVideoId(youtubeUrl);
+
+    lessonFindFirstOrThrowMock.mockResolvedValue({ position: 3, moduleId: "module-id" });
+    lessonCountMock.mockResolvedValue(3);
+    lessonFindManyMock.mockResolvedValue([{ id: "lesson-1", position: 1 }, { id: "lesson-2", position: 2 }]);
+
+    await upsertLesson("org-id", "admin-id", "ADMIN", { ...baseInput, position: 1 });
+
+    expect(lessonFindFirstOrThrowMock).toHaveBeenCalledWith({
+      where: { id: "lesson-being-edited", module: { course: { organizationId: "org-id" } } },
+      select: { position: true, moduleId: true },
+    });
+    expect(lessonFindManyMock).toHaveBeenCalledWith({
+      where: {
+        moduleId: "module-id",
+        id: { not: "lesson-being-edited" },
+        position: { gte: 1, lt: 3 },
+      },
+      select: { id: true, position: true },
+    });
+    expect(lessonUpdateMock.mock.calls).toEqual([
+      [{ where: { id: "lesson-1" }, data: { position: -1 } }],
+      [{ where: { id: "lesson-2" }, data: { position: -2 } }],
+      [{ where: { id: "lesson-being-edited" }, data: { position: -3 } }],
+      [{ where: { id: "lesson-1" }, data: { position: 2 } }],
+      [{ where: { id: "lesson-2" }, data: { position: 3 } }],
+      [{ where: { id: "lesson-being-edited" }, data: { position: 1 } }],
+      [
+        {
+          where: { id: "lesson-being-edited" },
+          data: {
+            title: "Aula",
+            description: null,
+            youtubeUrl,
+            youtubeVideoId: expectedVideoId,
+            coverImageUrl: null,
+            position: 1,
+            status: "ACTIVE",
+          },
+        },
+      ],
+    ]);
+  });
+
+  it("moving a lesson to a position beyond the total clamps it to the last position", async () => {
+    const { upsertLesson } = await import("@/server/repositories/admin-repository");
+
+    lessonFindFirstOrThrowMock.mockResolvedValue({ position: 1, moduleId: "module-id" });
+    lessonCountMock.mockResolvedValue(2);
+    lessonFindManyMock.mockResolvedValue([{ id: "lesson-2", position: 2 }]);
+
+    await upsertLesson("org-id", "admin-id", "ADMIN", { ...baseInput, position: 50 });
+
+    expect(lessonFindManyMock).toHaveBeenCalledWith({
+      where: {
+        moduleId: "module-id",
+        id: { not: "lesson-being-edited" },
+        position: { gt: 1, lte: 2 },
+      },
+      select: { id: true, position: true },
+    });
+    expect(lessonUpdateMock.mock.calls).toEqual([
+      [{ where: { id: "lesson-2" }, data: { position: -1 } }],
+      [{ where: { id: "lesson-being-edited" }, data: { position: -2 } }],
+      [{ where: { id: "lesson-2" }, data: { position: 1 } }],
+      [{ where: { id: "lesson-being-edited" }, data: { position: 2 } }],
+      [
+        {
+          where: { id: "lesson-being-edited" },
+          data: {
+            title: "Aula",
+            description: null,
+            youtubeUrl,
+            youtubeVideoId: expect.anything(),
+            coverImageUrl: null,
+            position: 2,
+            status: "ACTIVE",
+          },
+        },
+      ],
+    ]);
+  });
+
+  it("creating a lesson in the middle of the list shifts the following siblings forward", async () => {
+    const { upsertLesson } = await import("@/server/repositories/admin-repository");
+
+    lessonCountMock.mockResolvedValue(2);
+    lessonFindManyMock.mockResolvedValue([{ id: "lesson-1", position: 1 }]);
+    lessonCreateMock.mockResolvedValue({ id: "new-lesson-id" });
+
+    // Module lookup for the create path re-uses the `module` delegate, already mocked in Task 1.
+    moduleFindFirstOrThrowMock.mockResolvedValue({ id: "module-id" });
+
+    await upsertLesson("org-id", "admin-id", "ADMIN", {
+      moduleId: "module-id",
+      title: "Nova aula",
+      description: null,
+      youtubeUrl,
+      youtubeVideoId: null,
+      coverImageUrl: null,
+      position: 1,
+      status: "ACTIVE" as const,
+    });
+
+    expect(moduleFindFirstOrThrowMock).toHaveBeenCalledWith({
+      where: { id: "module-id", course: { organizationId: "org-id" } },
+      select: { id: true },
+    });
+    expect(lessonFindManyMock).toHaveBeenCalledWith({
+      where: { moduleId: "module-id", position: { gte: 1 } },
+      select: { id: true, position: true },
+    });
+    expect(lessonUpdateMock.mock.calls).toEqual([
+      [{ where: { id: "lesson-1" }, data: { position: -1 } }],
+      [{ where: { id: "lesson-1" }, data: { position: 2 } }],
+    ]);
+    expect(lessonCreateMock).toHaveBeenCalledWith({
+      data: {
+        moduleId: "module-id",
+        title: "Nova aula",
+        description: null,
+        youtubeUrl,
+        youtubeVideoId: expect.anything(),
+        coverImageUrl: null,
+        position: 1,
         status: "ACTIVE",
       },
     });

@@ -293,6 +293,15 @@ async function shiftModulePositions(tx: Prisma.TransactionClient, entries: Posit
   }
 }
 
+async function shiftLessonPositions(tx: Prisma.TransactionClient, entries: PositionEntry[]): Promise<void> {
+  for (const [index, entry] of entries.entries()) {
+    await tx.lesson.update({ where: { id: entry.id }, data: { position: -(index + 1) } });
+  }
+  for (const entry of entries) {
+    await tx.lesson.update({ where: { id: entry.id }, data: { position: entry.position } });
+  }
+}
+
 export async function upsertModule(
   organizationId: string,
   actorUserId: string,
@@ -421,37 +430,81 @@ export async function upsertLesson(
   const courseScope = scopedCourseWhere(organizationId, actorUserId, actorRole);
   const youtubeVideoId = normalizeLessonYouTubeVideoId(input.youtubeUrl);
 
-  if (input.id) {
-    return prisma.lesson.updateMany({
-      where: { id: input.id, module: { course: courseScope } },
+  return prisma.$transaction(async (tx) => {
+    if (input.id) {
+      const current = await tx.lesson.findFirstOrThrow({
+        where: { id: input.id, module: { course: courseScope } },
+        select: { position: true, moduleId: true },
+      });
+
+      const total = await tx.lesson.count({ where: { moduleId: current.moduleId } });
+      const position = clampPosition(input.position, total);
+
+      if (position !== current.position) {
+        const siblings = await tx.lesson.findMany({
+          where: {
+            moduleId: current.moduleId,
+            id: { not: input.id },
+            position: positionRangeFilter(current.position, position),
+          },
+          select: { id: true, position: true },
+        });
+
+        await shiftLessonPositions(tx, [
+          ...siblings.map((sibling) => ({
+            id: sibling.id,
+            position: shiftedSiblingPosition(sibling.position, current.position, position),
+          })),
+          { id: input.id, position },
+        ]);
+      }
+
+      return tx.lesson.update({
+        where: { id: input.id },
+        data: {
+          title: input.title,
+          description: input.description,
+          youtubeUrl: input.youtubeUrl,
+          youtubeVideoId,
+          coverImageUrl: input.coverImageUrl,
+          position,
+          status: input.status,
+        },
+      });
+    }
+
+    const lessonModule = await tx.module.findFirstOrThrow({
+      where: { id: input.moduleId, course: courseScope },
+      select: { id: true },
+    });
+
+    const total = await tx.lesson.count({ where: { moduleId: lessonModule.id } });
+    const position = clampPosition(input.position, total + 1);
+
+    const siblings = await tx.lesson.findMany({
+      where: { moduleId: lessonModule.id, position: { gte: position } },
+      select: { id: true, position: true },
+    });
+
+    if (siblings.length > 0) {
+      await shiftLessonPositions(
+        tx,
+        siblings.map((sibling) => ({ id: sibling.id, position: sibling.position + 1 })),
+      );
+    }
+
+    return tx.lesson.create({
       data: {
+        moduleId: lessonModule.id,
         title: input.title,
         description: input.description,
         youtubeUrl: input.youtubeUrl,
         youtubeVideoId,
         coverImageUrl: input.coverImageUrl,
-        position: input.position,
-        status: input.status,
+        position,
+        status: input.status ?? LessonStatus.ACTIVE,
       },
     });
-  }
-
-  await prisma.module.findFirstOrThrow({
-    where: { id: input.moduleId, course: courseScope },
-    select: { id: true },
-  });
-
-  return prisma.lesson.create({
-    data: {
-      moduleId: input.moduleId,
-      title: input.title,
-      description: input.description,
-      youtubeUrl: input.youtubeUrl,
-      youtubeVideoId,
-      coverImageUrl: input.coverImageUrl,
-      position: input.position,
-      status: input.status ?? LessonStatus.ACTIVE,
-    },
   });
 }
 
