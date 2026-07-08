@@ -23,6 +23,11 @@ const lessonCountMock = vi.hoisted(() => vi.fn());
 const lessonFindManyMock = vi.hoisted(() => vi.fn());
 const lessonUpdateMock = vi.hoisted(() => vi.fn());
 const lessonCreateMock = vi.hoisted(() => vi.fn());
+const lessonMaterialFindFirstOrThrowMock = vi.hoisted(() => vi.fn());
+const lessonMaterialCountMock = vi.hoisted(() => vi.fn());
+const lessonMaterialFindManyMock = vi.hoisted(() => vi.fn());
+const lessonMaterialUpdateMock = vi.hoisted(() => vi.fn());
+const lessonMaterialCreateMock = vi.hoisted(() => vi.fn());
 const transactionMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/db/prisma", () => ({
@@ -60,6 +65,13 @@ vi.mock("@/lib/db/prisma", () => ({
       findMany: lessonFindManyMock,
       update: lessonUpdateMock,
       create: lessonCreateMock,
+    },
+    lessonMaterial: {
+      findFirstOrThrow: lessonMaterialFindFirstOrThrowMock,
+      count: lessonMaterialCountMock,
+      findMany: lessonMaterialFindManyMock,
+      update: lessonMaterialUpdateMock,
+      create: lessonMaterialCreateMock,
     },
     $transaction: transactionMock,
   },
@@ -104,6 +116,11 @@ describe("admin repository", () => {
     lessonFindManyMock.mockReset();
     lessonUpdateMock.mockReset();
     lessonCreateMock.mockReset();
+    lessonMaterialFindFirstOrThrowMock.mockReset();
+    lessonMaterialCountMock.mockReset();
+    lessonMaterialFindManyMock.mockReset();
+    lessonMaterialUpdateMock.mockReset();
+    lessonMaterialCreateMock.mockReset();
     transactionMock.mockReset();
 
     findCourseMock.mockResolvedValue({ id: "course-id" });
@@ -116,6 +133,7 @@ describe("admin repository", () => {
     producerStudentDeleteManyMock.mockResolvedValue({ count: 1 });
     moduleFindManyMock.mockResolvedValue([]);
     lessonFindManyMock.mockResolvedValue([]);
+    lessonMaterialFindManyMock.mockResolvedValue([]);
     transactionMock.mockImplementation(async (callback: (tx: typeof prisma) => unknown) => callback(prisma));
   });
 
@@ -559,6 +577,116 @@ describe("upsertLesson position reordering", () => {
         youtubeUrl,
         youtubeVideoId: expect.anything(),
         coverImageUrl: null,
+        position: 1,
+        status: "ACTIVE",
+      },
+    });
+  });
+});
+
+describe("upsertLessonMaterial position reordering", () => {
+  const baseInput = {
+    id: "material-being-edited",
+    lessonId: "lesson-id",
+    type: "PDF" as const,
+    title: "Material",
+    url: "https://example.com/material.pdf",
+    status: "ACTIVE" as const,
+  };
+
+  beforeEach(() => {
+    lessonMaterialFindFirstOrThrowMock.mockReset();
+    lessonMaterialCountMock.mockReset();
+    lessonMaterialFindManyMock.mockReset();
+    lessonMaterialUpdateMock.mockReset();
+    lessonMaterialCreateMock.mockReset();
+    lessonFindFirstOrThrowMock.mockReset();
+    transactionMock.mockReset();
+    lessonMaterialFindManyMock.mockResolvedValue([]);
+    transactionMock.mockImplementation(async (callback: (tx: typeof prisma) => unknown) => callback(prisma));
+  });
+
+  it("moving a material to an earlier position shifts the in-between siblings forward", async () => {
+    const { upsertLessonMaterial } = await import("@/server/repositories/admin-repository");
+
+    lessonMaterialFindFirstOrThrowMock.mockResolvedValue({ position: 3, lessonId: "lesson-id" });
+    lessonMaterialCountMock.mockResolvedValue(3);
+    lessonMaterialFindManyMock.mockResolvedValue([
+      { id: "material-1", position: 1 },
+      { id: "material-2", position: 2 },
+    ]);
+
+    await upsertLessonMaterial("org-id", "admin-id", "ADMIN", { ...baseInput, position: 1 });
+
+    expect(lessonMaterialFindFirstOrThrowMock).toHaveBeenCalledWith({
+      where: { id: "material-being-edited", lesson: { module: { course: { organizationId: "org-id" } } } },
+      select: { position: true, lessonId: true },
+    });
+    expect(lessonMaterialFindManyMock).toHaveBeenCalledWith({
+      where: {
+        lessonId: "lesson-id",
+        id: { not: "material-being-edited" },
+        position: { gte: 1, lt: 3 },
+      },
+      select: { id: true, position: true },
+    });
+    expect(lessonMaterialUpdateMock.mock.calls).toEqual([
+      [{ where: { id: "material-1" }, data: { position: -1 } }],
+      [{ where: { id: "material-2" }, data: { position: -2 } }],
+      [{ where: { id: "material-being-edited" }, data: { position: -3 } }],
+      [{ where: { id: "material-1" }, data: { position: 2 } }],
+      [{ where: { id: "material-2" }, data: { position: 3 } }],
+      [{ where: { id: "material-being-edited" }, data: { position: 1 } }],
+      [
+        {
+          where: { id: "material-being-edited" },
+          data: {
+            type: "PDF",
+            title: "Material",
+            url: "https://example.com/material.pdf",
+            position: 1,
+            status: "ACTIVE",
+          },
+        },
+      ],
+    ]);
+  });
+
+  it("creating a material in the middle of the list shifts the following siblings forward", async () => {
+    const { upsertLessonMaterial } = await import("@/server/repositories/admin-repository");
+
+    lessonFindFirstOrThrowMock.mockResolvedValue({ id: "lesson-id" });
+    lessonMaterialCountMock.mockResolvedValue(1);
+    lessonMaterialFindManyMock.mockResolvedValue([{ id: "material-1", position: 1 }]);
+    lessonMaterialCreateMock.mockResolvedValue({ id: "new-material-id" });
+
+    await upsertLessonMaterial("org-id", "admin-id", "ADMIN", {
+      lessonId: "lesson-id",
+      type: "LINK" as const,
+      title: "Novo material",
+      url: "https://example.com/novo",
+      position: 1,
+      status: "ACTIVE" as const,
+    });
+
+    expect(lessonFindFirstOrThrowMock).toHaveBeenCalledWith({
+      where: { id: "lesson-id", module: { course: { organizationId: "org-id" } } },
+      select: { id: true },
+    });
+    expect(lessonMaterialFindManyMock).toHaveBeenCalledWith({
+      where: { lessonId: "lesson-id", position: { gte: 1 } },
+      select: { id: true, position: true },
+    });
+    expect(lessonMaterialUpdateMock.mock.calls).toEqual([
+      [{ where: { id: "material-1" }, data: { position: -1 } }],
+      [{ where: { id: "material-1" }, data: { position: 2 } }],
+    ]);
+    expect(lessonMaterialCreateMock).toHaveBeenCalledWith({
+      data: {
+        lessonId: "lesson-id",
+        type: "LINK",
+        title: "Novo material",
+        url: "https://example.com/novo",
         position: 1,
         status: "ACTIVE",
       },

@@ -552,45 +552,78 @@ export async function upsertLessonMaterial(
   input: LessonMaterialInput,
 ) {
   const courseScope = scopedCourseWhere(organizationId, actorUserId, actorRole);
-  if (input.id) {
-    return prisma.lessonMaterial.updateMany({
-      where: {
-        id: input.id,
-        lesson: {
-          module: {
-            course: courseScope,
+
+  return prisma.$transaction(async (tx) => {
+    if (input.id) {
+      const current = await tx.lessonMaterial.findFirstOrThrow({
+        where: { id: input.id, lesson: { module: { course: courseScope } } },
+        select: { position: true, lessonId: true },
+      });
+
+      const total = await tx.lessonMaterial.count({ where: { lessonId: current.lessonId } });
+      const position = clampPosition(input.position, total);
+
+      if (position !== current.position) {
+        const siblings = await tx.lessonMaterial.findMany({
+          where: {
+            lessonId: current.lessonId,
+            id: { not: input.id },
+            position: positionRangeFilter(current.position, position),
           },
+          select: { id: true, position: true },
+        });
+
+        await shiftPositions(tx.lessonMaterial, [
+          ...siblings.map((sibling) => ({
+            id: sibling.id,
+            position: shiftedSiblingPosition(sibling.position, current.position, position),
+          })),
+          { id: input.id, position },
+        ]);
+      }
+
+      return tx.lessonMaterial.update({
+        where: { id: input.id },
+        data: {
+          type: input.type,
+          title: input.title,
+          url: input.url,
+          position,
+          status: input.status,
         },
-      },
+      });
+    }
+
+    const lesson = await tx.lesson.findFirstOrThrow({
+      where: { id: input.lessonId, module: { course: courseScope } },
+      select: { id: true },
+    });
+
+    const total = await tx.lessonMaterial.count({ where: { lessonId: lesson.id } });
+    const position = clampPosition(input.position, total + 1);
+
+    const siblings = await tx.lessonMaterial.findMany({
+      where: { lessonId: lesson.id, position: { gte: position } },
+      select: { id: true, position: true },
+    });
+
+    if (siblings.length > 0) {
+      await shiftPositions(
+        tx.lessonMaterial,
+        siblings.map((sibling) => ({ id: sibling.id, position: sibling.position + 1 })),
+      );
+    }
+
+    return tx.lessonMaterial.create({
       data: {
+        lessonId: lesson.id,
         type: input.type,
         title: input.title,
         url: input.url,
-        position: input.position,
+        position,
         status: input.status,
       },
     });
-  }
-
-  await prisma.lesson.findFirstOrThrow({
-    where: {
-      id: input.lessonId,
-      module: {
-        course: courseScope,
-      },
-    },
-    select: { id: true },
-  });
-
-  return prisma.lessonMaterial.create({
-    data: {
-      lessonId: input.lessonId,
-      type: input.type,
-      title: input.title,
-      url: input.url,
-      position: input.position,
-      status: input.status,
-    },
   });
 }
 
