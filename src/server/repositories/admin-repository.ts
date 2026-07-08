@@ -1,6 +1,7 @@
 import {
   CourseStatus,
   EnrollmentStatus,
+  LessonMaterialStatus,
   LessonStatus,
   ModuleStatus,
   Prisma,
@@ -621,7 +622,7 @@ export async function upsertLessonMaterial(
         title: input.title,
         url: input.url,
         position,
-        status: input.status,
+        status: input.status ?? LessonMaterialStatus.ACTIVE,
       },
     });
   });

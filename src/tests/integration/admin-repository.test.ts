@@ -582,6 +582,17 @@ describe("upsertLesson position reordering", () => {
       },
     });
   });
+
+  it("throws when editing a lesson that does not exist or is out of scope", async () => {
+    const { upsertLesson } = await import("@/server/repositories/admin-repository");
+
+    lessonFindFirstOrThrowMock.mockRejectedValue(new Error("not found"));
+
+    await expect(
+      upsertLesson("org-id", "admin-id", "ADMIN", { ...baseInput, position: 1 }),
+    ).rejects.toThrow("not found");
+    expect(lessonUpdateMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("upsertLessonMaterial position reordering", () => {
@@ -691,5 +702,16 @@ describe("upsertLessonMaterial position reordering", () => {
         status: "ACTIVE",
       },
     });
+  });
+
+  it("throws when editing a material that does not exist or is out of scope", async () => {
+    const { upsertLessonMaterial } = await import("@/server/repositories/admin-repository");
+
+    lessonMaterialFindFirstOrThrowMock.mockRejectedValue(new Error("not found"));
+
+    await expect(
+      upsertLessonMaterial("org-id", "admin-id", "ADMIN", { ...baseInput, position: 1 }),
+    ).rejects.toThrow("not found");
+    expect(lessonMaterialUpdateMock).not.toHaveBeenCalled();
   });
 });
