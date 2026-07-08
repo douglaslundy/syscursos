@@ -284,21 +284,16 @@ function clampPosition(position: number, maxPosition: number): number {
   return Math.min(Math.max(position, 1), maxPosition);
 }
 
-async function shiftModulePositions(tx: Prisma.TransactionClient, entries: PositionEntry[]): Promise<void> {
-  for (const [index, entry] of entries.entries()) {
-    await tx.module.update({ where: { id: entry.id }, data: { position: -(index + 1) } });
-  }
-  for (const entry of entries) {
-    await tx.module.update({ where: { id: entry.id }, data: { position: entry.position } });
-  }
-}
+type PositionUpdateDelegate = {
+  update: (args: { where: { id: string }; data: { position: number } }) => Promise<unknown>;
+};
 
-async function shiftLessonPositions(tx: Prisma.TransactionClient, entries: PositionEntry[]): Promise<void> {
+async function shiftPositions(delegate: PositionUpdateDelegate, entries: PositionEntry[]): Promise<void> {
   for (const [index, entry] of entries.entries()) {
-    await tx.lesson.update({ where: { id: entry.id }, data: { position: -(index + 1) } });
+    await delegate.update({ where: { id: entry.id }, data: { position: -(index + 1) } });
   }
   for (const entry of entries) {
-    await tx.lesson.update({ where: { id: entry.id }, data: { position: entry.position } });
+    await delegate.update({ where: { id: entry.id }, data: { position: entry.position } });
   }
 }
 
@@ -330,7 +325,7 @@ export async function upsertModule(
           select: { id: true, position: true },
         });
 
-        await shiftModulePositions(tx, [
+        await shiftPositions(tx.module, [
           ...siblings.map((sibling) => ({
             id: sibling.id,
             position: shiftedSiblingPosition(sibling.position, current.position, position),
@@ -364,8 +359,8 @@ export async function upsertModule(
     });
 
     if (siblings.length > 0) {
-      await shiftModulePositions(
-        tx,
+      await shiftPositions(
+        tx.module,
         siblings.map((sibling) => ({ id: sibling.id, position: sibling.position + 1 })),
       );
     }
@@ -450,7 +445,7 @@ export async function upsertLesson(
           select: { id: true, position: true },
         });
 
-        await shiftLessonPositions(tx, [
+        await shiftPositions(tx.lesson, [
           ...siblings.map((sibling) => ({
             id: sibling.id,
             position: shiftedSiblingPosition(sibling.position, current.position, position),
@@ -487,8 +482,8 @@ export async function upsertLesson(
     });
 
     if (siblings.length > 0) {
-      await shiftLessonPositions(
-        tx,
+      await shiftPositions(
+        tx.lesson,
         siblings.map((sibling) => ({ id: sibling.id, position: sibling.position + 1 })),
       );
     }
