@@ -36,7 +36,7 @@ export function CourseCard({
         {coverImageUrl ? (
           <div
             aria-hidden="true"
-            className="mb-4 h-[10.5rem] w-full rounded-md border border-stroke-subtle bg-cover bg-center"
+            className="mb-4 h-[18.9rem] w-full rounded-md border border-stroke-subtle bg-cover bg-center"
             style={{ backgroundImage: `url("${coverImageUrl}")` }}
           />
         ) : null}
