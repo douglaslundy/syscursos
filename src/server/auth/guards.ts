@@ -16,7 +16,7 @@ export async function requireAnyRole(roles: UserRole[]) {
 
   if (!result.ok) {
     if (result.reason === "SERVER_ERROR") {
-      redirect(`${loginPath}?error=server`);
+      throw new Error("AUTH_SERVER_ERROR");
     }
 
     redirect(loginPath);

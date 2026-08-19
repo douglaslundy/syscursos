@@ -487,6 +487,7 @@ Arquivos afetados:
 - `src/app/(auth)/login/page.tsx`
 - `src/tests/unit/supabase-env.test.ts`
 - `src/tests/integration/auth-actions.test.ts`
+
 - `docs/TODO.md`
 - `docs/REVIEW.md`
 - `docs/DECISIONS.md`
@@ -1436,3 +1437,97 @@ Arquivos afetados:
 - `src/components/admin/admin-shell.tsx`
 - `src/components/student/student-shell.tsx`
 - `src/tests/integration/auth-actions.test.ts`
+
+## 2026-07-30 - Importação delimitada e fallback do curso Bíblia Comentada
+
+Decisão:
+
+Importar para `Bíblia Comentada` apenas os módulos contidos entre o marcador `CURSO: A Bíblia Comentada` e o marcador `CURSO:` seguinte. Itens sem URL compatível com a constraint de vídeo são mantidos como aulas, usando um marcador técnico e preservando a informação original na descrição.
+
+Motivo:
+
+O arquivo possui 16 blocos explicitamente identificados como cursos diferentes. Misturá-los criaria uma estrutura divergente da origem. O schema exige `youtube_url` em toda aula e aceita somente YouTube, Google Drive e OneDrive, enquanto 232 itens não fornecem URL, um item aponta para Spotify e outro para playlist do YouTube.
+
+Impacto:
+
+- O curso contém exatamente 67 módulos e 758 aulas do bloco correto.
+- Nenhum link de mídia foi inventado.
+- 234 itens permanecem identificáveis para complementação posterior.
+- A gravação ocorre em transação para impedir estado parcial em caso de falha.
+
+Arquivo afetado:
+
+- `prisma/create-biblia-comentada-course.ts`
+
+## 2026-07-30 - Cursos de biblia.txt mantidos como cursos independentes
+
+Decisão:
+
+Manter cada um dos 16 blocos `CURSO:` como um curso independente no banco e vincular todos ao produtor `douglaslundy@gmail.com`.
+
+Motivo:
+
+Após uma breve reconsideração sobre agrupar todo o conteúdo, o usuário confirmou que os demais cursos poderiam ser criados separadamente. Essa estrutura também corresponde aos delimitadores explícitos do arquivo e preserva os módulos de cada curso sem achatar a hierarquia.
+
+Impacto:
+
+- A decisão anterior de importar apenas o primeiro bloco fica superada pelo escopo final confirmado.
+- O catálogo resultante possui 16 cursos, 127 módulos e 1.560 aulas.
+- O script adicional grava os 15 cursos restantes em uma transação e valida integralmente a sequência persistida.
+
+Arquivo afetado:
+
+- `prisma/create-biblia-additional-courses.ts`
+
+
+## 2026-07-30 - Restaurar o gateway Supabase existente para recuperar o login
+
+Decisão:
+
+Restaurar o serviço Kong pela composição oficial já instalada em `/opt/supabase-syscursos`, preservando as regras Traefik, redes e configurações existentes.
+
+Motivo:
+
+O Auth e os dados do usuário estavam íntegros; a falha pública era causada apenas pela ausência do gateway ao qual o domínio estava associado. Criar um acesso alternativo ou alterar a aplicação ampliaria o risco sem tratar a causa operacional.
+
+Impacto:
+
+- O domínio público voltou a alcançar os serviços Supabase pelo caminho previsto.
+- Nenhuma rota, regra de autenticação, schema ou dado de curso foi alterado.
+- O serviço restaurado usa política de reinício `unless-stopped`.
+
+
+## 2026-08-19 - Corrigir gargalo de conexao (login falso e navegacao lenta) e headroom do banco
+
+Decisao:
+
+1. Aumentar `default_pool_size` (20->40) e `default_max_clients` (100->200) do tenant `your-tenant-id` no Supavisor da VPS (`_supavisor.tenants`/`_supavisor.users`), via UPDATE direto seguido de restart do container `supabase-syscursos-supavisor-1`.
+2. Elevar `connection_limit` padrao do Prisma em producao de `1` para `5` (`src/lib/db/prisma.ts`), compativel com o novo pool.
+3. Parar de tratar falha tecnica de banco/Auth como sessao invalida: `requireAnyRole` (`src/server/auth/guards.ts`) agora lanca erro em vez de redirecionar para `/login?error=server` quando `getCurrentUser` retorna `SERVER_ERROR`; o middleware (`middleware.ts`) deixa a requisicao seguir em vez de redirecionar ao login quando a checagem de sessao falha tecnicamente. Criado `src/app/admin/error.tsx` (mesma UX de "Tentar novamente" que ja existia em `/app`).
+
+Motivo:
+
+Investigacao (ver `docs/REVIEW.md`) confirmou que o app conecta ao Postgres pelo modo *session* do Supavisor (porta 55432) com pool pequeno (20). Sob varias mutacoes seguidas (ex.: cadastro de aulas em sequencia) ou varios alunos simultaneos, o pool estourava, o Prisma retornava erro de conexao, e como qualquer `SERVER_ERROR` em `getCurrentUser` redirecionava para a tela de login, o usuario parecia "deslogado" quando na verdade a sessao continuava valida - so o banco estava indisponivel por um instante. O `connection_limit=1` fixo tambem serializava toda consulta por instancia, contribuindo para navegacao lenta.
+
+Alternativas consideradas:
+
+- Migrar para o pooler em modo transacao (porta 6643) do Supavisor, que ja existe e esta saudavel na VPS. Nao aplicado ainda: a porta 6643 esta liberada no UFW/iptables do host, mas o teste TCP direto (`/dev/tcp`) trava, indicando bloqueio em uma camada externa ao SO (provavelmente firewall/security group do provedor da VPS, fora do alcance via SSH). Fica registrado como proxima etapa recomendada quando essa porta for liberada externamente.
+- Aumentar `max_connections` do Postgres. Nao foi necessario nesta rodada (uso atual ~30 de 100; RAM/CPU da VPS com folga confirmada antes da mudanca).
+
+Impacto:
+
+- Verificado com `prisma db execute --url ... "SELECT 1"` que a conexao pela porta 55432 continua funcionando apos o restart do Supavisor.
+- Nenhuma alteracao de schema, dado de curso/aluno ou variavel de ambiente foi feita nesta etapa; a mudanca no Supavisor foi apenas nas linhas de configuracao do proprio tenant (`_supavisor.tenants`/`_supavisor.users`).
+- `npm run lint`, `npm run typecheck` (sem novos erros; erros preexistentes em `prisma/update-metodo-sub10-course.ts` continuam fora de escopo) e os testes de `auth-actions`, `rbac` e `admin-actions` (34 testes) aprovados apos a mudanca.
+
+Arquivos afetados:
+
+- `src/lib/db/prisma.ts`
+- `src/server/auth/guards.ts`
+- `middleware.ts`
+- `src/app/admin/error.tsx`
+
+Pendencia:
+
+- Liberar a porta 6643/tcp no firewall externo (provedor da VPS) para permitir migrar `DATABASE_URL` de producao (Vercel) para o pooler em modo transacao com `pgbouncer=true`, que e a solucao definitiva para muitos alunos simultaneos numa aplicacao serverless.
+- Corrigir o mesmo tipo de mascaramento de erro (`storage_error` generico) no upload de capa de curso/aula, e alinhar os limites de tipo/tamanho do bucket `course-covers` com o codigo (diagnostico ja feito, correcao ainda nao aplicada).

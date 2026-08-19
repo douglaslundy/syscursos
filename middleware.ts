@@ -20,7 +20,9 @@ export async function middleware(request: NextRequest) {
     }
   } catch (error) {
     console.error("Failed to resolve Supabase middleware session.", error);
-    return handleMiddlewareFailure(request, response);
+    // Falha aqui e tecnica (Auth/rede indisponivel), nao prova de sessao invalida.
+    // Deixa a requisicao seguir; a pagina protegida valida a sessao de novo via
+    // requireAnyRole e mostra uma tela de "tentar novamente" sem forcar logout.
   }
 
   return response;
@@ -35,15 +37,6 @@ function redirectToLogin(request: NextRequest) {
   const url = new URL(loginPath, request.url);
   url.searchParams.set("next", request.nextUrl.pathname);
   return NextResponse.redirect(url);
-}
-
-function handleMiddlewareFailure(request: NextRequest, response: NextResponse) {
-  if (!isProtectedPath(request.nextUrl.pathname)) {
-    return response;
-  }
-
-  const loginPath = request.nextUrl.pathname.startsWith("/admin") ? "/login/admin" : "/login/client";
-  return NextResponse.redirect(new URL(`${loginPath}?error=server`, request.url));
 }
 
 export const config = {
