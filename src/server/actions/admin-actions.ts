@@ -461,6 +461,14 @@ function lessonMutationStatus(error: unknown) {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
 
+    if (message.includes("capa maior que o limite")) {
+      return "cover_too_large";
+    }
+
+    if (message.includes("formato de imagem nao suportado")) {
+      return "cover_invalid_type";
+    }
+
     if (message.includes("auth") || message.includes("supabase")) {
       return "lesson_auth_error";
     }
@@ -525,12 +533,21 @@ function adminErrorStatus(error: unknown) {
     }
   }
 
-  if (error instanceof Error && error.message.toLowerCase().includes("auth")) {
-    return "auth_error";
-  }
-
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
+
+    if (message.includes("capa maior que o limite")) {
+      return "cover_too_large";
+    }
+
+    if (message.includes("formato de imagem nao suportado")) {
+      return "cover_invalid_type";
+    }
+
+    if (message.includes("auth")) {
+      return "auth_error";
+    }
+
     if (message.includes("supabase_service_role_key") || message.includes("missing required environment variable")) {
       return "storage_error";
     }
@@ -564,7 +581,10 @@ function assertValidImageCover(file: File, errorPath: string) {
     "image/gif",
     "image/avif",
   ]);
-  const maxBytes = 5 * 1024 * 1024;
+  // Precisa bater com o file_size_limit real configurado no bucket do Supabase
+  // Storage (5MB = 5.000.000 bytes, unidade decimal usada pelo Supabase), senao
+  // um arquivo aprovado aqui pode ser rejeitado la com erro generico de storage.
+  const maxBytes = 5_000_000;
 
   if (!allowedTypes.has(file.type) || file.size > maxBytes) {
     redirect(`${errorPath}?status=invalid`);
@@ -590,6 +610,16 @@ async function uploadImageCover(file: File, folder: "courses" | "lessons") {
   });
 
   if (upload.error) {
+    const reason = upload.error.message.toLowerCase();
+
+    if (reason.includes("exceeded the maximum allowed size") || reason.includes("payload too large")) {
+      throw new Error(`Capa maior que o limite permitido pelo storage: ${upload.error.message}`);
+    }
+
+    if (reason.includes("mime type") || reason.includes("not supported")) {
+      throw new Error(`Formato de imagem nao suportado pelo storage: ${upload.error.message}`);
+    }
+
     throw new Error(`Erro ao enviar capa para storage: ${upload.error.message}`);
   }
 

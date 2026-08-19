@@ -38,6 +38,8 @@ const messages: Record<string, string> = {
   conflict: "Ja existe um registro com estes dados.",
   auth_error: "Nao foi possivel configurar o acesso do usuario. Verifique as variaveis do Supabase.",
   storage_error: "Nao foi possivel enviar a capa. Verifique o bucket/permissoes de storage no Supabase.",
+  cover_too_large: "A imagem da capa e maior que o limite permitido (5 MB). Reduza o tamanho e tente novamente.",
+  cover_invalid_type: "Formato de imagem nao suportado. Use JPEG, PNG, WEBP, GIF ou AVIF.",
   error: "Nao foi possivel concluir a operacao. Tente novamente.",
 };
 
