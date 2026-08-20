@@ -7,7 +7,7 @@ import { toggleLessonCompletion } from "@/server/services/student-service";
 import { saveLessonNote } from "@/server/services/student-service";
 import { updateOwnStudentProfile } from "@/server/services/student-service";
 import {
-  completeLessonSchema,
+  completeLessonActionSchema,
   lessonNoteSchema,
   studentProfileSchema,
 } from "@/server/validators/student";
@@ -23,23 +23,29 @@ export type SaveLessonNoteResult =
       message: string;
     };
 
-export async function completeLessonAction(formData: FormData) {
-  const parsed = completeLessonSchema.safeParse({
-    courseId: formData.get("courseId"),
-    lessonId: formData.get("lessonId"),
-  });
+export type CompleteLessonResult =
+  | {
+      ok: true;
+      isCompleted: boolean;
+    }
+  | {
+      ok: false;
+      message: string;
+    };
+
+export async function completeLessonAction(input: unknown): Promise<CompleteLessonResult> {
+  const parsed = completeLessonActionSchema.safeParse(input);
 
   if (!parsed.success) {
-    throw new Error("Entrada de progresso invalida.");
+    return { ok: false, message: "Entrada de progresso invalida." };
   }
 
-  const isCompletedRaw = formData.get("isCompleted");
-  const shouldComplete = isCompletedRaw === null ? true : isCompletedRaw === "true";
-  await toggleLessonCompletion(parsed.data, shouldComplete);
-  revalidatePath(`/app/courses/${parsed.data.courseId}`);
-  revalidatePath(`/app/courses/${parsed.data.courseId}/lessons/${parsed.data.lessonId}`);
-  const status = shouldComplete ? "completed" : "uncompleted";
-  redirect(`/app/courses/${parsed.data.courseId}/lessons/${parsed.data.lessonId}?status=${status}`);
+  const { courseId, lessonId, isCompleted } = parsed.data;
+  await toggleLessonCompletion({ courseId, lessonId }, isCompleted);
+  revalidatePath(`/app/courses/${courseId}`);
+  revalidatePath(`/app/courses/${courseId}/lessons/${lessonId}`);
+
+  return { ok: true, isCompleted };
 }
 
 export async function saveLessonNoteAction(input: unknown): Promise<SaveLessonNoteResult> {

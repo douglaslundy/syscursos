@@ -14,6 +14,10 @@ export const completeLessonSchema = z.object({
   lessonId: z.string().uuid(),
 });
 
+export const completeLessonActionSchema = completeLessonSchema.extend({
+  isCompleted: z.boolean(),
+});
+
 export const lessonNoteSchema = z.object({
   courseId: z.string().uuid(),
   lessonId: z.string().uuid(),

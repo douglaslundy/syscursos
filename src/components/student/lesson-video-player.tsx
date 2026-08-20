@@ -2,13 +2,10 @@
 
 import { useEffect, useId, useMemo, useRef } from "react";
 
-import { completeLessonAction } from "@/server/actions/student-actions";
-
 type LessonVideoPlayerProps = {
   videoEmbed: { url: string; supportsCompletionTracking: boolean } | null;
   title: string;
-  courseId: string;
-  lessonId: string;
+  onEnded: () => void;
 };
 
 type YouTubePlayerEvent = {
@@ -42,11 +39,9 @@ const ENDED_STATE = 0;
 export function LessonVideoPlayer({
   videoEmbed,
   title,
-  courseId,
-  lessonId,
+  onEnded,
 }: LessonVideoPlayerProps) {
   const iframeId = useId().replace(/:/g, "");
-  const formRef = useRef<HTMLFormElement | null>(null);
   const hasSubmittedRef = useRef(false);
   const playerUrl = useMemo(() => {
     if (!videoEmbed) {
@@ -67,6 +62,9 @@ export function LessonVideoPlayer({
     }
   }, [videoEmbed]);
 
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
+
   useEffect(() => {
     if (!videoEmbed?.supportsCompletionTracking) {
       return;
@@ -81,7 +79,7 @@ export function LessonVideoPlayer({
       }
 
       hasSubmittedRef.current = true;
-      formRef.current?.requestSubmit();
+      onEndedRef.current();
     };
 
     const createPlayer = () => {
@@ -128,23 +126,14 @@ export function LessonVideoPlayer({
   }
 
   return (
-    <>
-      <iframe
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
-        className="aspect-video w-full"
-        id={iframeId}
-        referrerPolicy="strict-origin-when-cross-origin"
-        src={playerUrl}
-        title={title}
-      />
-      {videoEmbed?.supportsCompletionTracking ? (
-        <form action={completeLessonAction} className="hidden" ref={formRef}>
-          <input name="courseId" type="hidden" value={courseId} />
-          <input name="lessonId" type="hidden" value={lessonId} />
-          <input name="isCompleted" type="hidden" value="true" />
-        </form>
-      ) : null}
-    </>
+    <iframe
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowFullScreen
+      className="aspect-video w-full"
+      id={iframeId}
+      referrerPolicy="strict-origin-when-cross-origin"
+      src={playerUrl}
+      title={title}
+    />
   );
 }
