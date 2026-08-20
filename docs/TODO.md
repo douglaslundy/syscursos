@@ -673,6 +673,26 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm.cmd run test -- --run src/tests/integration/student-service.test.ts`.
 - [x] Executar `npm.cmd run build`.
 
+## Operação 2026-07-30 - Cadastro do curso Bíblia Comentada
+
+- [x] Ler e validar o bloco `A Bíblia Comentada` em `biblia.txt`.
+- [x] Preservar a ordem de 67 módulos e 758 aulas.
+- [x] Cadastrar o curso `Bíblia Comentada` no banco da VPS.
+- [x] Vincular o curso ao produtor `douglaslundy@gmail.com`.
+- [x] Preservar na descrição a origem dos 234 itens sem URL compatível com o player.
+- [x] Validar contagens, posições e ownership diretamente no banco.
+- [x] Executar lint e a suíte completa de testes.
+- [ ] Corrigir em tarefa separada os erros de tipo preexistentes no arquivo não rastreado `prisma/update-metodo-sub10-course.ts` para liberar typecheck e build.
+
+## Complemento 2026-07-30 - Cursos independentes de biblia.txt
+
+- [x] Confirmar com o usuário que os 16 blocos devem permanecer como cursos independentes.
+- [x] Validar que os 15 slugs adicionais não colidem com cursos existentes.
+- [x] Cadastrar os 15 cursos adicionais com 60 módulos e 802 aulas.
+- [x] Vincular todos ao produtor `douglaslundy@gmail.com`.
+- [x] Validar individualmente estrutura e ordem de todos os cursos adicionais.
+- [x] Validar o agregado final de 16 cursos, 127 módulos e 1.560 aulas.
+
 ## Ajuste 2026-06-04 - Card de continuidade na pagina do curso
 
 - [x] Fazer a pagina do curso usar a ultima aula tocada no proprio curso como card de continuidade.
@@ -795,3 +815,31 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Executar `npm.cmd run typecheck`.
 - [x] Executar testes relevantes.
 - [x] Executar `npm.cmd run build`.
+
+
+## Operação 2026-07-30 - Restauração do login do produtor
+
+- [x] Confirmar que o usuário interno `douglaslundy@gmail.com` está ativo e vinculado ao Auth.
+- [x] Identificar a ausência do gateway Kong da instância Supabase SysCursos.
+- [x] Restaurar o serviço Kong pela composição existente na VPS.
+- [x] Confirmar o gateway saudável e o domínio público novamente roteado.
+- [x] Redefinir exclusivamente a senha do usuário solicitado.
+- [x] Validar o login real pela API pública e encerrar a sessão de teste.
+
+## Ajuste 2026-08-19/20 - Performance, sessao "fantasma" de logout e reload desnecessario
+
+### Concluido
+
+- [x] Identificar causa raiz de cair no login ao cadastrar varias aulas seguidas: pool pequeno do Supavisor (modo session, porta 55432) + `connection_limit=1` fixo no Prisma esgotavam conexoes, e qualquer erro de banco em `getCurrentUser` era tratado como sessao invalida.
+- [x] Aumentar `default_pool_size` (20->40) e `default_max_clients` (100->200) do tenant no Supavisor da VPS (`_supavisor.tenants`/`_supavisor.users`) e reiniciar o container.
+- [x] Elevar `connection_limit` padrao do Prisma em producao de 1 para 5 (`src/lib/db/prisma.ts`).
+- [x] Parar de tratar erro tecnico de banco/Auth como sessao invalida: `requireAnyRole` lanca erro em vez de redirecionar pro login; middleware deixa a requisicao seguir; criado `src/app/admin/error.tsx` com "Tentar novamente".
+- [x] Corrigir erro generico "Nao foi possivel enviar a capa" no cadastro de curso/aula: alinhar limite de tamanho do codigo (5MB=5.000.000 bytes) com o bucket real do Supabase Storage, liberar `gif`/`avif` no bucket `course-covers` (estava restrito a 3 tipos) e mostrar o motivo real do erro (tamanho vs formato) em vez da mensagem generica.
+- [x] Corrigir "flash"/reload da pagina inteira ao marcar aula como concluida: `completeLessonAction` deixou de redirecionar e passou a devolver `{ ok, isCompleted }`; novo componente `LessonCompletionPanel` atualiza so o botao, o checkmark da trilha e a barra de progresso, sem recarregar o resto da pagina.
+- [x] Cadastrar o curso `ORATÓRIA PARA INICIANTE - ROBERTO MALLET` (3 modulos, 17 aulas, produtor `douglaslundy@gmail.com`) via `prisma/create-oratoria-iniciante-course.ts`.
+
+### Pendente
+
+- [ ] Abrir a porta 6643/tcp no firewall externo (painel do provedor da VPS, fora do alcance por SSH) para migrar `DATABASE_URL` de producao (Vercel) para o pooler em modo transacao do Supavisor - correcao definitiva para muitos alunos simultaneos (hoje so o pool do modo session foi aumentado como paliativo).
+- [ ] Aplicar o mesmo padrao "atualizar so o elemento que mudou, sem recarregar a pagina" no CRUD administrativo inteiro: salvar/excluir/ativar-inativar/reordenar em cursos, modulos, aulas, alunos e matriculas (hoje todos usam `redirect(adminStatusPath(...))` via `runAdminMutation`, que forca reload completo da listagem a cada acao).
+- [ ] Apos aplicar o padrao no admin, reavaliar se a mensagem de status por query string (`Feedback`/`adminStatusPath`) ainda e necessaria ou pode ser substituida por feedback inline como no `LessonCompletionPanel`.
