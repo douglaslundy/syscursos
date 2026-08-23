@@ -731,3 +731,75 @@
 - Logout passou a sair apenas da audiencia atual.
 - Area do aluno passou a exigir sessao `STUDENT` pelo cookie de aluno.
 - Validacoes finais: `npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run test` (110 testes), `npm.cmd run build` e `git diff --check` aprovados nesta rodada.
+
+## Atualização 2026-07-30 - Cadastro do curso Bíblia Comentada
+
+- Script criado: `prisma/create-biblia-comentada-course.ts`.
+- Origem lida em UTF-8: `C:\Users\dougl\Desktop\biblia.txt`.
+- O bloco `A Bíblia Comentada` foi encerrado no marcador do curso seguinte, preservando a separação explícita do arquivo.
+- Curso criado na VPS com título `Bíblia Comentada`, slug `biblia-comentada`, status ativo e produtor `douglaslundy@gmail.com`.
+- Estrutura validada no banco: 67 módulos e 758 aulas, com posições consecutivas.
+- Os módulos `Marcos` e `Lucas` foram preservados sem aulas, conforme a origem.
+- 524 aulas receberam URL de vídeo compatível; 234 itens sem URL compatível usam marcador técnico e preservam a observação ou link original na descrição.
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run test`: aprovado, 110 testes.
+- `npm.cmd run typecheck` e `npm.cmd run build`: bloqueados por erros preexistentes no arquivo não rastreado `prisma/update-metodo-sub10-course.ts`, linhas 264 e 268; o arquivo não foi alterado nesta operação.
+
+## Atualização 2026-07-30 - Cadastro dos 15 cursos adicionais de biblia.txt
+
+- Escopo final confirmado pelo usuário: manter os 16 marcadores `CURSO:` como cursos independentes.
+- Script criado: `prisma/create-biblia-additional-courses.ts`.
+- Foram criados os 15 cursos adicionais e mantido o curso `Bíblia Comentada` criado anteriormente.
+- Todos os 16 cursos estão ativos e vinculados ao produtor `douglaslundy@gmail.com`.
+- Validação agregada na VPS: 16 cursos, 127 módulos e 1.560 aulas.
+- Validação detalhada confirmou títulos, URLs, descrições e posições de cada módulo/aula nos 15 cursos adicionais.
+- 267 aulas do catálogo completo usam marcador técnico por não possuírem URL compatível; todas preservam a informação de origem na descrição.
+
+
+## Atualização 2026-07-30 - Restauração do login e redefinição de senha
+
+- A indisponibilidade de login foi causada pela ausência do contêiner Kong da instância Supabase SysCursos na VPS; o Auth e o usuário interno permaneciam ativos.
+- O serviço `kong` foi recriado pela composição existente e ficou saudável, com política de reinício `unless-stopped`.
+- O domínio público do Supabase voltou a encaminhar requisições ao gateway.
+- A senha do usuário `douglaslundy@gmail.com` foi redefinida para o valor solicitado pelo usuário, sem registrar o valor em documentação.
+- O login por e-mail e senha foi validado pela API pública do Supabase e a sessão de teste foi encerrada.
+- Validações locais após a operação: lint aprovado, 110 testes aprovados e `git diff --check` sem erros.
+- Typecheck e build permanecem bloqueados apenas pelos erros preexistentes nas linhas 264 e 268 de `prisma/update-metodo-sub10-course.ts`, arquivo não alterado nesta operação.
+
+## Atualização 2026-08-20/23 - Estado para retomada de sessão (comando "continue")
+
+### Branch e commits mais recentes em `main` (nesta ordem, do mais antigo pro mais novo)
+
+- `995d895` fix(auth): stop treating DB/infra errors as logout, raise connection headroom
+- `ca561c2` fix(admin): fix course/lesson cover upload rejecting valid files
+- `71bb84d` fix(student): mark lesson complete without full page reload
+- `104982d` docs: record pending work from the performance/reload session
+
+Todos os 4 já estão em produção na Vercel (`syscursos`, team `douglaslundys-projects`, `prj_0mfxe5nGCrWVaCVDbkoatJZBsarw`), confirmados via `mcp__vercel__list_deployments` com `state: READY` batendo com esses SHAs.
+
+### Concluído nesta rodada (não repetir)
+
+- Causa raiz do "cai no login sozinho" e da lentidão geral: pool pequeno do Supavisor (modo *session*, porta 55432 na VPS `144.91.92.70`) + `connection_limit=1` fixo no Prisma esgotavam conexões; qualquer erro técnico de banco em `getCurrentUser` era tratado como sessão inválida e redirecionava pro login.
+  - Aumentado no Supavisor (dado direto na tabela `_supavisor.tenants`/`_supavisor.users`, sem mexer em `.env`/docker-compose): `default_pool_size` 20->40, `default_max_clients` 100->200. Container reiniciado e testado.
+  - `src/lib/db/prisma.ts`: `connection_limit` padrão em produção 1->5.
+  - `src/server/auth/guards.ts` + `middleware.ts`: erro técnico não redireciona mais pro login; lança erro capturado por error boundary. Criado `src/app/admin/error.tsx` (mesma UX "Tentar novamente" que já existia em `/app`).
+  - Corrigidos de brinde 2 erros de tipo preexistentes em `prisma/update-metodo-sub10-course.ts` (linhas 264/268) que travavam o hook de pre-commit (`husky`) para qualquer commit no repo. **Typecheck/build não estão mais bloqueados por isso.**
+- Bug "Nao foi possivel enviar a capa. Verifique o bucket/permissoes...": bucket `course-covers` no Supabase Storage só aceitava 3 tipos de imagem (jpeg/png/webp) e tinha limite de 5.000.000 bytes, enquanto o código validava 5 tipos (+ gif/avif) até 5.242.880 bytes — qualquer mismatch caía na mesma mensagem genérica.
+  - Bucket atualizado via Storage API pra aceitar os 5 tipos (reproduzido erro antes/depois, confirmado).
+  - `src/server/actions/admin-actions.ts`: limite de tamanho alinhado a 5.000.000 bytes; erros de tamanho/tipo agora viram mensagens específicas (`cover_too_large`, `cover_invalid_type`) em vez do genérico `storage_error`.
+- Cadastrado o curso `ORATÓRIA PARA INICIANTE - ROBERTO MALLET` (3 módulos, 17 aulas, produtor `douglaslundy@gmail.com`) via `prisma/create-oratoria-iniciante-course.ts`.
+- Flagship do padrão "atualizar só o elemento que mudou, sem recarregar a página": marcar/desmarcar aula concluída.
+  - `completeLessonAction` (`src/server/actions/student-actions.ts`) não redireciona mais; devolve `{ ok, isCompleted }`, igual `saveLessonNoteAction` já fazia.
+  - Novo `src/components/student/lesson-completion-panel.tsx` (client component, `useTransition`) atualiza só o botão, o checkmark da `LessonTrailSidebar` e a barra de progresso; materiais/navegação anterior-próxima continuam server-rendered, passados como `children`.
+  - `src/components/student/lesson-video-player.tsx` perdeu o `<form>` escondido; agora recebe `onEnded` e o painel decide o que fazer.
+  - Testes novos: `src/tests/integration/student-actions.test.ts`, `src/tests/unit/lesson-completion-panel.test.tsx`. Suite completa: 114 testes, todos passando.
+
+### Pendente (retomar por aqui)
+
+1. **Porta 6643/tcp bloqueada externamente na VPS** — Supavisor já tem o pooler em modo *transação* rodando saudável nessa porta (`docker port supabase-syscursos-supavisor-1` confirma o mapeamento, `ss -tlnp` confirma o listener), mas um teste de conexão TCP direto (`/dev/tcp/144.91.92.70/6643`) trava — UFW/iptables do host liberam, então o bloqueio é numa camada externa (provável firewall/security group do painel do provedor da VPS, ainda não identificado — perguntar ao usuário qual provedor usa). Sem essa porta aberta, não dá pra migrar `DATABASE_URL` de produção (Vercel) pro modo transação, que é a correção definitiva pra muitos alunos simultâneos (o que foi feito até agora no modo *session* é paliativo).
+2. **Aplicar o padrão "sem reload de página inteira" no CRUD administrativo inteiro** — hoje cursos/módulos/aulas/alunos/matrículas (salvar, excluir, ativar/inativar, reordenar posição) usam `runAdminMutation` -> `redirect(adminStatusPath(...))` em `src/server/actions/admin-actions.ts`, que força reload completo da listagem a cada ação. Usar o `LessonCompletionPanel` como referência de padrão (client component com `useTransition`, action sem redirect devolvendo resultado, atualização local do item afetado). Ainda não desenhado em detalhe — precisa de uma etapa de brainstorming/design antes de implementar (múltiplas entidades, cada uma com necessidades diferentes: toggle de status é simples, exclusão precisa remover linha da lista, reordenar precisa recalcular posições visíveis).
+3. Depois do item 2, reavaliar se o sistema de feedback por query string (`src/components/admin/feedback.tsx` + `adminStatusPath`) ainda é necessário ou pode virar feedback inline como no `LessonCompletionPanel`.
+
+### Ao retomar com "continue"
+
+Ler esta seção + a seção equivalente em `docs/TODO.md` ("Ajuste 2026-08-19/20"), confirmar com o usuário se ainda quer seguir pelo item 2 (admin) ou pelo item 1 (porta 6643, depende de acesso do usuário ao painel do provedor da VPS) antes de implementar qualquer coisa nova.
