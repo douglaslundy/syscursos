@@ -3212,3 +3212,33 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 
 - Validar no navegador com usuario aluno: troca de aulas, contagem de avanco,
   os dois botoes do bloco de continuar, e medir a latencia percebida.
+
+---
+
+### 2026-09-03 - Regiao das funcoes Vercel (gargalo do login)
+
+### Diagnostico
+
+- Login e navegacao continuavam lentos apos as otimizacoes de query.
+- Causa: funcoes serverless na Vercel rodavam em `iad1` (US East, default
+  nao configurado) enquanto Postgres e Supabase Auth (GoTrue) estao na VPS
+  Contabo em Lauterbourg, Franca (geo-IP de 144.91.92.70).
+- Cada `prisma.*` e cada `supabase.auth.*` de dentro de uma funcao era uma
+  ida-e-volta transatlantica (~170ms). Login + cair no `/app` encadeia
+  8-12 dessas chamadas (~1,5-2,5s so de latencia).
+
+### Correcao
+
+- `vercel.json`: `"regions": ["fra1"]` (Frankfurt, <10ms da VPS).
+- Deploy `dpl_CfMjXfM6VjoFghJDm33HnLWCwWtT` (commit 71cc2fc) confirmado com
+  `regions: ["fra1"]` e `X-Vercel-Id: ...::fra1::...`.
+- Sem downside para o publico majoritariamente brasileiro (BR->fra1 ~ BR->iad1;
+  assets estaticos seguem na CDN global).
+
+### Pendencias / proximos passos
+
+- Validar o tempo real de login com usuario aluno.
+- Opcao de fundo (maior): mover a VPS para um datacenter no Brasil, aproximando
+  banco e usuarios ao mesmo tempo.
+- Roundtrip do `supabase.auth.getUser()` a cada render e conexoes frias do
+  pooler agora custam ~5ms em fra1; deixaram de ser prioridade.
