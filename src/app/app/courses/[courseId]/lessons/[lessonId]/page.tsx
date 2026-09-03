@@ -62,6 +62,8 @@ export default async function StudentLessonPage({ params }: StudentLessonPagePro
         initialIsCompleted={data.isCompleted}
         lessonId={lessonId}
         modules={data.navigation?.modules ?? []}
+        nextLessonId={data.navigation?.nextLesson?.id ?? null}
+        nextLessonTitle={data.navigation?.nextLesson?.title ?? null}
         progress={data.progress}
         title={data.lesson.title}
         videoEmbed={data.videoEmbed}
