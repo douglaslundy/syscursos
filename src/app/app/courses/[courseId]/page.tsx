@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, Circle, PlayCircle } from "lucide-react";
 
+import { ContinueLessonBlock } from "@/components/student/continue-lesson-block";
 import { CourseBlocked } from "@/components/student/course-blocked";
 import { EmptyState } from "@/components/student/empty-state";
 import { ProgressBar } from "@/components/student/progress-bar";
@@ -45,27 +46,8 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
 
       <div className="mt-8 space-y-5">
         {data.continueLesson ? (
-            <section className="rounded-md border border-stroke-subtle bg-surface p-4 shadow-sm md:p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-copy-muted">
-                {data.continueLesson.mode === "NEXT_LESSON"
-                  ? "Continuar deste curso"
-                  : "Rever ultima aula do curso"}
-              </p>
-              <h2 className="mt-2 text-base font-semibold tracking-normal text-copy-primary md:text-lg">
-                {data.continueLesson.lessonTitle}
-              </h2>
-              <p className="mt-1 text-sm text-copy-secondary">
-                Modulo {data.continueLesson.modulePosition}: {data.continueLesson.moduleTitle} • Aula{" "}
-                {data.continueLesson.lessonPosition}
-              </p>
-              <Link
-                className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
-                href={data.continueLesson.href}
-              >
-                {data.continueLesson.mode === "NEXT_LESSON" ? "Continuar agora" : "Abrir aula"}
-              </Link>
-            </section>
-          ) : null}
+          <ContinueLessonBlock card={data.continueLesson} context="course" />
+        ) : null}
 
         {data.modules.length === 0 ? (
           <EmptyState

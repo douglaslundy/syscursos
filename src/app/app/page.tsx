@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ContinueLessonBlock } from "@/components/student/continue-lesson-block";
 import { CourseCard } from "@/components/student/course-card";
 import { EmptyState } from "@/components/student/empty-state";
 
@@ -28,22 +29,9 @@ export default async function StudentHomePage() {
       </div>
 
       {continueLesson ? (
-        <section className="mb-6 rounded-md border border-stroke-subtle bg-surface p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-copy-muted">
-            {continueLesson.mode === "NEXT_LESSON" ? "Proxima aula para assistir" : "Rever ultima aula da trilha"}
-          </p>
-          <h2 className="mt-2 text-lg font-semibold text-copy-primary">{continueLesson.lessonTitle}</h2>
-          <p className="mt-1 text-sm text-copy-secondary">
-            {continueLesson.courseTitle} • Modulo {continueLesson.modulePosition}: {continueLesson.moduleTitle} • Aula{" "}
-            {continueLesson.lessonPosition}
-          </p>
-          <Link
-            className="mt-3 inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
-            href={continueLesson.href}
-          >
-            {continueLesson.mode === "NEXT_LESSON" ? "Continuar agora" : "Abrir aula"}
-          </Link>
-        </section>
+        <div className="mb-6">
+          <ContinueLessonBlock card={continueLesson} context="home" />
+        </div>
       ) : null}
 
       {courses.length === 0 ? (

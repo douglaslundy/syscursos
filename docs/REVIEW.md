@@ -3141,3 +3141,74 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - A página pública `/login/admin` permaneceu disponível com resposta HTTP 200.
 - Verificações finais do repositório: lint aprovado, 110 testes aprovados e `git diff --check` sem erros.
 - Typecheck e build seguem bloqueados somente pelos erros preexistentes nas linhas 264 e 268 de `prisma/update-metodo-sub10-course.ts`, que não foi alterado nesta operação.
+
+---
+
+### 2026-09-02 - Desempenho da area do aluno, avanco automatico e bloco "continuar"
+
+### Arquivos criados ou alterados
+
+- `src/server/cache/course-content.ts` (novo)
+- `src/server/services/student-service.ts`
+- `src/server/repositories/student-repository.ts`
+- `src/server/auth/session.ts`
+- `src/server/actions/admin-actions.ts`
+- `src/server/actions/student-actions.ts`
+- `src/components/student/lesson-completion-panel.tsx`
+- `src/components/student/lesson-trail-sidebar.tsx`
+- `src/components/student/continue-lesson-block.tsx` (novo)
+- `src/app/app/page.tsx`
+- `src/app/app/courses/[courseId]/page.tsx`
+- `src/app/app/courses/[courseId]/lessons/[lessonId]/page.tsx`
+- Testes: `lesson-completion-panel`, `lesson-trail-sidebar` (novo), `continue-lesson-block` (novo), `student-service`, `student-actions`, `admin-actions`
+- `prisma/create-resenhas-filosoficas-course.ts` (novo, cadastro do curso Resenhas Filosoficas)
+
+### O que foi implementado
+
+1. Desempenho da navegacao do aluno:
+   - `getStudentLesson` deixou de encadear ~11 consultas em serie; agora sao uma
+     checagem de acesso e um unico `Promise.all`.
+   - `touchLessonProgress` virou upsert autocontido (update vazio, nunca reverte
+     aula concluida), fora do caminho critico e no maximo 1x/60s por aula.
+   - Arvore de modulos/aulas do curso em `unstable_cache` (tag
+     `student-course-content`); mutacoes de curso/modulo/aula/material no painel
+     chamam `revalidateTag`.
+   - Lookup do usuario da aplicacao em `getCurrentUser` cacheado por identidade
+     (tag `app-user`, 120s), invalidado pelas acoes de perfil.
+   - Dashboard: 2 counts por curso -> 2 consultas agregadas com mapa por curso.
+   - `LessonTrailSidebar` so renderiza as aulas do modulo atual (ou expandido).
+2. Avanco automatico: ao concluir a aula (fim do video no YouTube ou botao
+   manual) com proxima aula existente, contagem de 5s com "Ir agora"/"Cancelar"
+   e `router.push` (navegacao soft).
+3. Bloco "ultima aula assistida" (home e curso) extraido para
+   `ContinueLessonBlock` com "Assistir novamente" + "Assistir a proxima aula";
+   quando a aula do bloco ja e a proxima pendente, mostra so "Continuar".
+
+### Testes executados
+
+- `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
+
+### Resultado dos testes
+
+- lint: aprovado. typecheck: aprovado. test: 126 testes aprovados. build: aprovado.
+
+### Riscos encontrados
+
+- `unstable_cache`/`revalidateTag` sao novos no repo; se alguma mutacao de
+  conteudo de curso nao passar pelas acoes do painel, o cache pode servir a
+  arvore antiga por ate 300s.
+- O bump de "ultima aula vista" e disparado sem `await`; em ambiente serverless
+  pode nao concluir, atrasando o ponteiro de "continuar" em no maximo uma aula.
+- Videos do Google Drive/OneDrive continuam sem deteccao de fim; o avanco nesses
+  cursos depende do clique manual em "Marcar como concluida".
+
+### Pendencias
+
+- Roundtrip do `supabase.auth.getUser()` a cada render segue de pe (nao mexido
+  por ser sensivel a seguranca).
+- Item de infra da porta 6643 / modo transacao do pooler permanece pendente.
+
+### Proxima etapa recomendada
+
+- Validar no navegador com usuario aluno: troca de aulas, contagem de avanco,
+  os dois botoes do bloco de continuar, e medir a latencia percebida.

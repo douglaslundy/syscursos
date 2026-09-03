@@ -182,6 +182,101 @@ describe("student service", () => {
     });
   });
 
+  it("adds the next unwatched lesson to the continue card when the recent lesson is completed", async () => {
+    const { getStudentDashboard } = await import("@/server/services/student-service");
+    repositoryMock.listStudentCourseEnrollments.mockResolvedValue([activeEnrollment("course-id", "Curso")]);
+    repositoryMock.countActiveLessonsForCourses.mockResolvedValue(new Map([["course-id", 4]]));
+    repositoryMock.countCompletedLessonsForCourses.mockResolvedValue(new Map([["course-id", 2]]));
+    repositoryMock.findMostRecentLessonProgress.mockResolvedValue({
+      status: "COMPLETED",
+      updatedAt: new Date("2026-05-04T13:00:00.000Z"),
+      completedAt: new Date("2026-05-04T13:00:00.000Z"),
+      lesson: {
+        id: "lesson-2",
+        title: "Aula 2",
+        position: 2,
+        module: {
+          id: "module-1",
+          title: "Modulo",
+          position: 1,
+          course: { id: "course-id", title: "Curso" },
+        },
+      },
+    });
+    repositoryMock.getCourseWithActiveContent.mockResolvedValue({
+      id: "course-id",
+      modules: [
+        {
+          id: "module-1",
+          title: "Modulo",
+          position: 1,
+          lessons: [
+            { id: "lesson-1", title: "Aula 1", position: 1 },
+            { id: "lesson-2", title: "Aula 2", position: 2 },
+            { id: "lesson-3", title: "Aula 3", position: 3 },
+          ],
+        },
+      ],
+    });
+    repositoryMock.getCompletedLessonIds.mockResolvedValue(new Set(["lesson-1", "lesson-2"]));
+
+    const dashboard = await getStudentDashboard();
+
+    expect(dashboard.continueLesson).toMatchObject({
+      watchAgainHref: "/app/courses/course-id/lessons/lesson-2",
+      nextLessonHref: "/app/courses/course-id/lessons/lesson-3",
+      nextLessonTitle: "Aula 3",
+      mode: "REVIEW_LAST",
+    });
+  });
+
+  it("omits the next-lesson link when the recent lesson is itself the next to watch", async () => {
+    const { getStudentDashboard } = await import("@/server/services/student-service");
+    repositoryMock.listStudentCourseEnrollments.mockResolvedValue([activeEnrollment("course-id", "Curso")]);
+    repositoryMock.countActiveLessonsForCourses.mockResolvedValue(new Map([["course-id", 4]]));
+    repositoryMock.countCompletedLessonsForCourses.mockResolvedValue(new Map([["course-id", 1]]));
+    repositoryMock.findMostRecentLessonProgress.mockResolvedValue({
+      status: "NOT_STARTED",
+      updatedAt: new Date("2026-05-04T13:00:00.000Z"),
+      completedAt: null,
+      lesson: {
+        id: "lesson-2",
+        title: "Aula 2",
+        position: 2,
+        module: {
+          id: "module-1",
+          title: "Modulo",
+          position: 1,
+          course: { id: "course-id", title: "Curso" },
+        },
+      },
+    });
+    repositoryMock.getCourseWithActiveContent.mockResolvedValue({
+      id: "course-id",
+      modules: [
+        {
+          id: "module-1",
+          title: "Modulo",
+          position: 1,
+          lessons: [
+            { id: "lesson-1", title: "Aula 1", position: 1 },
+            { id: "lesson-2", title: "Aula 2", position: 2 },
+            { id: "lesson-3", title: "Aula 3", position: 3 },
+          ],
+        },
+      ],
+    });
+    repositoryMock.getCompletedLessonIds.mockResolvedValue(new Set(["lesson-1"]));
+
+    const dashboard = await getStudentDashboard();
+
+    expect(dashboard.continueLesson).toMatchObject({
+      watchAgainHref: "/app/courses/course-id/lessons/lesson-2",
+      nextLessonHref: null,
+      mode: "NEXT_LESSON",
+    });
+  });
+
   it("blocks an expired course without exposing modules", async () => {
     const { getStudentCourse } = await import("@/server/services/student-service");
     repositoryMock.findEnrollmentForCourse.mockResolvedValue(
