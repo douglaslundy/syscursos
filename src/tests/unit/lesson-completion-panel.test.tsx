@@ -4,8 +4,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { LessonCompletionPanel } from "@/components/student/lesson-completion-panel";
 import { completeLessonAction } from "@/server/actions/student-actions";
 
+const pushMock = vi.hoisted(() => vi.fn());
+
 vi.mock("@/server/actions/student-actions", () => ({
   completeLessonAction: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: pushMock }),
 }));
 
 const baseProps = {
@@ -21,6 +27,7 @@ const baseProps = {
 
 describe("LessonCompletionPanel", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
   });
 
@@ -66,5 +73,77 @@ describe("LessonCompletionPanel", () => {
     });
     expect(screen.getByRole("button", { name: "Marcar como concluida" })).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "40");
+  });
+
+  it("counts down and navigates to the next lesson after completion", async () => {
+    vi.useFakeTimers();
+    vi.mocked(completeLessonAction).mockResolvedValue({ ok: true, isCompleted: true });
+
+    render(
+      <LessonCompletionPanel
+        {...baseProps}
+        initialIsCompleted={false}
+        nextLessonId="lesson-2"
+        nextLessonTitle="Aula 2"
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Marcar como concluida" }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(screen.getByText(/Aula 2/)).toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(pushMock).toHaveBeenCalledWith("/app/courses/course-id/lessons/lesson-2");
+  });
+
+  it("lets the student cancel the auto-advance countdown", async () => {
+    vi.useFakeTimers();
+    vi.mocked(completeLessonAction).mockResolvedValue({ ok: true, isCompleted: true });
+
+    render(
+      <LessonCompletionPanel
+        {...baseProps}
+        initialIsCompleted={false}
+        nextLessonId="lesson-2"
+        nextLessonTitle="Aula 2"
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Marcar como concluida" }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /Cancelar/ }));
+    });
+
+    expect(screen.queryByText(/Proxima aula/)).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("does not start a countdown when there is no next lesson", async () => {
+    vi.useFakeTimers();
+    vi.mocked(completeLessonAction).mockResolvedValue({ ok: true, isCompleted: true });
+
+    render(<LessonCompletionPanel {...baseProps} initialIsCompleted={false} />);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Marcar como concluida" }));
+      await vi.advanceTimersByTimeAsync(5000);
+    });
+
+    expect(pushMock).not.toHaveBeenCalled();
   });
 });

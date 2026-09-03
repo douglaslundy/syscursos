@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { revalidateAuthUser } from "@/server/auth/session";
 import { toggleLessonCompletion } from "@/server/services/student-service";
 import { saveLessonNote } from "@/server/services/student-service";
 import { updateOwnStudentProfile } from "@/server/services/student-service";
@@ -82,6 +83,7 @@ export async function saveOwnStudentProfileAction(formData: FormData) {
   }
 
   await updateOwnStudentProfile(parsed.data);
+  revalidateAuthUser();
   revalidatePath("/app/me");
   redirect("/app/me?status=saved");
 }

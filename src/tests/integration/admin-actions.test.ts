@@ -8,6 +8,7 @@ const redirectMock = vi.hoisted(() =>
   }),
 );
 const revalidatePathMock = vi.hoisted(() => vi.fn());
+const revalidateTagMock = vi.hoisted(() => vi.fn());
 const saveStudentMock = vi.hoisted(() => vi.fn());
 const saveLessonMock = vi.hoisted(() => vi.fn());
 const lookupStudentByEmailMock = vi.hoisted(() => vi.fn());
@@ -19,6 +20,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
+  revalidateTag: revalidateTagMock,
 }));
 
 vi.mock("@/server/services/admin-service", () => ({
@@ -43,6 +45,7 @@ describe("admin student actions", () => {
   beforeEach(() => {
     redirectMock.mockClear();
     revalidatePathMock.mockClear();
+    revalidateTagMock.mockClear();
     saveStudentMock.mockReset();
     saveLessonMock.mockReset();
     lookupStudentByEmailMock.mockReset();
@@ -203,6 +206,33 @@ describe("admin student actions", () => {
     await expect(saveLessonAction(formData)).rejects.toThrow(
       "REDIRECT:/admin/modules/2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633/lessons?status=lesson_save_error",
     );
+  });
+
+  it("invalidates the student course-content cache when a lesson is saved", async () => {
+    const { saveLessonAction } = await import("@/server/actions/admin-actions");
+    const formData = new FormData();
+    formData.set("moduleId", "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633");
+    formData.set("title", "Aula");
+    formData.set("position", "1");
+    formData.set("status", "ACTIVE");
+    formData.set("youtubeUrl", "https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+    formData.set("youtubeVideoId", "");
+    formData.set("coverImageUrl", "");
+    formData.set("description", "");
+
+    await expect(saveLessonAction(formData)).rejects.toThrow("status=saved");
+
+    expect(revalidateTagMock).toHaveBeenCalledWith("student-course-content");
+  });
+
+  it("invalidates the student course-content cache when a course is deleted", async () => {
+    const { deleteCourseAction } = await import("@/server/actions/admin-actions");
+    const formData = new FormData();
+    formData.set("id", "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633");
+
+    await expect(deleteCourseAction(formData)).rejects.toThrow("status=deleted");
+
+    expect(revalidateTagMock).toHaveBeenCalledWith("student-course-content");
   });
 
   it("redirects with lookup=found when an e-mail already exists", async () => {

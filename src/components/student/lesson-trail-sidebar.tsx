@@ -39,7 +39,22 @@ export function LessonTrailSidebar({
   progress,
 }: LessonTrailSidebarProps) {
   const [open, setOpen] = useState(true);
+  const [expandedModuleIds, setExpandedModuleIds] = useState<Set<string>>(
+    () => new Set([currentModuleId]),
+  );
   const completedSet = new Set(completedLessonIds);
+
+  const toggleModule = (moduleId: string) => {
+    setExpandedModuleIds((current) => {
+      const next = new Set(current);
+      if (next.has(moduleId)) {
+        next.delete(moduleId);
+      } else {
+        next.add(moduleId);
+      }
+      return next;
+    });
+  };
 
   return (
     <aside
@@ -68,17 +83,32 @@ export function LessonTrailSidebar({
             Trilha de aulas
           </p>
           <div className="mb-5 max-h-[460px] space-y-3 overflow-y-auto pr-1">
-            {modules.map((module) => (
-              <details
+            {modules.map((module) => {
+              const isExpanded = expandedModuleIds.has(module.id);
+
+              return (
+              <div
                 className="rounded-md border border-stroke-subtle bg-background p-3"
                 key={module.id}
-                open={module.id === currentModuleId}
               >
-                <summary className="cursor-pointer list-none text-sm font-medium text-copy-primary">
-                  Modulo {module.position}: {module.title}
-                </summary>
-                <div className="mt-3 space-y-1">
-                  {module.lessons.map((lesson) => {
+                <button
+                  aria-expanded={isExpanded}
+                  className="flex w-full cursor-pointer items-center justify-between gap-2 text-left text-sm font-medium text-copy-primary"
+                  onClick={() => toggleModule(module.id)}
+                  type="button"
+                >
+                  <span>
+                    Modulo {module.position}: {module.title}
+                  </span>
+                  {isExpanded ? (
+                    <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 rotate-90" />
+                  ) : (
+                    <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  )}
+                </button>
+                <div className={isExpanded ? "mt-3 space-y-1" : "hidden"}>
+                  {isExpanded
+                    ? module.lessons.map((lesson) => {
                     const isCurrent = lesson.id === currentLessonId;
                     const completed = completedSet.has(lesson.id);
 
@@ -105,10 +135,12 @@ export function LessonTrailSidebar({
                         </span>
                       </Link>
                     );
-                  })}
+                      })
+                    : null}
                 </div>
-              </details>
-            ))}
+              </div>
+              );
+            })}
           </div>
           <ProgressBar
             label={`${progress.completedLessons}/${progress.totalLessons} aulas concluidas`}

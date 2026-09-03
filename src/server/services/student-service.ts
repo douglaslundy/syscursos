@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { requireAnyRole } from "@/server/auth/guards";
+import { getCachedCourseContent } from "@/server/cache/course-content";
 import * as repository from "@/server/repositories/student-repository";
 import { calculateCourseProgress } from "@/server/services/progress-service";
 import { getLessonVideoEmbed } from "@/server/services/video-platform-service";
@@ -29,6 +30,9 @@ export type StudentCourseCard = {
 
 export type ContinueLessonCard = {
   href: string;
+  watchAgainHref: string;
+  nextLessonHref: string | null;
+  nextLessonTitle: string | null;
   courseTitle: string;
   moduleTitle: string;
   lessonTitle: string;
@@ -41,25 +45,26 @@ export async function getStudentDashboard() {
   const studentId = await requireStudentProfileId();
   const enrollments = await repository.listStudentCourseEnrollments(studentId);
 
-  const courses = await Promise.all(
-    enrollments.map(async (enrollment): Promise<StudentCourseCard> => {
-      const totalLessons = await repository.countActiveLessonsByCourse(enrollment.courseId);
-      const completedLessons = await repository.countCompletedLessonsByCourse(
-        studentId,
-        enrollment.courseId,
-      );
+  const courseIds = enrollments.map((enrollment) => enrollment.courseId);
+  const [totalsByCourse, completedByCourse] = await Promise.all([
+    repository.countActiveLessonsForCourses(courseIds),
+    repository.countCompletedLessonsForCourses(studentId, courseIds),
+  ]);
 
-      return {
-        id: enrollment.course.id,
-        title: enrollment.course.title,
-        description: enrollment.course.description,
-        coverImageUrl: enrollment.course.coverImageUrl,
-        enrollmentStatus: getCourseAccessStatus(enrollment),
-        expiresAt: enrollment.expiresAt,
-        progress: calculateCourseProgress(completedLessons, totalLessons),
-      };
-    }),
-  );
+  const courses = enrollments.map((enrollment): StudentCourseCard => {
+    const totalLessons = totalsByCourse.get(enrollment.courseId) ?? 0;
+    const completedLessons = completedByCourse.get(enrollment.courseId) ?? 0;
+
+    return {
+      id: enrollment.course.id,
+      title: enrollment.course.title,
+      description: enrollment.course.description,
+      coverImageUrl: enrollment.course.coverImageUrl,
+      enrollmentStatus: getCourseAccessStatus(enrollment),
+      expiresAt: enrollment.expiresAt,
+      progress: calculateCourseProgress(completedLessons, totalLessons),
+    };
+  });
 
   const continueLesson = await resolveContinueLessonCard(studentId, enrollments.map((enrollment) => enrollment.courseId));
 
@@ -91,7 +96,7 @@ export async function getStudentCourse(courseId: string) {
     };
   }
 
-  const course = await repository.getCourseWithActiveContent(courseId);
+  const course = await getCachedCourseContent(courseId);
 
   if (!course) {
     return {
@@ -111,7 +116,7 @@ export async function getStudentCourse(courseId: string) {
     repository.findMostRecentLessonProgressForCourse(studentId, courseId),
   ]);
   const continueLesson = recentProgress
-    ? buildContinueLessonCardFromRecentProgress(recentProgress)
+    ? buildContinueLessonCardFromRecentProgress(recentProgress, course.modules, completedLessonIds)
     : buildContinueLessonCardFromCourseModules(course.modules, completedLessonIds, courseId, course.title);
 
   return {
@@ -147,27 +152,32 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     };
   }
 
-  const lesson = await repository.getActiveLessonForStudent(courseId, lessonId);
+  const [lesson, progress, totalLessons, completedLessons, note, courseContent, completedLessonIds, materials] =
+    await Promise.all([
+      repository.getActiveLessonForStudent(courseId, lessonId),
+      repository.findLessonProgress(studentId, lessonId),
+      repository.countActiveLessonsByCourse(courseId),
+      repository.countCompletedLessonsByCourse(studentId, courseId),
+      repository.findLessonNote(studentId, lessonId),
+      getCachedCourseContent(courseId),
+      repository.getCompletedLessonIds(studentId, courseId),
+      repository.listActiveLessonMaterials(lessonId),
+    ]);
 
   if (!lesson) {
     notFound();
   }
 
-  const progress = await repository.findLessonProgress(studentId, lessonId);
-  await repository.touchLessonProgress(studentId, lessonId, progress);
-
-  const [totalLessons, completedLessons, note, courseContent, completedLessonIds, materials] =
-    await Promise.all([
-    repository.countActiveLessonsByCourse(courseId),
-    repository.countCompletedLessonsByCourse(studentId, courseId),
-    repository.findLessonNote(studentId, lessonId),
-    repository.getCourseWithActiveContent(courseId),
-    repository.getCompletedLessonIds(studentId, courseId),
-    repository.listActiveLessonMaterials(lessonId),
-  ]);
-
   if (!courseContent) {
     notFound();
+  }
+
+  // Registra "última aula vista" para o bloco de continuar, fora do caminho
+  // crítico do render e no máximo uma vez por minuto para não escrever no banco
+  // a cada navegação.
+  const lastTouchedAt = progress?.updatedAt?.getTime() ?? 0;
+  if (Date.now() - lastTouchedAt > 60_000) {
+    void Promise.resolve(repository.touchLessonProgress(studentId, lessonId)).catch(() => {});
   }
 
   return {
@@ -353,7 +363,17 @@ async function resolveContinueLessonCard(
   const recentProgress = await repository.findMostRecentLessonProgress(studentId);
 
   if (recentProgress) {
-    return buildContinueLessonCardFromRecentProgress(recentProgress);
+    const recentCourseId = recentProgress.lesson.module.course.id;
+    const [recentCourse, recentCompletedLessonIds] = await Promise.all([
+      getCachedCourseContent(recentCourseId),
+      repository.getCompletedLessonIds(studentId, recentCourseId),
+    ]);
+
+    return buildContinueLessonCardFromRecentProgress(
+      recentProgress,
+      recentCourse?.modules ?? [],
+      recentCompletedLessonIds,
+    );
   }
 
   for (const courseId of courseIds) {
@@ -363,7 +383,7 @@ async function resolveContinueLessonCard(
     }
 
     const [course, completedLessonIds] = await Promise.all([
-      repository.getCourseWithActiveContent(courseId),
+      getCachedCourseContent(courseId),
       repository.getCompletedLessonIds(studentId, courseId),
     ]);
 
@@ -385,11 +405,53 @@ async function resolveContinueLessonCard(
   return null;
 }
 
+function findNextLessonToWatch(
+  modules: CourseModuleRow,
+  completedLessonIds: Set<string>,
+  courseId: string,
+  fromLessonId: string,
+): { href: string; title: string } | null {
+  const lessons = modules.flatMap((module) => module.lessons);
+  const fromIndex = lessons.findIndex((lesson) => lesson.id === fromLessonId);
+
+  if (fromIndex < 0) {
+    return null;
+  }
+
+  const nextPending = lessons.slice(fromIndex).find((lesson) => !completedLessonIds.has(lesson.id));
+
+  // Sem bloco de "proxima" quando a propria aula do bloco ja e a proxima
+  // pendente (os dois botoes apontariam para o mesmo lugar) ou quando nao
+  // sobra nenhuma aula pendente a partir dali.
+  if (!nextPending || nextPending.id === fromLessonId) {
+    return null;
+  }
+
+  return {
+    href: `/app/courses/${courseId}/lessons/${nextPending.id}`,
+    title: nextPending.title,
+  };
+}
+
 function buildContinueLessonCardFromRecentProgress(
   recentProgress: NonNullable<Awaited<ReturnType<typeof repository.findMostRecentLessonProgress>>>,
+  modules: CourseModuleRow,
+  completedLessonIds: Set<string>,
 ): ContinueLessonCard {
+  const courseId = recentProgress.lesson.module.course.id;
+  const href = `/app/courses/${courseId}/lessons/${recentProgress.lesson.id}`;
+  const nextLesson = findNextLessonToWatch(
+    modules,
+    completedLessonIds,
+    courseId,
+    recentProgress.lesson.id,
+  );
+
   return {
-    href: `/app/courses/${recentProgress.lesson.module.course.id}/lessons/${recentProgress.lesson.id}`,
+    href,
+    watchAgainHref: href,
+    nextLessonHref: nextLesson?.href ?? null,
+    nextLessonTitle: nextLesson?.title ?? null,
     courseTitle: recentProgress.lesson.module.course.title,
     moduleTitle: recentProgress.lesson.module.title,
     lessonTitle: recentProgress.lesson.title,
@@ -418,8 +480,12 @@ function buildContinueLessonCardFromCourseModules(
 
   const nextItem = lessons.find((item) => !completedLessonIds.has(item.lesson.id));
   if (nextItem) {
+    const href = `/app/courses/${courseId}/lessons/${nextItem.lesson.id}`;
     return {
-      href: `/app/courses/${courseId}/lessons/${nextItem.lesson.id}`,
+      href,
+      watchAgainHref: href,
+      nextLessonHref: null,
+      nextLessonTitle: null,
       courseTitle,
       moduleTitle: nextItem.module.title,
       lessonTitle: nextItem.lesson.title,
@@ -430,8 +496,12 @@ function buildContinueLessonCardFromCourseModules(
   }
 
   const lastItem = lessons[lessons.length - 1];
+  const lastHref = `/app/courses/${courseId}/lessons/${lastItem.lesson.id}`;
   return {
-    href: `/app/courses/${courseId}/lessons/${lastItem.lesson.id}`,
+    href: lastHref,
+    watchAgainHref: lastHref,
+    nextLessonHref: null,
+    nextLessonTitle: null,
     courseTitle,
     moduleTitle: lastItem.module.title,
     lessonTitle: lastItem.lesson.title,

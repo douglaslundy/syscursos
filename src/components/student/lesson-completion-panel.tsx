@@ -1,6 +1,7 @@
 "use client";
 
-import { type ReactNode, useState, useTransition } from "react";
+import { type ReactNode, useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 import { LessonTrailSidebar } from "@/components/student/lesson-trail-sidebar";
 import { LessonVideoPlayer } from "@/components/student/lesson-video-player";
@@ -33,8 +34,12 @@ type LessonCompletionPanelProps = {
   currentModuleId: string;
   modules: TrailModule[];
   progress: LessonProgress;
+  nextLessonId?: string | null;
+  nextLessonTitle?: string | null;
   children?: ReactNode;
 };
+
+const AUTO_ADVANCE_SECONDS = 5;
 
 function adjustProgress(progress: LessonProgress, delta: -1 | 1): LessonProgress {
   const completedLessons = Math.min(
@@ -57,12 +62,46 @@ export function LessonCompletionPanel({
   currentModuleId,
   modules,
   progress: initialProgress,
+  nextLessonId,
+  nextLessonTitle,
   children,
 }: LessonCompletionPanelProps) {
+  const router = useRouter();
+  const pushRef = useRef(router.push);
+  pushRef.current = router.push;
   const [isCompleted, setIsCompleted] = useState(initialIsCompleted);
   const [progress, setProgress] = useState(initialProgress);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(AUTO_ADVANCE_SECONDS);
   const [isPending, startTransition] = useTransition();
+
+  const nextLessonHref = nextLessonId
+    ? `/app/courses/${courseId}/lessons/${nextLessonId}`
+    : null;
+
+  useEffect(() => {
+    if (!isCountingDown || !nextLessonHref) {
+      return;
+    }
+
+    let canceled = false;
+    setSecondsLeft(AUTO_ADVANCE_SECONDS);
+    const navTimer = setTimeout(() => {
+      if (!canceled) {
+        pushRef.current(nextLessonHref);
+      }
+    }, AUTO_ADVANCE_SECONDS * 1000);
+    const tickTimer = setInterval(() => {
+      setSecondsLeft((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => {
+      canceled = true;
+      clearTimeout(navTimer);
+      clearInterval(tickTimer);
+    };
+  }, [isCountingDown, nextLessonHref]);
 
   const setCompletion = (next: boolean) => {
     if (next === isCompleted) {
@@ -80,6 +119,13 @@ export function LessonCompletionPanel({
       setIsCompleted(result.isCompleted);
       setProgress((current) => adjustProgress(current, result.isCompleted ? 1 : -1));
       setFeedback(result.isCompleted ? "Aula marcada como concluida." : "Marcacao de conclusao removida.");
+
+      if (result.isCompleted && nextLessonHref) {
+        setSecondsLeft(AUTO_ADVANCE_SECONDS);
+        setIsCountingDown(true);
+      } else {
+        setIsCountingDown(false);
+      }
     });
   };
 
@@ -102,6 +148,31 @@ export function LessonCompletionPanel({
           progress={progress}
         />
       </div>
+
+      {isCountingDown && nextLessonHref ? (
+        <div
+          aria-live="polite"
+          className="mt-4 flex flex-wrap items-center gap-3 rounded-md border border-brand-primary/40 bg-surface p-4"
+        >
+          <p className="text-sm text-copy-primary">
+            Proxima aula{nextLessonTitle ? `: ${nextLessonTitle}` : ""} em {secondsLeft}s
+          </p>
+          <button
+            className="inline-flex min-h-9 items-center justify-center rounded-md bg-brand-primary px-3 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
+            onClick={() => router.push(nextLessonHref)}
+            type="button"
+          >
+            Ir agora
+          </button>
+          <button
+            className="inline-flex min-h-9 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-3 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+            onClick={() => setIsCountingDown(false)}
+            type="button"
+          >
+            Cancelar
+          </button>
+        </div>
+      ) : null}
 
       {children}
 
