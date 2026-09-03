@@ -8,7 +8,9 @@ const redirectMock = vi.hoisted(() =>
   }),
 );
 const revalidatePathMock = vi.hoisted(() => vi.fn());
+const revalidateTagMock = vi.hoisted(() => vi.fn());
 const toggleLessonCompletionMock = vi.hoisted(() => vi.fn());
+const updateOwnStudentProfileMock = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
@@ -16,12 +18,13 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
+  revalidateTag: revalidateTagMock,
 }));
 
 vi.mock("@/server/services/student-service", () => ({
   toggleLessonCompletion: toggleLessonCompletionMock,
   saveLessonNote: vi.fn(),
-  updateOwnStudentProfile: vi.fn(),
+  updateOwnStudentProfile: updateOwnStudentProfileMock,
 }));
 
 describe("completeLessonAction", () => {
@@ -65,5 +68,28 @@ describe("completeLessonAction", () => {
     expect(result).toEqual({ ok: false, message: "Entrada de progresso invalida." });
     expect(toggleLessonCompletionMock).not.toHaveBeenCalled();
     expect(redirectMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("saveOwnStudentProfileAction", () => {
+  beforeEach(() => {
+    redirectMock.mockClear();
+    revalidatePathMock.mockClear();
+    revalidateTagMock.mockClear();
+    updateOwnStudentProfileMock.mockReset();
+    updateOwnStudentProfileMock.mockResolvedValue(undefined);
+  });
+
+  it("invalidates the cached authenticated user after a profile change", async () => {
+    const { saveOwnStudentProfileAction } = await import("@/server/actions/student-actions");
+    const formData = new FormData();
+    formData.set("name", "Nome Atualizado");
+    formData.set("phone", "");
+    formData.set("password", "");
+    formData.set("confirmPassword", "");
+
+    await expect(saveOwnStudentProfileAction(formData)).rejects.toThrow("REDIRECT:/app/me?status=saved");
+
+    expect(revalidateTagMock).toHaveBeenCalledWith("app-user");
   });
 });

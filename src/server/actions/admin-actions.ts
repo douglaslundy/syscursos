@@ -7,6 +7,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { revalidateAuthUser } from "@/server/auth/session";
+import { revalidateCourseContent } from "@/server/cache/course-content";
 import { StudentMutationError } from "@/server/repositories/admin-repository";
 import {
   cancelEnrollment as cancelEnrollmentService,
@@ -60,6 +62,7 @@ export async function saveCourseAction(formData: FormData) {
   await runAdminMutation(path, "saved", async () => {
     await saveCourse(input);
     revalidatePath(path);
+    revalidateCourseContent();
   });
 }
 
@@ -69,6 +72,7 @@ export async function deleteCourseAction(formData: FormData) {
   await runAdminMutation(path, "deleted", async () => {
     await removeCourse(id);
     revalidatePath(path);
+    revalidateCourseContent();
   });
 }
 
@@ -78,6 +82,7 @@ export async function saveModuleAction(formData: FormData) {
   await runAdminMutation(path, "saved", async () => {
     await saveModule(input);
     revalidatePath(path);
+    revalidateCourseContent();
   });
 }
 
@@ -88,6 +93,7 @@ export async function deleteModuleAction(formData: FormData) {
   await runAdminMutation(path, "deleted", async () => {
     await removeModule(id);
     revalidatePath(path);
+    revalidateCourseContent();
   });
 }
 
@@ -109,6 +115,7 @@ export async function saveLessonAction(formData: FormData) {
     await saveLesson(input);
     revalidatePath(path);
     revalidatePath("/app", "layout");
+    revalidateCourseContent();
   } catch (error) {
     console.error("Admin mutation failed.", error);
     redirect(adminStatusPath(path, lessonMutationStatus(error)));
@@ -124,6 +131,7 @@ export async function deleteLessonAction(formData: FormData) {
   await runAdminMutation(path, "deleted", async () => {
     await removeLesson(id);
     revalidatePath(path);
+    revalidateCourseContent();
   });
 }
 
@@ -136,6 +144,7 @@ export async function saveLessonMaterialAction(formData: FormData) {
     await saveLessonMaterial(input);
     revalidatePath(path);
     revalidatePath(`/app/courses/${requiredString(formData, "courseId", "/admin/courses")}`);
+    revalidateCourseContent();
   });
 }
 
@@ -148,6 +157,7 @@ export async function deleteLessonMaterialAction(formData: FormData) {
     await removeLessonMaterial(id);
     revalidatePath(path);
     revalidatePath(`/app/courses/${requiredString(formData, "courseId", "/admin/courses")}`);
+    revalidateCourseContent();
   });
 }
 
@@ -259,6 +269,7 @@ export async function saveOwnAdminProfileAction(formData: FormData) {
   const input = parseForm(adminProfileSchema, formData, path);
   await runAdminMutation(path, "saved", async () => {
     await updateOwnAdminProfile(input);
+    revalidateAuthUser();
     revalidatePath(path);
   });
 }

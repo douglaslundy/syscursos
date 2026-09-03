@@ -157,6 +157,65 @@ export async function countCompletedLessonsByCourse(studentId: string, courseId:
   });
 }
 
+export async function countActiveLessonsForCourses(courseIds: string[]) {
+  const totals = new Map<string, number>();
+
+  if (courseIds.length === 0) {
+    return totals;
+  }
+
+  const modules = await prisma.module.findMany({
+    where: {
+      courseId: { in: courseIds },
+      status: ModuleStatus.ACTIVE,
+      course: { status: CourseStatus.ACTIVE },
+    },
+    select: {
+      courseId: true,
+      _count: { select: { lessons: { where: { status: LessonStatus.ACTIVE } } } },
+    },
+  });
+
+  for (const moduleRow of modules) {
+    totals.set(moduleRow.courseId, (totals.get(moduleRow.courseId) ?? 0) + moduleRow._count.lessons);
+  }
+
+  return totals;
+}
+
+export async function countCompletedLessonsForCourses(studentId: string, courseIds: string[]) {
+  const totals = new Map<string, number>();
+
+  if (courseIds.length === 0) {
+    return totals;
+  }
+
+  const rows = await prisma.lessonProgress.findMany({
+    where: {
+      studentId,
+      status: LessonProgressStatus.COMPLETED,
+      lesson: {
+        status: LessonStatus.ACTIVE,
+        module: {
+          status: ModuleStatus.ACTIVE,
+          courseId: { in: courseIds },
+          course: { status: CourseStatus.ACTIVE },
+        },
+      },
+    },
+    select: {
+      lesson: { select: { module: { select: { courseId: true } } } },
+    },
+  });
+
+  for (const row of rows) {
+    const courseId = row.lesson.module.courseId;
+    totals.set(courseId, (totals.get(courseId) ?? 0) + 1);
+  }
+
+  return totals;
+}
+
 export async function getCompletedLessonIds(studentId: string, courseId: string) {
   const rows = await prisma.lessonProgress.findMany({
     where: {
@@ -363,15 +422,10 @@ export async function findLessonProgress(studentId: string, lessonId: string) {
   });
 }
 
-export async function touchLessonProgress(
-  studentId: string,
-  lessonId: string,
-  progress: { status: LessonProgressStatus; completedAt: Date | null } | null,
-) {
-  const status = progress?.status ?? LessonProgressStatus.NOT_STARTED;
-  const completedAt =
-    status === LessonProgressStatus.COMPLETED ? progress?.completedAt ?? new Date() : null;
-
+export async function touchLessonProgress(studentId: string, lessonId: string) {
+  // Cria a linha NOT_STARTED na primeira visita e, nas seguintes, apenas deixa o
+  // `@updatedAt` avancar (update vazio) para marcar "ultima aula vista" sem
+  // reverter uma aula ja concluida.
   return prisma.lessonProgress.upsert({
     where: {
       studentId_lessonId: {
@@ -380,14 +434,13 @@ export async function touchLessonProgress(
       },
     },
     update: {
-      status,
-      completedAt,
+      updatedAt: new Date(),
     },
     create: {
       studentId,
       lessonId,
-      status,
-      completedAt,
+      status: LessonProgressStatus.NOT_STARTED,
+      completedAt: null,
     },
   });
 }

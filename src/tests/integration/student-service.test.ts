@@ -15,6 +15,8 @@ const repositoryMock = vi.hoisted(() => ({
   listStudentCourseEnrollments: vi.fn(),
   countActiveLessonsByCourse: vi.fn(),
   countCompletedLessonsByCourse: vi.fn(),
+  countActiveLessonsForCourses: vi.fn(),
+  countCompletedLessonsForCourses: vi.fn(),
   findEnrollmentForCourse: vi.fn(),
   getCourseWithActiveContent: vi.fn(),
   getCompletedLessonIds: vi.fn(),
@@ -42,6 +44,11 @@ vi.mock("@/server/auth/guards", () => ({
 
 vi.mock("@/server/repositories/student-repository", () => repositoryMock);
 
+vi.mock("@/server/cache/course-content", () => ({
+  getCachedCourseContent: (courseId: string) => repositoryMock.getCourseWithActiveContent(courseId),
+  revalidateCourseContent: vi.fn(),
+}));
+
 describe("student service", () => {
   beforeEach(() => {
     vi.setSystemTime(new Date("2026-05-04T12:00:00.000Z"));
@@ -65,8 +72,8 @@ describe("student service", () => {
     repositoryMock.listStudentCourseEnrollments.mockResolvedValue([
       activeEnrollment("course-id", "Curso ativo"),
     ]);
-    repositoryMock.countActiveLessonsByCourse.mockResolvedValue(4);
-    repositoryMock.countCompletedLessonsByCourse.mockResolvedValue(2);
+    repositoryMock.countActiveLessonsForCourses.mockResolvedValue(new Map([["course-id", 4]]));
+    repositoryMock.countCompletedLessonsForCourses.mockResolvedValue(new Map([["course-id", 2]]));
 
     const dashboard = await getStudentDashboard();
 
@@ -80,6 +87,7 @@ describe("student service", () => {
         percentage: 50,
       },
     });
+    expect(repositoryMock.countActiveLessonsForCourses).toHaveBeenCalledWith(["course-id"]);
   });
 
   it("keeps canceled courses visible without marking them available", async () => {
@@ -90,8 +98,8 @@ describe("student service", () => {
         status: "CANCELED",
       },
     ]);
-    repositoryMock.countActiveLessonsByCourse.mockResolvedValue(4);
-    repositoryMock.countCompletedLessonsByCourse.mockResolvedValue(2);
+    repositoryMock.countActiveLessonsForCourses.mockResolvedValue(new Map([["course-id", 4]]));
+    repositoryMock.countCompletedLessonsForCourses.mockResolvedValue(new Map([["course-id", 2]]));
 
     const dashboard = await getStudentDashboard();
 
@@ -107,11 +115,17 @@ describe("student service", () => {
       activeEnrollment("new-course-id", "Curso novo"),
       activeEnrollment("old-course-id", "Curso antigo"),
     ]);
-    repositoryMock.countActiveLessonsByCourse.mockImplementation(async (courseId: string) =>
-      courseId === "new-course-id" ? 5 : 4,
+    repositoryMock.countActiveLessonsForCourses.mockResolvedValue(
+      new Map([
+        ["new-course-id", 5],
+        ["old-course-id", 4],
+      ]),
     );
-    repositoryMock.countCompletedLessonsByCourse.mockImplementation(async (_studentId: string, courseId: string) =>
-      courseId === "new-course-id" ? 1 : 2,
+    repositoryMock.countCompletedLessonsForCourses.mockResolvedValue(
+      new Map([
+        ["new-course-id", 1],
+        ["old-course-id", 2],
+      ]),
     );
     repositoryMock.findMostRecentLessonProgress.mockResolvedValue({
       status: "NOT_STARTED",
@@ -237,7 +251,7 @@ describe("student service", () => {
     repositoryMock.countActiveLessonsByCourse.mockResolvedValue(3);
     repositoryMock.countCompletedLessonsByCourse.mockResolvedValue(1);
     repositoryMock.findLessonProgress.mockResolvedValue({ status: "COMPLETED" });
-    repositoryMock.touchLessonProgress.mockResolvedValue({ status: "COMPLETED" });
+    repositoryMock.touchLessonProgress.mockResolvedValue(undefined);
     repositoryMock.findLessonNote.mockResolvedValue({
       id: "note-id",
       content: "Resumo",
@@ -258,9 +272,27 @@ describe("student service", () => {
       },
       progress: { completedLessons: 1, totalLessons: 3, percentage: 33 },
     });
-    expect(repositoryMock.touchLessonProgress).toHaveBeenCalledWith("student-profile-id", "lesson-id", {
-      status: "COMPLETED",
+    expect(repositoryMock.touchLessonProgress).toHaveBeenCalledWith("student-profile-id", "lesson-id");
+  });
+
+  it("skips touching lesson progress when it was updated in the last minute", async () => {
+    const { getStudentLesson } = await import("@/server/services/student-service");
+    repositoryMock.findEnrollmentForCourse.mockResolvedValue(activeEnrollment("course-id", "Curso"));
+    repositoryMock.getActiveLessonForStudent.mockResolvedValue(activeLesson());
+    repositoryMock.countActiveLessonsByCourse.mockResolvedValue(3);
+    repositoryMock.countCompletedLessonsByCourse.mockResolvedValue(1);
+    repositoryMock.findLessonProgress.mockResolvedValue({
+      status: "NOT_STARTED",
+      updatedAt: new Date("2026-05-04T11:59:30.000Z"),
     });
+    repositoryMock.findLessonNote.mockResolvedValue(null);
+    repositoryMock.getCourseWithActiveContent.mockResolvedValue(activeCourseContent());
+    repositoryMock.getCompletedLessonIds.mockResolvedValue(new Set());
+    repositoryMock.listActiveLessonMaterials.mockResolvedValue([]);
+
+    await getStudentLesson("course-id", "lesson-id");
+
+    expect(repositoryMock.touchLessonProgress).not.toHaveBeenCalled();
   });
 
   it("touches lesson progress when an active lesson is opened without completion", async () => {
@@ -272,10 +304,7 @@ describe("student service", () => {
     repositoryMock.countActiveLessonsByCourse.mockResolvedValue(3);
     repositoryMock.countCompletedLessonsByCourse.mockResolvedValue(1);
     repositoryMock.findLessonProgress.mockResolvedValue(null);
-    repositoryMock.touchLessonProgress.mockResolvedValue({
-      status: "NOT_STARTED",
-      completedAt: null,
-    });
+    repositoryMock.touchLessonProgress.mockResolvedValue(undefined);
     repositoryMock.findLessonNote.mockResolvedValue(null);
     repositoryMock.getCourseWithActiveContent.mockResolvedValue(activeCourseContent());
     repositoryMock.getCompletedLessonIds.mockResolvedValue(new Set());
@@ -283,7 +312,7 @@ describe("student service", () => {
 
     await getStudentLesson("course-id", "lesson-id");
 
-    expect(repositoryMock.touchLessonProgress).toHaveBeenCalledWith("student-profile-id", "lesson-id", null);
+    expect(repositoryMock.touchLessonProgress).toHaveBeenCalledWith("student-profile-id", "lesson-id");
   });
 
   it("marks lesson progress only for active enrolled courses", async () => {

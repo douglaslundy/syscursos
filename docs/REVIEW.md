@@ -3073,3 +3073,71 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ### Proxima etapa recomendada
 
 - Apos deploy, testar no mesmo navegador: login produtor em `/login/admin`, login aluno em `/login/client`, alternancia entre `/admin` e `/app` e logout independente em cada area.
+
+---
+
+### 2026-07-30 - Cadastro do curso Bíblia Comentada na VPS
+
+### O que foi executado
+
+- Criado o script transacional `prisma/create-biblia-comentada-course.ts`.
+- Importado somente o bloco explicitamente identificado como `A Bíblia Comentada` no arquivo de origem.
+- Curso `Bíblia Comentada` criado com slug `biblia-comentada` e vinculado ao produtor `douglaslundy@gmail.com`.
+- Gravados 67 módulos e 758 aulas na ordem da origem.
+- Para 234 itens sem URL aceita pelo schema, foi usado marcador técnico; a observação ou URL original ficou preservada na descrição.
+
+### Validação no banco
+
+- Curso ativo e ownership confirmado.
+- 67 módulos e 758 aulas confirmados.
+- Posições de módulos e aulas confirmadas como consecutivas.
+- `Marcos` na posição 44 e `Lucas` na posição 45 confirmados sem aulas, conforme o arquivo.
+- Todas as 234 aulas com marcador possuem descrição de origem.
+
+### Verificações do repositório
+
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run test`: aprovado, 110 testes.
+- `npm.cmd run typecheck`: falhou por dois erros preexistentes em `prisma/update-metodo-sub10-course.ts`, arquivo não rastreado e não alterado nesta operação.
+- `npm.cmd run build`: compilou a aplicação e falhou na verificação de tipos pelo mesmo arquivo preexistente.
+
+### Riscos e pendências
+
+- Os 234 itens com marcador não possuem mídia reproduzível no arquivo de origem; seus links reais precisarão ser cadastrados quando estiverem disponíveis.
+- Corrigir separadamente os erros de tipo do script não rastreado `prisma/update-metodo-sub10-course.ts`.
+
+---
+
+### 2026-07-30 - Cadastro dos demais cursos de biblia.txt
+
+### Resultado
+
+- O usuário confirmou que os blocos `CURSO:` devem ser cadastrados como cursos independentes.
+- Criados 15 cursos adicionais por meio de `prisma/create-biblia-additional-courses.ts`.
+- O lote adicional possui 60 módulos e 802 aulas.
+- Somado ao `Bíblia Comentada`, o catálogo importado possui 16 cursos, 127 módulos e 1.560 aulas.
+- Todos os cursos estão ativos e vinculados a `douglaslundy@gmail.com`.
+- Nenhum slug estava previamente ocupado; não houve sobrescrita de cursos alheios.
+- A validação pós-gravação confirmou cada título, posição, URL e descrição.
+- As 267 aulas sem URL compatível no catálogo completo usam marcador técnico e preservam a origem na descrição.
+
+
+---
+
+### 2026-07-30 - Restauração da autenticação do produtor
+
+### Diagnóstico
+
+- A conta interna de `douglaslundy@gmail.com` estava ativa, vinculada ao Auth e sem expiração de acesso.
+- O domínio do Supabase retornava `404` porque o contêiner Kong da instância SysCursos não existia, embora os demais serviços estivessem saudáveis.
+- A interface convertia a falha de infraestrutura em mensagem genérica de credenciais inválidas.
+
+### Correção e validação
+
+- O serviço Kong foi recriado usando os arquivos de composição existentes na VPS.
+- O contêiner ficou saudável com política de reinício `unless-stopped`, e o proxy voltou a encaminhar o domínio público.
+- A senha da conta solicitada foi redefinida sem persistir o valor em documentação.
+- Um login real por e-mail e senha foi concluído pela API pública do Supabase com o identificador Auth esperado; a sessão de validação foi encerrada em seguida.
+- A página pública `/login/admin` permaneceu disponível com resposta HTTP 200.
+- Verificações finais do repositório: lint aprovado, 110 testes aprovados e `git diff --check` sem erros.
+- Typecheck e build seguem bloqueados somente pelos erros preexistentes nas linhas 264 e 268 de `prisma/update-metodo-sub10-course.ts`, que não foi alterado nesta operação.
