@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isUnauthenticatedAuthError } from "@/lib/supabase/auth-error";
 import { createSupabaseMiddlewareClient } from "@/lib/supabase/middleware";
 import { getSupabaseAudienceForPath } from "@/lib/supabase/session";
 
@@ -13,7 +14,12 @@ export async function middleware(request: NextRequest) {
     const supabase = createSupabaseMiddlewareClient(request, response, audience);
     const {
       data: { session },
+      error,
     } = await supabase.auth.getSession();
+
+    if (error && !isUnauthenticatedAuthError(error)) {
+      throw error;
+    }
 
     if (!session && isProtectedPath(request.nextUrl.pathname)) {
       return redirectToLogin(request);

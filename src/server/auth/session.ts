@@ -2,6 +2,7 @@ import { revalidateTag, unstable_cache } from "next/cache";
 import { cache } from "react";
 
 import { prisma } from "@/lib/db/prisma";
+import { isUnauthenticatedAuthError } from "@/lib/supabase/auth-error";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { SupabaseAuthAudience } from "@/lib/supabase/session";
 import { withDbRetry } from "@/server/db/retry";
@@ -54,7 +55,18 @@ export const getCurrentUser = cache(async (audience: SupabaseAuthAudience = "cli
   try {
     const {
       data: { user },
+      error,
     } = await supabase.auth.getUser();
+
+    if (error) {
+      if (isUnauthenticatedAuthError(error)) {
+        return { ok: false, reason: "UNAUTHENTICATED" };
+      }
+
+      console.error("Failed to load Supabase user session.", error);
+      return { ok: false, reason: "SERVER_ERROR" };
+    }
+
     supabaseUser = user;
   } catch (error) {
     console.error("Failed to load Supabase user session.", error);

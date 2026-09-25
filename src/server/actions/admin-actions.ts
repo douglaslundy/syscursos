@@ -418,6 +418,10 @@ function studentMutationStatus(error: unknown) {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
 
+    if (isSupabaseAdminConfigurationError(message)) {
+      return "supabase_admin_config";
+    }
+
     if (message.includes("apenas produtores")) {
       return "student_producer_required";
     }
@@ -471,6 +475,10 @@ function lessonMutationStatus(error: unknown) {
 
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
+
+    if (isSupabaseAdminConfigurationError(message)) {
+      return "supabase_admin_config";
+    }
 
     if (message.includes("capa maior que o limite")) {
       return "cover_too_large";
@@ -547,6 +555,10 @@ function adminErrorStatus(error: unknown) {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
 
+    if (isSupabaseAdminConfigurationError(message)) {
+      return "supabase_admin_config";
+    }
+
     if (message.includes("capa maior que o limite")) {
       return "cover_too_large";
     }
@@ -559,16 +571,21 @@ function adminErrorStatus(error: unknown) {
       return "auth_error";
     }
 
-    if (message.includes("supabase_service_role_key") || message.includes("missing required environment variable")) {
-      return "storage_error";
-    }
-
     if (message.includes("storage") || message.includes("bucket")) {
       return "storage_error";
     }
   }
 
   return "error";
+}
+
+function isSupabaseAdminConfigurationError(message: string) {
+  return (
+    message.includes("supabase_service_role_key") ||
+    message.includes("missing required environment variable") ||
+    message.includes("invalid api key") ||
+    message.includes("invalid jwt")
+  );
 }
 
 function isRedirectError(error: unknown) {

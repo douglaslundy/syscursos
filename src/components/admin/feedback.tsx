@@ -28,6 +28,7 @@ const messages: Record<string, string> = {
   student_auth_email: "Nao foi possivel atualizar o e-mail de acesso no Supabase Auth. Verifique se o e-mail ja existe ou esta em formato aceito.",
   student_auth_password: "Nao foi possivel atualizar a senha no Supabase Auth. Informe uma senha mais forte ou deixe o campo em branco para manter a senha atual.",
   student_auth_error: "Nao foi possivel atualizar o acesso do aluno no Supabase Auth. Verifique as credenciais e tente novamente.",
+  supabase_admin_config: "A integracao administrativa com o Supabase nao esta configurada corretamente no servidor. Atualize a chave service_role do ambiente e tente novamente.",
   student_producer_required: "Somente produtores podem cadastrar ou editar alunos nesta area.",
   student_save_error: "Nao foi possivel salvar o aluno. Nenhum campo foi alterado; tente novamente e verifique os dados informados.",
   lesson_invalid: "Nao foi possivel salvar a aula. Verifique os campos obrigatorios, a posicao e o modulo selecionado.",
