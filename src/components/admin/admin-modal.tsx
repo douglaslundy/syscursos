@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLink as Link } from "@/components/admin/admin-link";
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
 type AdminModalProps = {

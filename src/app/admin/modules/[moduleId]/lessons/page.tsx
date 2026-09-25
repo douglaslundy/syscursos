@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLink as Link } from "@/components/admin/admin-link";
 
 import { AdminModal } from "@/components/admin/admin-modal";
 import { Feedback } from "@/components/admin/feedback";

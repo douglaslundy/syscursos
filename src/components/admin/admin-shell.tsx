@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLink as Link } from "@/components/admin/admin-link";
 
 import { logoutAction } from "@/server/actions/auth-actions";
 import type { AuthenticatedUser } from "@/server/auth/types";

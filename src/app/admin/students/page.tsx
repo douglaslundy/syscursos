@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLink as Link } from "@/components/admin/admin-link";
 import { UserStatus } from "@prisma/client";
 
 import { Feedback } from "@/components/admin/feedback";

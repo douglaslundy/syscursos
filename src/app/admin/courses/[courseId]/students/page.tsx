@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLink as Link } from "@/components/admin/admin-link";
 
 import { Pagination } from "@/components/admin/pagination";
 import { getStudentsByCourse } from "@/server/services/admin-service";

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AdminLink as Link } from "@/components/admin/admin-link";
 
 type AdminPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
