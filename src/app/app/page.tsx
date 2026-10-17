@@ -3,10 +3,24 @@ import Link from "next/link";
 import { ContinueLessonBlock } from "@/components/student/continue-lesson-block";
 import { CourseCard } from "@/components/student/course-card";
 import { EmptyState } from "@/components/student/empty-state";
+import { LessonThumbLink } from "@/components/student/lesson-thumb-card";
 
-export default async function StudentHomePage() {
+type StudentHomePageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default async function StudentHomePage({ searchParams }: StudentHomePageProps) {
+  const search = typeof searchParams?.q === "string" ? searchParams.q.trim() : "";
   const { getStudentDashboard } = await import("@/server/services/student-service");
-  const { courses, continueLesson } = await getStudentDashboard();
+  const { getRecentCourseLessons } = await import("@/server/services/favorite-service");
+  const [{ courses: allCourses, continueLesson }, recentLessons] = await Promise.all([
+    getStudentDashboard(),
+    getRecentCourseLessons(),
+  ]);
+  const needle = search.toLocaleLowerCase("pt-BR");
+  const courses = needle
+    ? allCourses.filter((course) => course.title.toLocaleLowerCase("pt-BR").includes(needle))
+    : allCourses;
 
   return (
     <section>
@@ -25,19 +39,59 @@ export default async function StudentHomePage() {
           >
             Abrir cadernos
           </Link>
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+            href="/cursos"
+          >
+            Ver cursos disponiveis
+          </Link>
         </div>
       </div>
 
-      {continueLesson ? (
+      {recentLessons.length > 0 ? (
+        <div className="mb-6">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-copy-muted">
+            Continue de onde parou
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {recentLessons.map((card) => (
+              <LessonThumbLink card={card} key={card.courseId} />
+            ))}
+          </div>
+        </div>
+      ) : continueLesson ? (
         <div className="mb-6">
           <ContinueLessonBlock card={continueLesson} context="home" />
         </div>
       ) : null}
 
+      {allCourses.length > 1 ? (
+        <form action="/app" className="mb-6 flex gap-2" role="search">
+          <input
+            aria-label="Pesquisar curso pelo nome"
+            className="min-h-10 w-full max-w-md rounded-md border border-stroke-subtle bg-surface px-3 text-sm outline-none"
+            defaultValue={search}
+            name="q"
+            placeholder="Pesquisar curso pelo nome"
+            type="search"
+          />
+          <button
+            className="inline-flex min-h-10 items-center rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary hover:bg-surface-hover hover:text-copy-primary"
+            type="submit"
+          >
+            Buscar
+          </button>
+        </form>
+      ) : null}
+
       {courses.length === 0 ? (
         <EmptyState
-          description="Quando uma matricula ativa estiver vinculada ao seu usuario, o curso aparecera aqui."
-          title="Nenhum curso vinculado"
+          description={
+            search
+              ? "Nenhum dos seus cursos tem esse nome. Tente outro termo."
+              : "Quando uma matricula ativa estiver vinculada ao seu usuario, o curso aparecera aqui."
+          }
+          title={search ? "Nenhum curso encontrado" : "Nenhum curso vinculado"}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

@@ -11,9 +11,11 @@ import { revalidateAuthUser } from "@/server/auth/session";
 import { revalidateCourseContent } from "@/server/cache/course-content";
 import { StudentMutationError } from "@/server/repositories/admin-repository";
 import {
+  approveEnrollmentRequest,
   cancelEnrollment as cancelEnrollmentService,
   linkStudentToProducer,
   lookupStudentByEmail,
+  rejectEnrollmentRequest,
   removeCourse,
   removeLesson,
   removeLessonMaterial,
@@ -30,6 +32,7 @@ import {
   updateOwnAdminProfile,
 } from "@/server/services/admin-service";
 import {
+  approveEnrollmentRequestSchema,
   cancelEnrollmentSchema,
   courseSchema,
   enrollmentSchema,
@@ -251,6 +254,24 @@ export async function cancelEnrollmentAction(formData: FormData) {
   const { id } = parseForm(cancelEnrollmentSchema, formData, path);
   await runAdminMutation(path, "canceled", async () => {
     await cancelEnrollmentService(id);
+    revalidatePath(path);
+  });
+}
+
+export async function approveEnrollmentRequestAction(formData: FormData) {
+  const path = "/admin/requests";
+  const input = parseForm(approveEnrollmentRequestSchema, formData, path);
+  await runAdminMutation(path, "approved", async () => {
+    await approveEnrollmentRequest(input.id, input.expiresAt);
+    revalidatePath(path);
+  });
+}
+
+export async function rejectEnrollmentRequestAction(formData: FormData) {
+  const path = "/admin/requests";
+  const { id } = parseForm(idSchema, formData, path);
+  await runAdminMutation(path, "rejected", async () => {
+    await rejectEnrollmentRequest(id);
     revalidatePath(path);
   });
 }

@@ -45,6 +45,21 @@ export async function getStudentDashboard() {
   const studentId = await requireStudentProfileId();
   const enrollments = await repository.listStudentCourseEnrollments(studentId);
 
+  const courses = await buildStudentCourseCards(studentId, enrollments);
+
+  const continueLesson = await resolveContinueLessonCard(studentId, enrollments.map((enrollment) => enrollment.courseId));
+
+  return {
+    courses,
+    continueHref: continueLesson?.href ?? null,
+    continueLesson,
+  };
+}
+
+export async function buildStudentCourseCards(
+  studentId: string,
+  enrollments: Awaited<ReturnType<typeof repository.listStudentCourseEnrollments>>,
+) {
   const courseIds = enrollments.map((enrollment) => enrollment.courseId);
   const [totalsByCourse, completedByCourse] = await Promise.all([
     repository.countActiveLessonsForCourses(courseIds),
@@ -66,13 +81,7 @@ export async function getStudentDashboard() {
     };
   });
 
-  const continueLesson = await resolveContinueLessonCard(studentId, enrollments.map((enrollment) => enrollment.courseId));
-
-  return {
-    courses,
-    continueHref: continueLesson?.href ?? null,
-    continueLesson,
-  };
+  return courses;
 }
 
 export async function getStudentCourse(courseId: string) {
@@ -280,7 +289,7 @@ export async function updateOwnStudentProfile(input: StudentProfileInput) {
   return repository.updateStudentProfile(studentId, input);
 }
 
-async function requireStudentProfileId() {
+export async function requireStudentProfileId() {
   const user = await requireAnyRole(["STUDENT"]);
 
   if (!user.studentProfileId) {
@@ -290,7 +299,7 @@ async function requireStudentProfileId() {
   return user.studentProfileId;
 }
 
-function getCourseAccessStatus(enrollment: {
+export function getCourseAccessStatus(enrollment: {
   status: string;
   expiresAt: Date | null;
   startsAt: Date;

@@ -58,6 +58,7 @@ describe("admin service", () => {
       description: null,
       coverImageUrl: null,
       status: "ACTIVE" as const,
+      isPublic: false,
     };
     repositoryMock.upsertCourse.mockResolvedValue({ id: "course-id", ...input });
 

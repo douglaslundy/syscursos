@@ -843,3 +843,72 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [ ] Abrir a porta 6643/tcp no firewall externo (painel do provedor da VPS, fora do alcance por SSH) para migrar `DATABASE_URL` de producao (Vercel) para o pooler em modo transacao do Supavisor - correcao definitiva para muitos alunos simultaneos (hoje so o pool do modo session foi aumentado como paliativo).
 - [ ] Aplicar o mesmo padrao "atualizar so o elemento que mudou, sem recarregar a pagina" no CRUD administrativo inteiro: salvar/excluir/ativar-inativar/reordenar em cursos, modulos, aulas, alunos e matriculas (hoje todos usam `redirect(adminStatusPath(...))` via `runAdminMutation`, que forca reload completo da listagem a cada acao).
 - [ ] Apos aplicar o padrao no admin, reavaliar se a mensagem de status por query string (`Feedback`/`adminStatusPath`) ainda e necessaria ou pode ser substituida por feedback inline como no `LessonCompletionPanel`.
+
+## Operação 2026-09-10 - Links de Resenhas Filosóficas
+
+- [x] Localizar o curso `Resenhas Filosóficas` no banco configurado.
+- [x] Associar as 30 aulas somente pelo nome, ignorando a numeração recebida.
+- [x] Atualizar transacionalmente os links de vídeo informados.
+- [x] Confirmar os 30 links após a gravação.
+- [x] Confirmar que os 21 materiais PDF e a aula extra `eBook de Introdução à Filosofia` não foram alterados.
+
+## Operação 2026-09-25 - Importação da pasta CURSOS LINKS
+
+- [x] Ler os 9 arquivos `.txt` da pasta `CURSOS LINKS` em UTF-8.
+- [x] Criar um importador transacional com modo de prévia e validação posterior.
+- [x] Cadastrar 9 cursos, 75 módulos e 456 aulas na sequência da origem.
+- [x] Remover prefixos numéricos dos títulos das aulas.
+- [x] Vincular todos os cursos ao produtor `douglaslundy@gmail.com`.
+- [x] Matricular `douglaslundy100@gmail.com` nos 9 cursos entre 25/09/2026 e 25/09/2027.
+- [x] Preservar progressos e anotações dos cursos preexistentes durante a reconciliação.
+- [x] Usar marcador técnico nas 45 aulas sem URL compatível, preservando a observação na descrição.
+- [x] Validar títulos, posições, URLs, ownership e matrículas diretamente no banco.
+
+## Correção 2026-09-25 - Storage, Auth administrativo e sessão
+
+- [x] Validar diretamente leitura do bucket, upload/remoção de imagem e criação/remoção de usuário Auth no Supabase.
+- [x] Cruzar as operações com os logs do gateway da VPS e identificar ausência das chamadas administrativas do site.
+- [x] Sincronizar `SUPABASE_SERVICE_ROLE_KEY` na Vercel para Production e Preview.
+- [x] Refazer o deploy de produção após atualizar a variável protegida.
+- [x] Impedir que erros técnicos retornados por `getUser`/`getSession` sejam tratados como logout.
+- [x] Validar JWT administrativo para rejeitar chave pública/anon usada como `service_role`.
+- [x] Exibir erro específico de configuração administrativa do Supabase.
+- [x] Executar lint, typecheck, testes e build.
+
+## Correção 2026-09-25 - Limite Auth para concorrência
+
+- [x] Identificar respostas 429 do Kong após o cadastro de usuário.
+- [x] Confirmar que o cadastro do usuário terminou antes do bloqueio temporário.
+- [x] Aumentar o limite global de Auth de 20/min para 150/s e 1.200/min.
+- [x] Manter os limites específicos internos do GoTrue para login, OTP e recuperação.
+- [x] Desativar prefetch automático em todos os links administrativos.
+- [x] Validar rajada de 100 chamadas simultâneas sem erro.
+- [x] Confirmar Kong saudável e ausência de novos 429.
+- [x] Executar lint, typecheck, 134 testes e build.
+
+## Operação 2026-10-02 - Importação dos cursos WISE UP
+
+- [x] Ler `WISE UP.txt` em UTF-8 e validar a hierarquia recebida.
+- [x] Separar o bloco misturado de `TRAVEL` em `Road Trip` e `Parques Temáticos`, cada um com seu PDF.
+- [x] Cadastrar 3 cursos, 24 módulos, 518 aulas de vídeo e 24 aulas de PDF na ordem da origem.
+- [x] Colocar o PDF como primeira aula de cada módulo e também disponibilizá-lo como material clicável.
+- [x] Vincular os cursos ao produtor `douglaslundy@gmail.com`.
+- [x] Matricular `douglaslundy100@gmail.com` nos 3 cursos com validade até o fim de 02/10/2027.
+- [x] Validar estrutura, posições, materiais, ownership e matrículas diretamente no banco.
+
+## Operação 2026-10-08 - Importação do curso Polícia Rodoviária Federal
+
+- [x] Ler o arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` em UTF-8.
+- [x] Ordenar módulos e aulas por nomenclatura natural crescente.
+- [x] Cadastrar 1 curso, 25 módulos e 1.253 aulas com links diretos do Google Drive.
+- [x] Vincular o curso ao produtor `douglaslundy@gmail.com`.
+- [x] Vincular o aluno `douglaslundy100@gmail.com` ao produtor e matriculá-lo no curso.
+- [x] Definir a expiração da matrícula para o fim de 31/12/2027 no fuso de São Paulo.
+- [x] Validar títulos, posições, URLs, ownership e matrícula diretamente no banco.
+
+## 2026-10-17
+- [x] Busca de cursos na area do aluno, pagina publica `/cursos`, solicitacoes de matricula e flag publico/privado no curso.
+- [x] Migration `20261017120000_public_courses_enrollment_requests` aplicada (2026-10-17).
+- [ ] Login ainda ignora `?next=`: apos entrar, o aluno cai em `/app` (link "Ver cursos disponiveis" leva a `/cursos`).
+- [x] Favoritos (cursos/aulas) e 3 ultimos cursos na home do aluno.
+- [x] Migration `20261017150000_student_favorites` aplicada (2026-10-17).

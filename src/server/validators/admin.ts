@@ -36,6 +36,7 @@ export const courseSchema = z.object({
   description: optionalTextSchema,
   coverImageUrl: optionalHttpsUrlSchema,
   status: z.nativeEnum(CourseStatus).default(CourseStatus.ACTIVE),
+  isPublic: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
 });
 
 export const moduleSchema = z.object({
@@ -119,6 +120,15 @@ export const enrollmentSchema = z.object({
 export const renewEnrollmentSchema = z.object({
   id: uuidSchema,
   expiresAt: z.coerce.date(),
+});
+
+export const approveEnrollmentRequestSchema = z.object({
+  id: uuidSchema,
+  expiresAt: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .transform((value) => new Date(`${value}T00:00:00.000Z`)),
 });
 
 export const cancelEnrollmentSchema = z.object({

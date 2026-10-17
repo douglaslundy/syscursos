@@ -50,6 +50,12 @@ enum EnrollmentStatus {
   CANCELED
 }
 
+enum EnrollmentRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum LessonProgressStatus {
   NOT_STARTED
   COMPLETED
@@ -98,6 +104,9 @@ model StudentProfile {
   enrollments Enrollment[]
   notes       LessonNote[]
   progress    LessonProgress[]
+  enrollmentRequests EnrollmentRequest[]
+  favoriteCourses FavoriteCourse[]
+  favoriteLessons FavoriteLesson[]
   producers   ProducerStudent[]  @relation("ProducerStudentStudent")
 
   @@map("student_profiles")
@@ -112,14 +121,18 @@ model Course {
   description String?
   coverImageUrl String?    @map("cover_image_url") @db.VarChar(500)
   status      CourseStatus @default(ACTIVE)
+  isPublic    Boolean      @default(false) @map("is_public")
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   producer    User         @relation("CourseProducer", fields: [producerId], references: [id], onDelete: Restrict)
   modules     Module[]
   enrollments Enrollment[]
+  enrollmentRequests EnrollmentRequest[]
+  favorites FavoriteCourse[]
 
   @@index([organizationId, producerId, status])
+  @@index([isPublic, status])
   @@index([title])
   @@map("courses")
 }
@@ -170,6 +183,7 @@ model Lesson {
   notes          LessonNote[]
   progress       LessonProgress[]
   materials      LessonMaterial[]
+  favorites      FavoriteLesson[]
 
   @@unique([moduleId, position])
   @@index([moduleId, status])
@@ -211,6 +225,45 @@ model Enrollment {
   @@index([studentId, status])
   @@index([expiresAt])
   @@map("enrollments")
+}
+
+model EnrollmentRequest {
+  id         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId  String                  @map("student_id") @db.Uuid
+  courseId   String                  @map("course_id") @db.Uuid
+  status     EnrollmentRequestStatus @default(PENDING)
+  createdAt  DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt DateTime?               @map("resolved_at") @db.Timestamptz(6)
+  student    StudentProfile          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course     Course                  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@index([courseId, status])
+  @@map("enrollment_requests")
+}
+
+model FavoriteCourse {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String         @map("student_id") @db.Uuid
+  courseId  String         @map("course_id") @db.Uuid
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@map("favorite_courses")
+}
+
+model FavoriteLesson {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String         @map("student_id") @db.Uuid
+  lessonId  String         @map("lesson_id") @db.Uuid
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, lessonId])
+  @@map("favorite_lessons")
 }
 
 model LessonNote {

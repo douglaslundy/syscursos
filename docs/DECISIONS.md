@@ -1531,3 +1531,128 @@ Pendencia:
 
 - Liberar a porta 6643/tcp no firewall externo (provedor da VPS) para permitir migrar `DATABASE_URL` de producao (Vercel) para o pooler em modo transacao com `pgbouncer=true`, que e a solucao definitiva para muitos alunos simultaneos numa aplicacao serverless.
 - Corrigir o mesmo tipo de mascaramento de erro (`storage_error` generico) no upload de capa de curso/aula, e alinhar os limites de tipo/tamanho do bucket `course-covers` com o codigo (diagnostico ja feito, correcao ainda nao aplicada).
+
+## 2026-09-10 - Atualizar vídeos de Resenhas Filosóficas por correspondência nominal
+
+Decisão:
+
+- Usar o slug estável do curso apenas para delimitar o conjunto e associar cada vídeo pelo nome normalizado da aula, sem usar posições ou números.
+- Exigir exatamente uma correspondência para cada um dos 30 nomes antes de permitir qualquer gravação.
+- Atualizar todos os registros correspondentes em uma única transação e comparar um snapshot dos materiais antes e depois.
+
+Motivo:
+
+- A lista recebida contém numeração duplicada, saltos e itens sem número; a posição não é uma chave confiável.
+- Os PDFs já estavam corretos e precisavam permanecer fora da mutação.
+
+Resultado:
+
+- 29 URLs foram alteradas, 1 já estava correta, os 30 links foram validados e os 21 materiais existentes permaneceram idênticos.
+
+## 2026-09-25 - Importar CURSOS LINKS com reconciliação de histórico
+
+### Contexto
+
+A pasta `CURSOS LINKS` contém um arquivo por curso e mistura aulas com Google Drive, itens sem mídia e materiais complementares. Dois cursos já existiam no banco e possuíam progresso e anotações.
+
+### Decisão
+
+- Usar o nome-base literal do arquivo como título do curso e gerar o slug por normalização.
+- Considerar apenas cabeçalhos `MÓDULO` como módulos; `BLOCO` e `SUBMÓDULO` mantêm a ordem das aulas dentro do módulo principal.
+- Remover o rótulo `Aula` e qualquer número inicial do título, recalculando posições consecutivas por módulo.
+- Usar `https://www.youtube.com/watch?v=unavailable` nas aulas sem mídia compatível e guardar a observação de origem na descrição.
+- Reconciliar aulas preexistentes por URL normalizada ou título compatível, reutilizando IDs e migrando progresso/anotações quando necessário.
+- Executar todo o lote em uma transação e abortar diante de ownership incompatível, conflito de anotação ou histórico sem destino seguro.
+
+### Consequências
+
+- A importação é repetível e valida a estrutura persistida contra a origem.
+- Progressos e anotações preexistentes não são descartados ao atualizar a estrutura.
+- PDFs isolados não rotulados como aula ficam fora do escopo desta carga.
+
+## 2026-09-25 - Separar ausência de sessão de falha técnica do Supabase
+
+### Decisão
+
+- Classificar como não autenticado somente erros reconhecidos de sessão/JWT/refresh token.
+- Tratar respostas 5xx, timeout, rede e demais falhas do Supabase como erro de servidor, mantendo os cookies e sem redirecionar ao login.
+- Validar a função `service_role` quando a chave administrativa tiver formato JWT e apresentar erro específico de configuração.
+
+### Motivo
+
+Os clientes Supabase retornam diversas falhas no campo `error` sem lançar exceção. Ignorar esse campo transformava indisponibilidade temporária em logout. Além disso, Storage administrativo e gestão de usuários compartilham a mesma chave server-side; uma chave divergente produzia mensagens diferentes para a mesma causa raiz.
+
+### Consequências
+
+- Erros temporários deixam de invalidar visualmente a sessão do usuário.
+- Chave pública configurada no backend é detectada antes da chamada externa.
+- Problemas de configuração deixam de ser mascarados como permissão de bucket ou senha do aluno.
+
+## 2026-09-25 - Separar capacidade global do gateway e proteção de operações Auth
+
+### Decisão
+
+- Elevar o limite global de `/auth/v1/*` no Kong para 150 requisições por segundo e 1.200 por minuto.
+- Preservar os rate limits específicos do GoTrue para token, login, OTP, e-mail e demais operações sensíveis.
+- Desativar o prefetch dos links administrativos por padrão.
+
+### Motivo
+
+O limite anterior de 20/min era compartilhado por todas as validações de sessão e não distinguia navegação legítima de operações sensíveis. Uma única listagem com links pré-carregados conseguia bloquear todos os usuários. A nova capacidade comporta uma rajada de 50 usuários com margem, enquanto a redução de chamadas desnecessárias evita consumir recursos sem interação real.
+
+### Consequências
+
+- O gateway deixa de ser o gargalo imediato da autenticação em uso concorrente.
+- Operações vulneráveis a abuso continuam protegidas pelo Auth.
+- Links administrativos podem iniciar a navegação apenas quando acionados, com pequeno custo de latência em troca de previsibilidade e estabilidade.
+
+## 2026-10-02 - Representar os PDFs do WISE UP como primeiras aulas
+
+### Contexto
+
+O arquivo `WISE UP.txt` declara três cursos e traz um PDF por módulo. O primeiro bloco de `TRAVEL` mistura duas trilhas, `Road Trip` e `Parques Temáticos`, e contém dois PDFs distintos.
+
+### Decisão
+
+- Cadastrar os três blocos como cursos independentes: `WISE UP - CITIES`, `WISE UP - TRAVEL` e `WISE UP - BUSINESS`.
+- Separar o primeiro bloco de `TRAVEL` em dois módulos, usando os temas e PDFs explícitos da origem.
+- Criar cada PDF como aula ativa na posição 1, usando o link Google Drive no visualizador e repetindo o mesmo arquivo como material `PDF` clicável.
+- Deslocar as aulas de vídeo para as posições seguintes sem alterar sua ordem relativa.
+- Considerar a validade solicitada inclusiva e encerrar as matrículas às 23:59:59 de 02/10/2027 no fuso de São Paulo.
+
+### Consequências
+
+- Cada um dos 24 módulos possui exatamente uma aula de PDF como primeiro item.
+- O aluno pode visualizar o documento no player e também abri-lo pelo bloco de materiais.
+- A importação é transacional, possui prévia e valida a persistência após a gravação.
+
+## 2026-10-08 - Ordenar a importação da Polícia Rodoviária Federal por nomenclatura
+
+### Contexto
+
+O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.253 aulas de vídeo do Google Drive. A solicitação exige que módulos e aulas sejam cadastrados do menor para o maior conforme a nomenclatura.
+
+### Decisão
+
+- Usar o nome-base do arquivo, sem a extensão `.txt`, como título literal do curso.
+- Ordenar módulos e aulas com comparação natural `pt-BR`, sensível a números, antes de atribuir posições consecutivas.
+- Aceitar somente URLs HTTPS de arquivos do Google Drive no formato `/file/d/.../view`.
+- Executar a carga em uma transação e impedir substituição quando uma reimportação encontrar progresso ou anotações.
+- Considerar 31/12/2027 inclusivo, encerrando a matrícula às 23:59:59.999 no fuso de São Paulo.
+
+### Consequências
+
+- A ordem persistida é determinística e independente da numeração visual já presente no arquivo.
+- A importação pode ser repetida com segurança enquanto o curso não tiver histórico de aluno.
+- O aluno recebe acesso ativo de 08/10/2026 até o fim de 31/12/2027.
+
+## 2026-10-17 - Cursos publicos e solicitacao de matricula
+- `courses.is_public` (default false) define se o curso aparece em `/cursos` (pagina publica) ou so recebe matricula manual.
+- Nova tabela `enrollment_requests` (PENDING/APPROVED/REJECTED, unica por aluno+curso; novo pedido reabre o registro).
+- Aprovacao (`/admin/requests`, so PRODUCER dono do curso) cria/renova a matricula, vincula aluno ao produtor e usa validade padrao de 12 meses, editavel.
+- Busca de curso do aluno: filtro por nome em `/app?q=` (so aparece com mais de 1 curso).
+
+## 2026-10-17 - Favoritos e ultimos cursos
+- Tabelas `favorite_courses` e `favorite_lessons` (unicas por aluno+item). Alternar favorito valida matricula vigente (e aula ativa).
+- Home do aluno mostra as 3 ultimas aulas assistidas, uma por curso (curso em destaque, aula abaixo, thumbnail); sem historico mantem o bloco "continuar".
+- Menu "Favoritos" -> `/app/favorites/courses` e `/app/favorites/lessons` (agrupado por curso). Botao de favorito na pagina do curso e da aula.

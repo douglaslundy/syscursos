@@ -1,5 +1,6 @@
 import { requireAnyRole, requireRole } from "@/server/auth/guards";
 import * as repository from "@/server/repositories/admin-repository";
+import * as requestRepository from "@/server/repositories/enrollment-request-repository";
 import type { PaginationInput } from "@/server/validators/pagination";
 import type {
   AdminProfileInput,
@@ -181,6 +182,21 @@ export async function renewEnrollment(input: RenewEnrollmentInput) {
 export async function cancelEnrollment(id: string) {
   const admin = await requireAdminOrProducer();
   return repository.cancelEnrollment(admin.organizationId, admin.id, admin.role, id);
+}
+
+export async function getPendingEnrollmentRequests() {
+  const producer = await requireProducer();
+  return requestRepository.listPendingRequests(producer.organizationId, producer.id);
+}
+
+export async function approveEnrollmentRequest(id: string, expiresAt: Date) {
+  const producer = await requireProducer();
+  return requestRepository.approveEnrollmentRequest(producer.organizationId, producer.id, id, expiresAt);
+}
+
+export async function rejectEnrollmentRequest(id: string) {
+  const producer = await requireProducer();
+  return requestRepository.rejectEnrollmentRequest(producer.organizationId, producer.id, id);
 }
 
 export async function getCoursesByStudent(studentId: string, input: PaginationInput) {

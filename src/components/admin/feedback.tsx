@@ -3,6 +3,8 @@ const messages: Record<string, string> = {
   deleted: "Registro removido com sucesso.",
   renewed: "Matricula renovada com sucesso.",
   canceled: "Matricula cancelada com sucesso.",
+  approved: "Solicitacao aprovada e matricula liberada.",
+  rejected: "Solicitacao recusada.",
   linked_existing: "Aluno ja possuia cadastro na plataforma e foi vinculado com sucesso a sua lista.",
   student_lookup_found: "Aluno encontrado na plataforma. Os dados foram carregados e o proximo passo e somente vincular.",
   student_lookup_not_found: "Aluno nao encontrado na plataforma. Preencha os campos para realizar um novo cadastro.",

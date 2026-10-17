@@ -3,8 +3,10 @@ import { CheckCircle2, Circle, PlayCircle } from "lucide-react";
 
 import { ContinueLessonBlock } from "@/components/student/continue-lesson-block";
 import { CourseBlocked } from "@/components/student/course-blocked";
+import { FavoriteButton } from "@/components/student/favorite-button";
 import { EmptyState } from "@/components/student/empty-state";
 import { ProgressBar } from "@/components/student/progress-bar";
+import { getCourseFavoriteState } from "@/server/services/favorite-service";
 import { getStudentCourse } from "@/server/services/student-service";
 import { getLessonThumbnailUrl, getLessonVideoEmbed } from "@/server/services/youtube-service";
 import { studentCourseParamsSchema } from "@/server/validators/student";
@@ -15,7 +17,7 @@ type StudentCoursePageProps = {
 
 export default async function StudentCoursePage({ params }: StudentCoursePageProps) {
   const { courseId } = studentCourseParamsSchema.parse(params);
-  const data = await getStudentCourse(courseId);
+  const [data, isFavorite] = await Promise.all([getStudentCourse(courseId), getCourseFavoriteState(courseId)]);
 
   if (data.status !== "AVAILABLE") {
     return <CourseBlocked status={data.status} />;
@@ -32,6 +34,9 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-copy-primary md:text-4xl">
             {data.course.title}
           </h1>
+          <div className="mt-3">
+            <FavoriteButton courseId={courseId} isFavorite={isFavorite} />
+          </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-copy-secondary">
             {data.course.description ?? "Conteudo liberado para seu estudo."}
           </p>

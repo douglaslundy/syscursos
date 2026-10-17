@@ -1,8 +1,10 @@
 import Link from "next/link";
 
 import { CourseBlocked } from "@/components/student/course-blocked";
+import { FavoriteButton } from "@/components/student/favorite-button";
 import { LessonCompletionPanel } from "@/components/student/lesson-completion-panel";
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
+import { getLessonFavoriteState } from "@/server/services/favorite-service";
 import { getStudentLesson } from "@/server/services/student-service";
 import { studentLessonParamsSchema } from "@/server/validators/student";
 
@@ -12,7 +14,10 @@ type StudentLessonPageProps = {
 
 export default async function StudentLessonPage({ params }: StudentLessonPageProps) {
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const data = await getStudentLesson(courseId, lessonId);
+  const [data, isFavorite] = await Promise.all([
+    getStudentLesson(courseId, lessonId),
+    getLessonFavoriteState(lessonId),
+  ]);
 
   if (data.status !== "AVAILABLE") {
     return <CourseBlocked status={data.status} />;
@@ -46,6 +51,9 @@ export default async function StudentLessonPage({ params }: StudentLessonPagePro
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-copy-primary md:text-4xl">
             {data.lesson.title}
           </h1>
+          <div className="mt-3">
+            <FavoriteButton courseId={courseId} isFavorite={isFavorite} lessonId={lessonId} />
+          </div>
         </div>
       </div>
 

@@ -189,6 +189,7 @@ export async function upsertCourse(
         description: input.description,
         coverImageUrl: input.coverImageUrl,
         status: input.status,
+        isPublic: input.isPublic,
       },
     });
   }
@@ -202,6 +203,7 @@ export async function upsertCourse(
       description: input.description,
       coverImageUrl: input.coverImageUrl,
       status: input.status ?? CourseStatus.ACTIVE,
+      isPublic: input.isPublic,
     },
   });
 }

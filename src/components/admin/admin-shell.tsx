@@ -11,6 +11,7 @@ const navItems = [
   { href: "/admin/lessons", label: "Cadastrar aulas" },
   { href: "/admin/students", label: "Alunos" },
   { href: "/admin/enrollments", label: "Matriculas" },
+  { href: "/admin/requests", label: "Solicitacoes" },
 ];
 
 type AdminShellProps = Readonly<{

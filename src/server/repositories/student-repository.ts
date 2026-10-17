@@ -235,35 +235,37 @@ export async function getCompletedLessonIds(studentId: string, courseId: string)
   return new Set(rows.map((row) => row.lessonId));
 }
 
-export async function findMostRecentLessonProgress(studentId: string) {
+// Aula ativa de curso com matricula vigente e vinculo produtor-aluno.
+export function accessibleLessonWhere(studentId: string): Prisma.LessonWhereInput {
   const now = new Date();
 
-  return prisma.lessonProgress.findFirst({
-    where: {
-      studentId,
-      lesson: {
-        status: LessonStatus.ACTIVE,
-        module: {
-          status: ModuleStatus.ACTIVE,
-          course: {
-            status: CourseStatus.ACTIVE,
-            enrollments: {
-              some: {
-                studentId,
-                status: EnrollmentStatus.ACTIVE,
-                startsAt: { lte: now },
-                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-              },
-            },
-            producer: {
-              producerStudents: {
-                some: { studentId },
-              },
-            },
+  return {
+    status: LessonStatus.ACTIVE,
+    module: {
+      status: ModuleStatus.ACTIVE,
+      course: {
+        status: CourseStatus.ACTIVE,
+        enrollments: {
+          some: {
+            studentId,
+            status: EnrollmentStatus.ACTIVE,
+            startsAt: { lte: now },
+            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+          },
+        },
+        producer: {
+          producerStudents: {
+            some: { studentId },
           },
         },
       },
     },
+  };
+}
+
+export async function findMostRecentLessonProgress(studentId: string) {
+  return prisma.lessonProgress.findFirst({
+    where: { studentId, lesson: accessibleLessonWhere(studentId) },
     orderBy: [{ updatedAt: "desc" }, { completedAt: "desc" }],
     select: {
       status: true,

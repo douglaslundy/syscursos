@@ -45,6 +45,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                   description: editingCourse.description ?? "",
                   coverImageUrl: editingCourse.coverImageUrl ?? "",
                   status: editingCourse.status,
+                  isPublic: editingCourse.isPublic,
                 }
               : undefined
           }
@@ -65,7 +66,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
               </div>
               <div>
                 <div className="text-xs text-muted-foreground">Status</div>
-                <div className="text-sm">{course.status}</div>
+                <div className="text-sm">
+                  {course.status} - {course.isPublic ? "Publico" : "Privado"}
+                </div>
               </div>
             </div>
             {course.description ? (
@@ -150,6 +153,7 @@ type CourseFormProps = {
     description: string;
     coverImageUrl: string;
     status: string;
+    isPublic: boolean;
   };
 };
 
@@ -157,7 +161,7 @@ function CourseForm({ course }: CourseFormProps) {
   return (
     <form
       action={saveCourseAction}
-      className="grid gap-3 md:grid-cols-[1fr_1fr_auto]"
+      className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]"
       encType="multipart/form-data"
     >
       {course ? <input name="id" type="hidden" value={course.id} /> : null}
@@ -181,8 +185,17 @@ function CourseForm({ course }: CourseFormProps) {
         <option value="ACTIVE">Ativo</option>
         <option value="INACTIVE">Inativo</option>
       </select>
+      <select
+        aria-label="Visibilidade"
+        className="rounded-md border px-3 py-2 text-sm outline-none"
+        defaultValue={course?.isPublic ? "true" : "false"}
+        name="isPublic"
+      >
+        <option value="false">Privado (matricula manual)</option>
+        <option value="true">Publico (aparece em /cursos)</option>
+      </select>
       <textarea
-        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-3"
+        className="rounded-md border px-3 py-2 text-sm outline-none md:col-span-4"
         defaultValue={course?.description}
         name="description"
         placeholder="Descricao"

@@ -3242,3 +3242,191 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
   banco e usuarios ao mesmo tempo.
 - Roundtrip do `supabase.auth.getUser()` a cada render e conexoes frias do
   pooler agora custam ~5ms em fra1; deixaram de ser prioridade.
+
+---
+
+### 2026-09-10 - Atualização dos links de Resenhas Filosóficas
+
+### Resultado
+
+- Executado `prisma/update-resenhas-filosoficas-video-links.ts` primeiro em modo de prévia e depois com `--apply`.
+- O banco continha 31 aulas no curso; 30 nomes enviados tiveram correspondência única após normalização de acentos, pontuação e caixa.
+- Foram substituídos 29 links; `O Conceito de Angústia - Soren Kierkegaard` já possuía o link solicitado.
+- A aula `eBook de Introdução à Filosofia`, ausente da lista de vídeos enviada, não foi alterada.
+- A verificação posterior confirmou os 30 links esperados e os mesmos 21 registros de materiais, com títulos e URLs inalterados.
+
+### Segurança e escopo
+
+- A gravação foi feita em uma única transação e alterou somente `lessons.youtube_url` e `lessons.youtube_video_id` das correspondências validadas.
+- Nenhuma rota, regra de negócio, migration, matrícula, progresso ou material PDF foi alterado.
+
+### Verificações do repositório
+
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- `npm.cmd run test`: aprovado, 126 testes.
+- `npm.cmd run build`: aprovado.
+
+---
+
+### 2026-09-25 - Importação dos cursos de CURSOS LINKS
+
+### Arquivos criados ou alterados
+
+- `prisma/import-cursos-links.ts`
+- `docs/TODO.md`
+- `docs/DECISIONS.md`
+- `docs/REVIEW.md`
+- `.codex/context/CURRENT_STATE.md`
+
+### O que foi implementado
+
+- Importador UTF-8 para os 9 arquivos da pasta `CURSOS LINKS`.
+- Parser de módulos e aulas com remoção da numeração inicial das aulas.
+- Carga transacional de 9 cursos, 75 módulos e 456 aulas.
+- Ownership pelo produtor `douglaslundy@gmail.com` e 9 matrículas para `douglaslundy100@gmail.com`.
+- Início em 25/09/2026 e expiração em 25/09/2027.
+- Reconciliação dos cursos preexistentes `O PODER DO FLASH` e `SHIBARILAND`, preservando progresso e anotações.
+- Marcador técnico para 45 aulas sem URL compatível, sem inventar mídia.
+
+### Testes executados
+
+- Prévia do importador.
+- Execução do importador com `--apply`.
+- Validação posterior de estrutura, posições, URLs, produtor e matrículas no próprio importador.
+- Checklist de qualidade do repositório descrito abaixo após sua conclusão.
+
+### Resultado dos testes
+
+- Importação aprovada: 9 cursos, 75 módulos, 456 aulas e 9 matrículas.
+- Nenhuma divergência encontrada na validação posterior à gravação.
+- `npm.cmd run lint`: aprovado, sem warnings.
+- `npm.cmd run typecheck`: aprovado.
+- `npm.cmd run test`: aprovado, 126 testes.
+- `npm.cmd run build`: aprovado.
+
+### Riscos encontrados
+
+- 45 aulas não têm URL de vídeo compatível na origem e usam marcador técnico.
+- Materiais complementares e PDFs isolados não rotulados como aula não foram importados nesta operação.
+
+### Pendências
+
+- Cadastrar mídia real nas 45 aulas quando ela estiver disponível.
+
+### Próxima etapa recomendada
+
+- Validar visualmente os nove cursos na área do aluno.
+
+---
+
+### 2026-09-25 - Correção de capas, usuários Auth e logout indevido
+
+### Diagnóstico
+
+- O Supabase da VPS respondeu com sucesso à consulta do bucket `course-covers`, upload/remoção de PNG e criação/remoção de usuário via API administrativa.
+- Nas mesmas janelas de análise, os logs do gateway não continham chamadas administrativas originadas pelo site, embora a navegação e as capas públicas chegassem normalmente.
+- A causa comum das falhas de capa e usuário estava na credencial administrativa do ambiente de produção, não no bucket nem no serviço Auth.
+- O código também ignorava o campo `error` retornado por `supabase.auth.getUser()` e `getSession()`. Assim, uma falha técnica resolvida como `{ user: null, error }` era interpretada como sessão ausente e redirecionava ao login.
+
+### Correções
+
+- Chave `SUPABASE_SERVICE_ROLE_KEY` sincronizada em Production e Preview na Vercel e produção reconstruída com sucesso.
+- Erros de infraestrutura do Auth agora preservam o fluxo protegido e chegam à tela recuperável; somente sessão realmente ausente, inválida ou expirada provoca login.
+- JWT configurado como chave administrativa passa por validação de `role=service_role`.
+- Erro de configuração administrativa recebeu status e mensagem próprios.
+
+### Validação
+
+- `npm.cmd run lint`: aprovado.
+- `npm.cmd run typecheck`: aprovado.
+- Testes: 132 aprovados no total desta alteração.
+- `npm.cmd run build`: aprovado.
+- Redeploy da Vercel concluído e alias `https://syscursos.vercel.app` atualizado.
+
+---
+
+### 2026-09-25 - Capacidade do Auth para 50 usuários simultâneos
+
+### Diagnóstico
+
+- O usuário `fabiomendesofc@gmail.com` foi criado com sucesso no Supabase Auth às 18:22:41 UTC.
+- Logo depois, o Kong começou a devolver 429 em `GET /auth/v1/user`; a Vercel registrou `AuthApiError: API rate limit exceeded` em todas as páginas protegidas.
+- O arquivo declarativo do Kong limitava a rota Auth inteira a 20 requisições por minuto, compartilhadas pelo consumidor da chave pública.
+- A listagem administrativa possui muitos links dinâmicos; o prefetch do Next.js solicitava páginas ainda não abertas e cada render validava a sessão.
+
+### Correção
+
+- Limite do Kong alterado para 150/s e 1.200/min, dimensionado com margem para 50 usuários simultâneos.
+- O GoTrue continua aplicando suas proteções específicas para operações sensíveis.
+- Todos os links da área administrativa passaram a usar `AdminLink`, com `prefetch=false` por padrão.
+
+### Validação
+
+- Kong saudável após recriação isolada do container.
+- 100 chamadas Auth administrativas simultâneas concluídas com 100 respostas 200.
+- Nenhuma resposta 429 após a alteração.
+- Lint, typecheck, 134 testes e build aprovados.
+
+---
+
+### 2026-10-02 - Importação dos cursos WISE UP
+
+### Resultado
+
+- Criado `prisma/import-wise-up-courses.ts`, com parser UTF-8, modo de prévia, transação única e validação posterior.
+- Cadastrados `WISE UP - CITIES`, `WISE UP - TRAVEL` e `WISE UP - BUSINESS`.
+- Estrutura gravada: 24 módulos, 518 aulas de vídeo e 24 aulas de PDF, totalizando 542 aulas.
+- Cada PDF ocupa a posição 1 do módulo e possui um material `PDF` ativo com a mesma URL.
+- O bloco inicial de `TRAVEL` foi normalizado em `Road Trip` (21 vídeos) e `Parques Temáticos` (24 vídeos).
+- Ownership confirmado para `douglaslundy@gmail.com`.
+- Três matrículas ativas confirmadas para `douglaslundy100@gmail.com`, válidas de 02/10/2026 até o fim de 02/10/2027 no horário de São Paulo.
+
+### Segurança e integridade
+
+- O importador exige produtor e aluno ativos, com papéis corretos e pertencentes à mesma organização.
+- Uma reimportação é interrompida se os cursos-alvo já possuírem progresso ou anotações.
+- Links são aceitos somente quando correspondem a arquivos HTTPS do Google Drive.
+- A operação inteira é atômica e a validação compara títulos, posições, URLs, materiais, produtor e matrículas.
+
+### Validação
+
+- Prévia do importador: aprovada.
+- Aplicação e validação direta no banco: aprovadas.
+- `npm.cmd run lint`: aprovado, sem warnings.
+- `npm.cmd run typecheck`: aprovado.
+- `npm.cmd run test`: aprovado, 134 testes.
+- `npm.cmd run build`: aprovado.
+
+---
+
+### 2026-10-08 - Importação do curso Polícia Rodoviária Federal
+
+### Resultado
+
+- Criado `prisma/import-policia-rodoviaria-federal-gran-cursos.ts`, com parser UTF-8, prévia, transação única e validação posterior.
+- Cadastrado o curso `POLICIA RODOVIARIA FEDERAL GRAN CURSOS` com slug `policia-rodoviaria-federal-gran-cursos`.
+- Estrutura gravada: 25 módulos e 1.253 aulas, ordenados por nomenclatura natural crescente.
+- Todos os links persistidos correspondem a arquivos reproduzíveis do Google Drive no formato `/file/d/.../view`.
+- Ownership confirmado para `douglaslundy@gmail.com`.
+- Matrícula ativa confirmada para `douglaslundy100@gmail.com`, iniciada em 08/10/2026 e válida até o fim de 31/12/2027 no horário de São Paulo.
+
+### Segurança e integridade
+
+- O importador exige produtor e aluno ativos, com papéis corretos e pertencentes à mesma organização.
+- Uma reimportação é interrompida se o curso já possuir progresso ou anotações.
+- Títulos duplicados de módulo, URLs duplicadas ou linhas fora do formato interrompem a operação antes da gravação.
+- A validação posterior compara integralmente títulos, posições, URLs, status, produtor e matrícula.
+
+### Validação
+
+- Prévia do importador: aprovada.
+- Aplicação e validação direta no banco: aprovadas.
+- `npm.cmd run lint`: aprovado, sem warnings.
+- `npm.cmd run typecheck`: aprovado.
+- `npm.cmd run test`: aprovado, 134 testes.
+- `npm.cmd run build`: aprovado.
+
+## 2026-10-17 - Cursos publicos / solicitacoes
+- tsc, vitest (134 testes) e next lint verdes. Sem teste novo para a aprovacao (transacao Prisma); build nao rodado.
+- Autorizacao server-side: solicitar exige STUDENT logado e curso publico+ativo; aprovar/recusar filtram por organizationId+producerId.
