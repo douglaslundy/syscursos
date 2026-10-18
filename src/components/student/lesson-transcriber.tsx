@@ -12,7 +12,8 @@ const SAMPLE_RATE = 16_000;
 const MIN_SAMPLES = SAMPLE_RATE / 2;
 
 type Method = "browser" | "gemini";
-type Phase = "idle" | "loading" | "recording" | "finishing" | "saving" | "done" | "error";
+type Phase = "idle" | "loading" | "recording" | "paused" | "finishing" | "review" | "saving" | "done" | "error";
+type Part = { start: number; text: string };
 
 type TranscriberProps = {
   courseId: string;
@@ -36,6 +37,11 @@ async function decodeToPcm(blob: Blob) {
   }
 }
 
+const primaryButton =
+  "rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-copy-primary disabled:opacity-60";
+const secondaryButton =
+  "rounded-md border border-stroke-subtle px-4 py-2 text-sm font-medium text-copy-secondary hover:bg-surface-hover";
+
 export function LessonTranscriber({ courseId, lessonId, method }: TranscriberProps) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -43,6 +49,7 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
   const [elapsed, setElapsed] = useState(0);
   const [done, setDone] = useState(0);
   const [total, setTotal] = useState(0);
+  const [draft, setDraft] = useState("");
   const [canRecord, setCanRecord] = useState(true);
 
   const workerRef = useRef<Worker | null>(null);
@@ -51,20 +58,28 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
   const rotateRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
-  const partsRef = useRef<Array<string | null>>([]);
+  const partsRef = useRef<Array<Part | undefined>>([]);
   const failedRef = useRef(0);
   const nextIdRef = useRef(0);
   const pendingRef = useRef(new Map<number, (text: string) => void>());
   const stoppingRef = useRef(false);
+  const elapsedRef = useRef(0);
+  const seqRef = useRef(0);
 
-  const cleanup = useCallback(() => {
+  const stopTimers = useCallback(() => {
     if (rotateRef.current) window.clearTimeout(rotateRef.current);
     if (tickRef.current) window.clearInterval(tickRef.current);
+    rotateRef.current = null;
+    tickRef.current = null;
+  }, []);
+
+  const cleanup = useCallback(() => {
+    stopTimers();
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     workerRef.current?.terminate();
     workerRef.current = null;
-  }, []);
+  }, [stopTimers]);
 
   useEffect(() => {
     setCanRecord(supported());
@@ -119,23 +134,26 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     throw new Error("gemini");
   }
 
-  function enqueue(index: number, blob: Blob) {
+  function enqueue(seq: number, start: number, blob: Blob) {
     setTotal((value) => value + 1);
     queueRef.current = queueRef.current.then(async () => {
+      let text: string;
+
       try {
         const pcm = await decodeToPcm(blob);
 
-        partsRef.current[index] = pcm.length < MIN_SAMPLES ? "" : method === "browser" ? await runWhisper(pcm) : await runGemini(pcm);
+        text = pcm.length < MIN_SAMPLES ? "" : method === "browser" ? await runWhisper(pcm) : await runGemini(pcm);
       } catch {
         failedRef.current += 1;
-        partsRef.current[index] = "[trecho nao transcrito]";
+        text = "[trecho nao transcrito]";
       }
 
+      partsRef.current[seq] = { start, text };
       setDone((value) => value + 1);
     });
   }
 
-  function startSegment(index: number) {
+  function startSegment(seq: number, start: number) {
     const stream = streamRef.current;
 
     if (!stream) return;
@@ -145,47 +163,70 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     const chunks: Blob[] = [];
 
     recorder.ondataavailable = (event) => chunks.push(event.data);
-    recorder.onstop = () => enqueue(index, new Blob(chunks, { type: recorder.mimeType }));
+    recorder.onstop = () => enqueue(seq, start, new Blob(chunks, { type: recorder.mimeType }));
     recorder.start();
     recorderRef.current = recorder;
+    seqRef.current = seq;
     // O proximo trecho comeca antes de fechar o atual, para nao perder fala na troca.
     rotateRef.current = window.setTimeout(() => {
       if (stoppingRef.current) return;
-      startSegment(index + 1);
+      startSegment(seq + 1, start + SEGMENT_SECONDS);
       recorder.stop();
     }, SEGMENT_SECONDS * 1000);
   }
 
+  function startTick() {
+    tickRef.current = window.setInterval(() => {
+      elapsedRef.current += 1;
+      setElapsed(elapsedRef.current);
+    }, 1000);
+  }
+
+  // Fecha o trecho em andamento e espera ele entrar na fila.
+  function closeCurrentSegment() {
+    const recorder = recorderRef.current;
+
+    if (!recorder || recorder.state === "inactive") return Promise.resolve();
+
+    return new Promise<void>((resolve) => {
+      const previous = recorder.onstop;
+      recorder.onstop = (event) => {
+        previous?.call(recorder, event);
+        resolve();
+      };
+      recorder.stop();
+    });
+  }
+
+  async function pause() {
+    stopTimers();
+    await closeCurrentSegment();
+    setPhase("paused");
+    setMessage("Gravacao pausada. Pause tambem o video e clique em Retomar quando continuar a aula.");
+  }
+
+  function resume() {
+    startSegment(seqRef.current + 1, elapsedRef.current);
+    startTick();
+    setPhase("recording");
+    setMessage("");
+  }
+
+  // Para a gravacao e mostra o texto para conferir; nada e salvo ate o aluno confirmar.
   async function finish() {
     if (stoppingRef.current) return;
 
     stoppingRef.current = true;
     setPhase("finishing");
     setMessage("Terminando os ultimos trechos...");
-    if (rotateRef.current) window.clearTimeout(rotateRef.current);
-    if (tickRef.current) window.clearInterval(tickRef.current);
-
-    const recorder = recorderRef.current;
-
-    if (recorder && recorder.state !== "inactive") {
-      // Espera o ultimo trecho entrar na fila antes de esvaziar a fila.
-      await new Promise<void>((resolve) => {
-        const previous = recorder.onstop;
-        recorder.onstop = (event) => {
-          previous?.call(recorder, event);
-          resolve();
-        };
-        recorder.stop();
-      });
-    }
-
+    stopTimers();
+    await closeCurrentSegment();
     streamRef.current?.getTracks().forEach((track) => track.stop());
     await queueRef.current;
-
-    const text = joinSegments(partsRef.current, SEGMENT_SECONDS);
-
     workerRef.current?.terminate();
     workerRef.current = null;
+
+    const text = joinSegments(partsRef.current.filter((part): part is Part => part !== undefined));
 
     if (!text) {
       setPhase("error");
@@ -193,22 +234,37 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
       return;
     }
 
+    setDraft(text);
+    setPhase("review");
+    setMessage(
+      failedRef.current > 0
+        ? `${failedRef.current} trecho(s) de 1 minuto falharam e estao marcados no texto.`
+        : "Confira o texto, corrija se precisar e salve.",
+    );
+  }
+
+  function discard() {
+    stoppingRef.current = true;
+    cleanup();
+    partsRef.current = [];
+    setDraft("");
+    setMessage("");
+    setPhase("idle");
+  }
+
+  async function save() {
     setPhase("saving");
     setMessage("Salvando a transcricao...");
 
-    const result = await saveRecordedTranscriptAction({ courseId, lessonId, text });
+    const result = await saveRecordedTranscriptAction({ courseId, lessonId, text: draft });
 
     if (result === "ok" || result === "exists") {
       setPhase("done");
-      setMessage(
-        failedRef.current > 0
-          ? `Transcricao salva, mas ${failedRef.current} trecho(s) de 1 minuto falharam e ficaram marcados.`
-          : "Transcricao salva.",
-      );
+      setMessage("Transcricao salva.");
       router.refresh();
     } else {
-      setPhase("error");
-      setMessage("Nao foi possivel salvar a transcricao.");
+      setPhase("review");
+      setMessage("Nao foi possivel salvar. Tente de novo.");
     }
   }
 
@@ -217,6 +273,7 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     partsRef.current = [];
     failedRef.current = 0;
     queueRef.current = Promise.resolve();
+    elapsedRef.current = 0;
     setDone(0);
     setTotal(0);
     setElapsed(0);
@@ -237,9 +294,10 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
       }
 
       streamRef.current = stream;
+      // Se o compartilhamento for encerrado pelo navegador, o que foi captado vai para conferencia, nao e salvo direto.
       stream.getAudioTracks()[0].onended = () => void finish();
-      startSegment(0);
-      tickRef.current = window.setInterval(() => setElapsed((value) => value + 1), 1000);
+      startSegment(0, 0);
+      startTick();
       setPhase("recording");
       setMessage("");
     } catch (error) {
@@ -263,43 +321,78 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     );
   }
 
-  const busy = phase === "loading" || phase === "recording" || phase === "finishing" || phase === "saving";
+  const active = phase === "recording" || phase === "paused";
+  const idle = phase === "idle" || phase === "error" || phase === "done";
 
   return (
     <div className="mt-2 space-y-3 text-sm text-copy-secondary">
-      <p>
-        Como fazer: clique em Iniciar, escolha a guia desta aula e marque &quot;Compartilhar audio da guia&quot;. Depois
-        de iniciar, volte ao inicio do video e de play. A transcricao acompanha a aula em tempo real: deixe a guia
-        aberta, com som, ate o fim e clique em Finalizar.{" "}
-        {method === "browser"
-          ? "O texto e feito no seu computador; na primeira vez e baixado um modelo de 80 a 150 MB."
-          : "O audio e enviado em pedacos de 1 minuto ao Gemini e nao fica guardado."}
-      </p>
+      {idle ? (
+        <p>
+          Como fazer: clique em Transcrever, escolha a guia desta aula e marque &quot;Compartilhar audio da guia&quot;.
+          Depois volte o video ao inicio e de play. A transcricao acompanha a aula em tempo real: deixe a guia aberta,
+          com som, ate o fim e clique em Finalizar. Se precisar parar, use Pausar e depois Retomar.{" "}
+          {method === "browser"
+            ? "O texto e feito no seu computador; na primeira vez e baixado um modelo de 80 a 150 MB."
+            : "O audio e enviado em pedacos de 1 minuto ao Gemini e nao fica guardado."}
+        </p>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-3">
-        {phase === "recording" ? (
-          <button
-            className="rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-copy-primary"
-            onClick={() => void finish()}
-            type="button"
-          >
-            Finalizar e salvar
-          </button>
-        ) : (
-          <button
-            className="rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-copy-primary disabled:opacity-60"
-            disabled={busy}
-            onClick={() => void start()}
-            type="button"
-          >
+        {idle ? (
+          <button className={primaryButton} onClick={() => void start()} type="button">
             Transcrever esta aula
           </button>
-        )}
+        ) : null}
         {phase === "recording" ? (
-          <span>
-            Gravando {clock(elapsed)} - {done}/{total} trechos transcritos
-          </span>
+          <button className={secondaryButton} onClick={() => void pause()} type="button">
+            Pausar
+          </button>
+        ) : null}
+        {phase === "paused" ? (
+          <button className={primaryButton} onClick={resume} type="button">
+            Retomar
+          </button>
+        ) : null}
+        {active ? (
+          <>
+            <button className={primaryButton} onClick={() => void finish()} type="button">
+              Finalizar
+            </button>
+            <button
+              className={secondaryButton}
+              onClick={() => {
+                if (window.confirm("Descartar esta gravacao e comecar de novo?")) discard();
+              }}
+              type="button"
+            >
+              Descartar e recomecar
+            </button>
+            <span>
+              {phase === "paused" ? "Pausado em" : "Gravando"} {clock(elapsed)} - {done}/{total} trechos transcritos
+            </span>
+          </>
         ) : null}
       </div>
+
+      {phase === "review" || phase === "saving" ? (
+        <div className="space-y-3">
+          <textarea
+            className="h-64 w-full rounded-md border border-stroke-subtle bg-surface-elevated p-3 text-sm leading-6 text-copy-secondary"
+            disabled={phase === "saving"}
+            onChange={(event) => setDraft(event.target.value)}
+            value={draft}
+          />
+          <div className="flex flex-wrap gap-3">
+            <button className={primaryButton} disabled={phase === "saving" || !draft.trim()} onClick={() => void save()} type="button">
+              Salvar transcricao
+            </button>
+            <button className={secondaryButton} disabled={phase === "saving"} onClick={discard} type="button">
+              Descartar e recomecar
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {message ? (
         <p className={phase === "error" ? "text-destructive" : phase === "done" ? "text-green-500" : ""}>{message}</p>
       ) : null}

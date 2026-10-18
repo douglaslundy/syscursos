@@ -90,6 +90,17 @@ export async function saveRecordedTranscript(courseId: string, lessonId: string,
   return "ok" as const;
 }
 
+// Apaga a transcricao da aula para refazer. Mesmo nivel de confianca de quem a grava: qualquer aluno com acesso.
+export async function resetLessonTranscript(courseId: string, lessonId: string) {
+  const lesson = await findTranscribableLesson(courseId, lessonId);
+
+  if (!lesson) {
+    redirect("/app/forbidden");
+  }
+
+  await prisma.lesson.update({ where: { id: lessonId }, data: { transcript: null } });
+}
+
 // Gera e guarda a transcricao (legenda do YouTube) da aula. Vale para todos os alunos; so gera uma vez.
 export async function generateLessonTranscript(courseId: string, lessonId: string): Promise<TranscriptResult> {
   const lesson = await findTranscribableLesson(courseId, lessonId);

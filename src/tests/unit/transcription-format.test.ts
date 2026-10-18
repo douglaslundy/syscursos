@@ -10,7 +10,7 @@ describe("transcription helpers", () => {
   });
 
   it("joins one line per non-empty segment with its start time", () => {
-    expect(joinSegments(["ola", "", "tchau"], 60)).toBe("[00:00] ola\n[02:00] tchau");
+    expect(joinSegments([{ start: 0, text: "ola" }, { start: 60, text: "" }, { start: 125, text: "tchau" }])).toBe("[00:00] ola\n[02:05] tchau");
   });
 
   it("encodes a 16-bit mono WAV", () => {

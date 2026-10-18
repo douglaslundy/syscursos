@@ -8,10 +8,10 @@ export function clock(totalSeconds: number) {
   return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
-// Junta os textos dos trechos de 1 min numa linha por trecho: "[05:00] texto...". Trecho sem texto e pulado.
-export function joinSegments(parts: Array<string | null>, segmentSeconds: number) {
+// Uma linha por trecho gravado: "[05:00] texto...". start = segundos de gravacao (pausas nao contam). Trecho sem texto e pulado.
+export function joinSegments(parts: Array<{ start: number; text: string }>) {
   return parts
-    .map((text, index) => (text ? `[${clock(index * segmentSeconds)}] ${text}` : null))
-    .filter((line): line is string => line !== null)
+    .filter((part) => part.text)
+    .map((part) => `[${clock(part.start)}] ${part.text}`)
     .join("\n");
 }

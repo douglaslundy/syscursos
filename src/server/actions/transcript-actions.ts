@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { z } from "zod";
 
-import { generateLessonTranscript, saveRecordedTranscript } from "@/server/services/transcript-service";
+import { generateLessonTranscript, resetLessonTranscript, saveRecordedTranscript } from "@/server/services/transcript-service";
 import { studentLessonParamsSchema } from "@/server/validators/student";
 
 export async function generateTranscriptAction(formData: FormData) {
@@ -20,6 +20,20 @@ export async function generateTranscriptAction(formData: FormData) {
   const path = `/app/courses/${courseId}/lessons/${lessonId}`;
   revalidatePath(path);
   redirect(`${path}?transcript=${result}#transcricao`);
+}
+
+export async function resetTranscriptAction(formData: FormData) {
+  const parsed = studentLessonParamsSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (!parsed.success) {
+    redirect("/app");
+  }
+
+  const { courseId, lessonId } = parsed.data;
+  await resetLessonTranscript(courseId, lessonId);
+  const path = `/app/courses/${courseId}/lessons/${lessonId}`;
+  revalidatePath(path);
+  redirect(`${path}#transcricao`);
 }
 
 const recordedTranscriptSchema = z.object({

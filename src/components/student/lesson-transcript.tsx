@@ -1,6 +1,6 @@
 import { SubmitButton } from "@/components/admin/submit-button";
 import { LessonTranscriber } from "@/components/student/lesson-transcriber";
-import { generateTranscriptAction } from "@/server/actions/transcript-actions";
+import { generateTranscriptAction, resetTranscriptAction } from "@/server/actions/transcript-actions";
 
 const messages: Record<string, { text: string; ok: boolean }> = {
   ok: { text: "Transcricao gerada.", ok: true },
@@ -27,6 +27,15 @@ export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, me
     <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4" id="transcricao">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">Transcricao da aula</h2>
+        {transcript ? (
+          <form action={resetTranscriptAction}>
+            <input name="courseId" type="hidden" value={courseId} />
+            <input name="lessonId" type="hidden" value={lessonId} />
+            <SubmitButton destructive confirmMessage="Apagar esta transcricao para fazer de novo? Vale para todos os alunos.">
+              Apagar e refazer
+            </SubmitButton>
+          </form>
+        ) : null}
         {transcript || !isYouTube ? null : (
           <form action={generateTranscriptAction}>
             <input name="courseId" type="hidden" value={courseId} />
