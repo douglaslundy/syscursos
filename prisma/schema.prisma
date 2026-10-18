@@ -182,6 +182,7 @@ model Lesson {
   coverImageUrl  String?          @map("cover_image_url") @db.VarChar(500)
   position       Int
   durationSeconds Int?            @map("duration_seconds")
+  transcript     String?          @db.Text
   status         LessonStatus     @default(ACTIVE)
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)

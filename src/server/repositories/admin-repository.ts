@@ -1701,3 +1701,28 @@ export async function listCourseLessonsForDuration(
 export async function setLessonDuration(lessonId: string, durationSeconds: number) {
   return prisma.lesson.update({ where: { id: lessonId }, data: { durationSeconds } });
 }
+
+// Aulas ativas com e sem duracao lida, por curso (restrito ao escopo do ator).
+export async function getDurationCoverage(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  courseIds: string[],
+) {
+  if (courseIds.length === 0) {
+    return [];
+  }
+
+  const producerId = actorRole === UserRole.ADMIN ? null : actorUserId;
+  const rows = await prisma.$queryRaw<Array<{ course_id: string; total: number; read: number }>>`
+    select m.course_id, count(*)::int as total, count(l.duration_seconds)::int as read
+    from lessons l
+    join modules m on m.id = l.module_id
+    join courses c on c.id = m.course_id
+    where l.status::text = 'ACTIVE'
+      and c.organization_id = ${organizationId}::uuid
+      and (${producerId}::uuid is null or c.producer_id = ${producerId}::uuid)
+      and m.course_id = any(${courseIds}::uuid[])
+    group by m.course_id`;
+  return rows.map((row) => ({ courseId: row.course_id, total: row.total, read: row.read }));
+}

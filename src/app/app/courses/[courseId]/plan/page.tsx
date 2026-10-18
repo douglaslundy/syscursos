@@ -12,7 +12,7 @@ type StudyPlanPageProps = {
 
 const messages: Record<string, { text: string; ok: boolean }> = {
   saved: { text: "Plano de estudos atualizado.", ok: true },
-  invalid: { text: "Preencha apenas um campo: data final, quantidade de dias ou horas por dia.", ok: false },
+  invalid: { text: "Preencha apenas um campo: data final, quantidade de dias ou minutos por dia.", ok: false },
   no_lessons: { text: "Voce ja concluiu todas as aulas deste curso.", ok: false },
   past_date: { text: "A data final precisa ser hoje ou depois.", ok: false },
   no_study_days: { text: "Nao ha dias de estudo ate essa data. Ajuste seus dias em Meus dados.", ok: false },
@@ -26,7 +26,7 @@ export default async function StudyPlanPage({ params, searchParams }: StudyPlanP
   const view = await getStudyPlanView(courseId);
   const status = typeof searchParams?.status === "string" ? messages[searchParams.status] : undefined;
   const { prefs, remaining, plan } = view;
-  const defaultHours = Math.max(0.5, (prefs.studyEndMinute - prefs.studyStartMinute) / 60);
+  const defaultMinutes = Math.max(10, prefs.studyEndMinute - prefs.studyStartMinute);
 
   return (
     <section>
@@ -72,8 +72,8 @@ export default async function StudyPlanPage({ params, searchParams }: StudyPlanP
             <input className={inputClass} max={3650} min={1} name="days" placeholder="Ex.: 60" type="number" />
           </label>
           <label className="grid gap-1 text-sm text-copy-secondary">
-            Horas de estudo por dia
-            <input className={inputClass} inputMode="decimal" name="hoursPerDay" placeholder={`Ex.: ${defaultHours}`} />
+            Minutos de estudo por dia
+            <input className={inputClass} max={960} min={1} name="minutesPerDay" placeholder={`Ex.: ${defaultMinutes}`} type="number" />
           </label>
           <button
             className="rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-copy-primary md:col-span-3 md:justify-self-start"
@@ -99,7 +99,7 @@ export default async function StudyPlanPage({ params, searchParams }: StudyPlanP
             ) : null}
             {plan.overdue > 0 ? (
               <p className="mt-1 text-destructive">
-                {plan.overdue} aulas atrasadas. Assista-as ou replaneje com uma nova data.
+                {plan.overdue} aulas atrasadas. Assista-as ou gere um novo cronograma (ele substitui o atual).
               </p>
             ) : null}
             <p className="mt-2 text-xs text-copy-muted">

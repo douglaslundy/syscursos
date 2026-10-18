@@ -3,9 +3,10 @@ import { AdminLink as Link } from "@/components/admin/admin-link";
 import { Feedback } from "@/components/admin/feedback";
 import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
+import { DurationProgress } from "@/components/admin/duration-progress";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { deleteCourseAction, saveCourseAction, scanCourseDurationsAction } from "@/server/actions/admin-actions";
-import { getCourses } from "@/server/services/admin-service";
+import { getCourses, getDurationCoverage } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 
 type CoursesPageProps = {
@@ -17,6 +18,7 @@ export const maxDuration = 60;
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const pagination = getPagination(searchParams);
   const courses = await getCourses(pagination);
+  const coverage = await getDurationCoverage(courses.items.map((course) => course.id));
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const editId = getStringParam(searchParams, "editId");
   const editingCourse = courses.items.find((course) => course.id === editId);
@@ -79,6 +81,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
             {course.coverImageUrl ? (
               <p className="mt-2 break-all text-xs text-muted-foreground">{course.coverImageUrl}</p>
             ) : null}
+            <DurationProgress read={coverage.get(course.id)?.read ?? 0} total={coverage.get(course.id)?.total ?? 0} />
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
                 className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"

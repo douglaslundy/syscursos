@@ -18,6 +18,7 @@ const messages: Record<string, string> = {
   gkey_test_disabled: "A chave existe, mas a Drive API nao esta ativada no projeto do Google Cloud.",
   gkey_test_unshared: "A chave foi aceita, mas o arquivo de teste nao esta compartilhado por link (ou a chave tem restricoes).",
   gkey_test_no_sample: "Nao ha aula do Google Drive cadastrada para usar no teste.",
+  gkey_test_youtube_disabled: "Drive OK, mas a YouTube Data API v3 nao esta ativada no projeto. Ative-a para ler a duracao das aulas do YouTube.",
   gkey_test_network: "Nao foi possivel falar com o Google. Tente novamente.",
   durations_no_key: "Aulas do Google Drive exigem a Google API Key. Cadastre em Configuracoes (login de administrador). Nenhuma duracao foi lida.",
   linked_existing: "Aluno ja possuia cadastro na plataforma e foi vinculado com sucesso a sua lista.",

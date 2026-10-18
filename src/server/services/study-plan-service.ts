@@ -13,10 +13,10 @@ import {
   type PlannerLesson,
 } from "@/server/services/study-planner";
 
-const MIN_DAILY_MINUTES = 5;
+const MIN_DAILY_MINUTES = 1;
 const MAX_DAILY_MINUTES = 16 * 60;
 
-export type StudyPlanInput = { targetDate?: string; days?: number; hoursPerDay?: number };
+export type StudyPlanInput = { targetDate?: string; days?: number; minutesPerDay?: number };
 export type StudyPlanError = "no_lessons" | "past_date" | "no_study_days" | "after_expiry";
 
 const saoPauloDate = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" });
@@ -93,8 +93,8 @@ export async function saveStudyPlan(courseId: string, input: StudyPlanInput): Pr
   let dailyMinutes: number;
   let targetDate: string;
 
-  if (input.hoursPerDay !== undefined) {
-    dailyMinutes = clampMinutes(Math.round(input.hoursPerDay * 60));
+  if (input.minutesPerDay !== undefined) {
+    dailyMinutes = clampMinutes(input.minutesPerDay);
     const days = buildSchedule({ ...base, dailyMinutes });
     targetDate = days[days.length - 1]?.date ?? today;
   } else {

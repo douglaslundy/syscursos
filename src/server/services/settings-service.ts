@@ -1,11 +1,19 @@
 import { prisma } from "@/lib/db/prisma";
 import { requireRole } from "@/server/auth/guards";
 import { decryptSecret, encryptSecret } from "@/server/security/secret-box";
-import { getGoogleDriveFileId } from "@/server/services/video-platform-service";
+import { extractYouTubeVideoId, getGoogleDriveFileId } from "@/server/services/video-platform-service";
 
 const GOOGLE_KEY = "google_api_key";
 
-export type GoogleKeyTestResult = "ok" | "empty" | "invalid" | "disabled" | "unshared" | "no_sample" | "network";
+export type GoogleKeyTestResult =
+  | "ok"
+  | "empty"
+  | "invalid"
+  | "disabled"
+  | "unshared"
+  | "no_sample"
+  | "network"
+  | "youtube_disabled";
 
 // Chave salva na UI tem prioridade; GOOGLE_API_KEY do ambiente e o fallback.
 export async function getGoogleApiKey() {
@@ -68,7 +76,7 @@ export async function testGoogleApiKey(candidate: string | null): Promise<Google
     );
 
     if (response.ok) {
-      return "ok";
+      return await testYouTubeApi(key);
     }
 
     const body = (await response.json().catch(() => ({}))) as {
@@ -83,4 +91,23 @@ export async function testGoogleApiKey(candidate: string | null): Promise<Google
     console.error("Google API key test failed.", error);
     return "network";
   }
+}
+
+// Mesma chave serve para o YouTube Data API v3 (duracao das aulas do YouTube); precisa estar ativado no projeto.
+async function testYouTubeApi(key: string): Promise<GoogleKeyTestResult> {
+  const sample = await prisma.lesson.findFirst({
+    where: { OR: [{ youtubeUrl: { contains: "youtube.com" } }, { youtubeUrl: { contains: "youtu.be" } }] },
+    select: { youtubeUrl: true },
+  });
+  const videoId = sample ? extractYouTubeVideoId(sample.youtubeUrl) : null;
+
+  if (!videoId) {
+    return "ok";
+  }
+
+  const response = await fetch(
+    `https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoId}&key=${encodeURIComponent(key)}`,
+    { signal: AbortSignal.timeout(10_000) },
+  );
+  return response.ok ? "ok" : "youtube_disabled";
 }

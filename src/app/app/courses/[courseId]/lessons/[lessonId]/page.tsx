@@ -4,15 +4,17 @@ import { CourseBlocked } from "@/components/student/course-blocked";
 import { FavoriteButton } from "@/components/student/favorite-button";
 import { LessonCompletionPanel } from "@/components/student/lesson-completion-panel";
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
+import { LessonTranscript } from "@/components/student/lesson-transcript";
 import { getLessonFavoriteState } from "@/server/services/favorite-service";
 import { getStudentLesson } from "@/server/services/student-service";
 import { studentLessonParamsSchema } from "@/server/validators/student";
 
 type StudentLessonPageProps = {
   params: { courseId: string; lessonId: string };
+  searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function StudentLessonPage({ params }: StudentLessonPageProps) {
+export default async function StudentLessonPage({ params, searchParams }: StudentLessonPageProps) {
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
   const [data, isFavorite] = await Promise.all([
     getStudentLesson(courseId, lessonId),
@@ -134,6 +136,13 @@ export default async function StudentLessonPage({ params }: StudentLessonPagePro
         courseId={courseId}
         initialContent={data.note?.content ?? ""}
         lessonId={lessonId}
+      />
+
+      <LessonTranscript
+        courseId={courseId}
+        lessonId={lessonId}
+        status={typeof searchParams?.transcript === "string" ? searchParams.transcript : undefined}
+        transcript={data.lesson.transcript}
       />
     </section>
   );

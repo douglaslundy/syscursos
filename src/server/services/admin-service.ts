@@ -56,6 +56,12 @@ export async function getCourses(input: PaginationInput) {
   return repository.listCourses(producer.organizationId, producer.id, producer.role, input);
 }
 
+export async function getDurationCoverage(courseIds: string[]) {
+  const producer = await requireProducer();
+  const rows = await repository.getDurationCoverage(producer.organizationId, producer.id, producer.role, courseIds);
+  return new Map(rows.map((row) => [row.courseId, row]));
+}
+
 export async function getCourseOptions() {
   const producer = await requireProducer();
   return repository.listCourseOptions(producer.organizationId, producer.id, producer.role);

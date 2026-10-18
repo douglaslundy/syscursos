@@ -1665,3 +1665,8 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 ## Configuracoes e backup (admin)
 - Chave Google salva criptografada (AES-256-GCM) em `app_settings`; chave de criptografia = `SETTINGS_ENCRYPTION_KEY` ou, se ausente, `SUPABASE_SERVICE_ROLE_KEY` (trocar a chave exige reinformar o segredo). Env `GOOGLE_API_KEY` segue como fallback.
 - Backup: GET /admin/backup (so ADMIN) gera .json.gz com todas as tabelas em ordem de FK, sem `app_settings`. Restore: `npm run db:restore -- arquivo.json.gz [--wipe]` apos `prisma migrate deploy`. Senhas ficam no Supabase Auth, fora do backup. Limite: resposta serverless ~4,5 MB.
+
+## Transcricao e duracao YouTube
+- `Lesson.transcript` (texto, linhas de ~30s com tempo) gerado sob demanda por qualquer aluno matriculado a partir da legenda do YouTube (`youtube-transcript`), uma vez por aula. Drive nao tem legenda: sem STT pago nao ha transcricao. YouTube pode bloquear IPs de servidor (Vercel); nao verificado em producao.
+- Duracao de aula YouTube usa YouTube Data API v3 com a mesma chave Google (precisa ativar a API no projeto); sem chave tenta a pagina publica.
+- Plano de estudo: entrada em minutos/dia; gerar novo cronograma substitui o anterior (upsert por aluno+curso).
