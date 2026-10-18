@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { requireRole } from "@/server/auth/guards";
 import { decryptSecret, encryptSecret } from "@/server/security/secret-box";
+import { pingGemini } from "@/server/services/gemini-transcribe-service";
 import { extractYouTubeVideoId, getGoogleDriveFileId } from "@/server/services/video-platform-service";
 
 const GOOGLE_KEY = "google_api_key";
@@ -110,4 +111,73 @@ async function testYouTubeApi(key: string): Promise<GoogleKeyTestResult> {
     { signal: AbortSignal.timeout(10_000) },
   );
   return response.ok ? "ok" : "youtube_disabled";
+}
+
+// --- Transcricao de aulas (Drive): metodo escolhido pelo admin e chave do Gemini ---
+const GEMINI_KEY = "gemini_api_key";
+const METHOD_KEY = "transcription_method";
+
+export type TranscriptionMethod = "browser" | "gemini";
+export type GeminiKeyTestResult = "ok" | "empty" | "invalid" | "quota" | "network";
+
+export async function getGeminiApiKey() {
+  const row = await prisma.appSetting.findUnique({ where: { key: GEMINI_KEY } });
+  return row ? decryptSecret(row.value) : null;
+}
+
+export async function getGeminiKeyStatus() {
+  await requireRole("ADMIN");
+  const row = await prisma.appSetting.findUnique({ where: { key: GEMINI_KEY } });
+  const key = row ? decryptSecret(row.value) : null;
+  return { configured: key !== null, hint: key ? `...${key.slice(-4)}` : null, unreadable: row !== null && key === null };
+}
+
+export async function saveGeminiApiKey(key: string) {
+  await requireRole("ADMIN");
+  const value = encryptSecret(key);
+  await prisma.appSetting.upsert({ where: { key: GEMINI_KEY }, create: { key: GEMINI_KEY, value }, update: { value } });
+}
+
+// Sem chave, o metodo Gemini nao funciona: volta para o navegador.
+export async function removeGeminiApiKey() {
+  await requireRole("ADMIN");
+  await prisma.appSetting.deleteMany({ where: { key: GEMINI_KEY } });
+  await prisma.appSetting.deleteMany({ where: { key: METHOD_KEY, value: "gemini" } });
+}
+
+export async function testGeminiApiKey(candidate: string | null): Promise<GeminiKeyTestResult> {
+  await requireRole("ADMIN");
+  const key = candidate || (await getGeminiApiKey());
+
+  if (!key) return "empty";
+
+  const result = await pingGemini(key);
+  if (result.ok) return "ok";
+  return result.reason === "invalid_key" ? "invalid" : result.reason === "quota" ? "quota" : "network";
+}
+
+// Metodo efetivo: "gemini" so vale com chave legivel; o padrao e "browser".
+export async function getTranscriptionMethod(): Promise<TranscriptionMethod> {
+  const row = await prisma.appSetting.findUnique({ where: { key: METHOD_KEY } });
+
+  if (row?.value === "gemini" && (await getGeminiApiKey())) {
+    return "gemini";
+  }
+
+  return "browser";
+}
+
+export async function saveTranscriptionMethod(method: TranscriptionMethod): Promise<"saved" | "need_key"> {
+  await requireRole("ADMIN");
+
+  if (method === "gemini" && !(await getGeminiApiKey())) {
+    return "need_key";
+  }
+
+  await prisma.appSetting.upsert({
+    where: { key: METHOD_KEY },
+    create: { key: METHOD_KEY, value: method },
+    update: { value: method },
+  });
+  return "saved";
 }

@@ -6,7 +6,9 @@ import { LessonCompletionPanel } from "@/components/student/lesson-completion-pa
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
 import { LessonTranscript } from "@/components/student/lesson-transcript";
 import { getLessonFavoriteState } from "@/server/services/favorite-service";
+import { getTranscriptionMethod } from "@/server/services/settings-service";
 import { getStudentLesson } from "@/server/services/student-service";
+import { extractYouTubeVideoId } from "@/server/services/video-platform-service";
 import { studentLessonParamsSchema } from "@/server/validators/student";
 
 type StudentLessonPageProps = {
@@ -16,9 +18,10 @@ type StudentLessonPageProps = {
 
 export default async function StudentLessonPage({ params, searchParams }: StudentLessonPageProps) {
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
+    getTranscriptionMethod(),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -140,6 +143,8 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
 
       <LessonTranscript
         courseId={courseId}
+        isYouTube={extractYouTubeVideoId(data.lesson.youtubeUrl) !== null}
+        method={transcriptionMethod}
         lessonId={lessonId}
         status={typeof searchParams?.transcript === "string" ? searchParams.transcript : undefined}
         transcript={data.lesson.transcript}

@@ -3433,3 +3433,5 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 
 ## Planejador de estudos
 - Testes unitarios do calculo (study-planner). Lint/tsc/build ok. Sem teste de integracao do service nem smoke visual.
+
+- Transcricao Drive: tsc, lint, vitest (143) e build ok; fluxo de gravacao/Whisper/Gemini sem teste manual no navegador.

@@ -2,6 +2,7 @@ import { YoutubeTranscript } from "youtube-transcript";
 import { redirect } from "next/navigation";
 
 import { prisma } from "@/lib/db/prisma";
+import { clock } from "@/lib/transcription/format";
 import * as repository from "@/server/repositories/student-repository";
 import { getCourseAccessStatus, requireStudentProfileId } from "@/server/services/student-service";
 import { extractYouTubeVideoId } from "@/server/services/video-platform-service";
@@ -22,15 +23,6 @@ function decodeEntities(text: string) {
     .replace(/&gt;/g, ">")
     .replace(/\s+/g, " ")
     .trim();
-}
-
-function clock(totalSeconds: number) {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = Math.floor(totalSeconds % 60);
-  const mm = String(minutes).padStart(2, "0");
-  const ss = String(seconds).padStart(2, "0");
-  return hours > 0 ? `${hours}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
 // Junta os trechos em linhas de ~30s com o tempo no inicio: "[01:30] texto...". offset em segundos.
@@ -71,16 +63,36 @@ async function fetchSegments(videoId: string): Promise<Segment[]> {
   }
 }
 
-// Gera e guarda a transcricao (legenda do YouTube) da aula. Vale para todos os alunos; so gera uma vez.
-export async function generateLessonTranscript(courseId: string, lessonId: string): Promise<TranscriptResult> {
+// Aula ativa do curso, se o aluno logado tem matricula disponivel; senao null.
+export async function findTranscribableLesson(courseId: string, lessonId: string) {
   const studentId = await requireStudentProfileId();
   const enrollment = await repository.findEnrollmentForCourse(studentId, courseId);
 
   if (!enrollment || getCourseAccessStatus(enrollment) !== "AVAILABLE") {
-    redirect("/app/forbidden");
+    return null;
   }
 
-  const lesson = await repository.getActiveLessonForStudent(courseId, lessonId);
+  return repository.getActiveLessonForStudent(courseId, lessonId);
+}
+
+// Guarda a transcricao feita pelo navegador do aluno (gravacao + Whisper ou Gemini). Vale para todos; so grava uma vez.
+export async function saveRecordedTranscript(courseId: string, lessonId: string, text: string) {
+  const lesson = await findTranscribableLesson(courseId, lessonId);
+
+  if (!lesson) return "forbidden" as const;
+  if (lesson.transcript) return "exists" as const;
+
+  const clean = text.trim().slice(0, MAX_TRANSCRIPT_CHARS);
+
+  if (!clean) return "empty" as const;
+
+  await prisma.lesson.update({ where: { id: lessonId }, data: { transcript: clean } });
+  return "ok" as const;
+}
+
+// Gera e guarda a transcricao (legenda do YouTube) da aula. Vale para todos os alunos; so gera uma vez.
+export async function generateLessonTranscript(courseId: string, lessonId: string): Promise<TranscriptResult> {
+  const lesson = await findTranscribableLesson(courseId, lessonId);
 
   if (!lesson) {
     redirect("/app/forbidden");

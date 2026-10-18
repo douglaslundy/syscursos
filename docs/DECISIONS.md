@@ -1670,3 +1670,9 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 - `Lesson.transcript` (texto, linhas de ~30s com tempo) gerado sob demanda por qualquer aluno matriculado a partir da legenda do YouTube (`youtube-transcript`), uma vez por aula. Drive nao tem legenda: sem STT pago nao ha transcricao. YouTube pode bloquear IPs de servidor (Vercel); nao verificado em producao.
 - Duracao de aula YouTube usa YouTube Data API v3 com a mesma chave Google (precisa ativar a API no projeto); sem chave tenta a pagina publica.
 - Plano de estudo: entrada em minutos/dia; gerar novo cronograma substitui o anterior (upsert por aluno+curso).
+
+## Transcricao de aulas do Drive (browser ou Gemini)
+- Dois metodos escolhidos pelo ADMIN em `/admin/settings/transcription` (`AppSetting` `transcription_method`; padrao `browser`). Chave do Gemini em `AppSetting` `gemini_api_key` (AES-256-GCM, mesmo `secret-box`). Sem chave, o metodo efetivo volta para `browser`.
+- Gravacao no navegador: `getDisplayMedia` (audio da guia) + `MediaRecorder`, trechos de 60 s. `browser`: Whisper (`onnx-community/whisper-base`, transformers.js via CDN em `public/whisper-worker.js`). `gemini`: trecho vira WAV 16 kHz mono (~1,9 MB, cabe nos 4,5 MB da Vercel) e vai para `POST /app/transcribe/gemini`, que chama o Gemini. Audio nunca e guardado; so o texto vai para `Lesson.transcript`.
+- Qualquer aluno com acesso grava a transcricao (so se estiver vazia). Risco aceito: texto errado/malicioso fica visivel a todos; o produtor nao tem tela para apagar.
+- Nao verificado ponta a ponta: download/velocidade do Whisper, captura de audio da guia com o iframe do Drive, nome do modelo Gemini (`GEMINI_MODEL`) e limites do plano gratuito.

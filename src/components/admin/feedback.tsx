@@ -20,6 +20,16 @@ const messages: Record<string, string> = {
   gkey_test_no_sample: "Nao ha aula do Google Drive cadastrada para usar no teste.",
   gkey_test_youtube_disabled: "Drive OK, mas a YouTube Data API v3 nao esta ativada no projeto. Ative-a para ler a duracao das aulas do YouTube.",
   gkey_test_network: "Nao foi possivel falar com o Google. Tente novamente.",
+  transcription_saved: "Metodo de transcricao salvo.",
+  transcription_need_key: "Para usar o Gemini, salve antes a chave do Gemini.",
+  gemini_saved: "Chave do Gemini salva. Use Testar para confirmar que funciona.",
+  gemini_removed: "Chave do Gemini removida. O metodo voltou para o navegador do aluno.",
+  gemini_invalid_format: "A chave parece invalida (20 a 200 caracteres, sem espacos).",
+  gemini_test_ok: "Funcionou: o Gemini respondeu com essa chave.",
+  gemini_test_empty: "Nenhuma chave para testar. Cole uma chave ou salve antes.",
+  gemini_test_invalid: "Chave invalida ou sem permissao. Confira se foi copiada por inteiro.",
+  gemini_test_quota: "A chave e valida, mas o limite de uso do Gemini foi atingido. Tente mais tarde.",
+  gemini_test_network: "Nao foi possivel falar com o Gemini. Tente novamente.",
   durations_no_key: "Aulas do Google Drive exigem a Google API Key. Cadastre em Configuracoes (login de administrador). Nenhuma duracao foi lida.",
   linked_existing: "Aluno ja possuia cadastro na plataforma e foi vinculado com sucesso a sua lista.",
   student_lookup_found: "Aluno encontrado na plataforma. Os dados foram carregados e o proximo passo e somente vincular.",
@@ -79,7 +89,7 @@ export function Feedback({ status }: FeedbackProps) {
 }
 
 function feedbackClassName(status: string) {
-  const isError = !["saved", "deleted", "renewed", "canceled", "linked_existing", "durations_scanned", "durations_partial", "study_prefs_saved", "gkey_saved", "gkey_removed", "gkey_test_ok"].includes(status);
+  const isError = !["saved", "deleted", "renewed", "canceled", "linked_existing", "durations_scanned", "durations_partial", "study_prefs_saved", "gkey_saved", "gkey_removed", "gkey_test_ok", "transcription_saved", "gemini_saved", "gemini_removed", "gemini_test_ok"].includes(status);
 
   return isError
     ? "mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"
