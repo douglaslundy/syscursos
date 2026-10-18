@@ -1714,8 +1714,9 @@ export async function getDurationCoverage(
   }
 
   const producerId = actorRole === UserRole.ADMIN ? null : actorUserId;
-  const rows = await prisma.$queryRaw<Array<{ course_id: string; total: number; read: number }>>`
-    select m.course_id, count(*)::int as total, count(l.duration_seconds)::int as read
+  const rows = await prisma.$queryRaw<Array<{ course_id: string; total: number; read: number; none: number }>>`
+    select m.course_id, count(*)::int as total, count(l.duration_seconds)::int as read,
+           count(*) filter (where l.duration_seconds = 0)::int as none
     from lessons l
     join modules m on m.id = l.module_id
     join courses c on c.id = m.course_id
@@ -1724,5 +1725,5 @@ export async function getDurationCoverage(
       and (${producerId}::uuid is null or c.producer_id = ${producerId}::uuid)
       and m.course_id = any(${courseIds}::uuid[])
     group by m.course_id`;
-  return rows.map((row) => ({ courseId: row.course_id, total: row.total, read: row.read }));
+  return rows.map((row) => ({ courseId: row.course_id, total: row.total, read: row.read, none: row.none }));
 }

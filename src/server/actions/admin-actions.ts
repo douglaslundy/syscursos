@@ -259,15 +259,31 @@ export async function cancelEnrollmentAction(formData: FormData) {
   });
 }
 
+const listViewSchema = z.object({
+  page: z.coerce.number().int().min(1).optional().catch(undefined),
+  pageSize: z.coerce.number().int().min(1).max(100).optional().catch(undefined),
+  query: z.string().trim().max(120).optional(),
+});
+
 export async function scanCourseDurationsAction(formData: FormData) {
   const path = "/admin/courses";
   const { id } = parseForm(idSchema, formData, path);
-  let status = "durations_scanned";
+  const view = parseForm(listViewSchema, formData, path);
+  const listParams: Record<string, string> = { focus: id };
+  if (view.page) listParams.page = String(view.page);
+  if (view.pageSize) listParams.pageSize = String(view.pageSize);
+  if (view.query) listParams.query = view.query;
+
   await runAdminMutation(path, "durations_scanned", async () => {
     const result = await scanCourseDurations(id);
-    status = result.noDriveKey && result.found === 0 ? "durations_no_key" : result.remaining > 0 ? "durations_partial" : "durations_scanned";
+    const status =
+      result.noDriveKey && result.found === 0
+        ? "durations_no_key"
+        : result.remaining > 0
+          ? "durations_partial"
+          : "durations_scanned";
     revalidatePath(path);
-    redirect(adminStatusPath(path, status));
+    redirect(`${adminStatusPath(path, status, listParams)}#course-${id}`);
   });
 }
 

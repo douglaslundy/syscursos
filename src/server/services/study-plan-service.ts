@@ -44,9 +44,9 @@ async function loadPlannerContext(studentId: string, courseId: string) {
     id: row.id,
     title: row.title,
     moduleTitle: row.module.title,
-    seconds: row.durationSeconds ?? FALLBACK_LESSON_SECONDS,
+    seconds: row.durationSeconds || FALLBACK_LESSON_SECONDS,
   }));
-  const estimatedLessons = rows.filter((row) => row.durationSeconds === null).length;
+  const estimatedLessons = rows.filter((row) => !row.durationSeconds).length;
   return { lessons, estimatedLessons, prefs };
 }
 

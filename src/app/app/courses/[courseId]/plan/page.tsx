@@ -51,7 +51,7 @@ export default async function StudyPlanPage({ params, searchParams }: StudyPlanP
 
       {status ? (
         <div
-          className={`mt-4 rounded-md border px-4 py-3 text-sm ${status.ok ? "border-success text-success" : "border-destructive text-destructive"}`}
+          className={`mt-4 rounded-md border px-4 py-3 text-sm ${status.ok ? "border-green-500 text-green-500" : "border-destructive text-destructive"}`}
         >
           {status.text}
         </div>

@@ -34,7 +34,7 @@ export function LessonTranscript({ courseId, lessonId, transcript, status }: Les
         )}
       </div>
       {message ? (
-        <p className={`mt-2 text-sm ${message.ok ? "text-success" : "text-destructive"}`}>{message.text}</p>
+        <p className={`mt-2 text-sm ${message.ok ? "text-green-500" : "text-destructive"}`}>{message.text}</p>
       ) : null}
       {transcript ? (
         <details className="mt-3" open>

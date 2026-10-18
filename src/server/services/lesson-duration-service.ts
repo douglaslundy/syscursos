@@ -2,6 +2,7 @@ import { extractYouTubeVideoId, getGoogleDriveFileId } from "@/server/services/v
 
 const FETCH_TIMEOUT_MS = 8000;
 
+// seconds 0 = arquivo sem duracao (PDF, OneDrive...): conta como processado; null = falhou, tenta de novo.
 export type DurationLookup = { seconds: number | null; reason?: "no_drive_key" | "unsupported" | "failed" };
 
 // YouTube: YouTube Data API v3 com a chave Google; sem chave, tenta a pagina publica (YouTube bloqueia IPs de servidor). Drive: API v3 (exige a chave Google (Configuracoes do admin) e arquivo compartilhado).
@@ -24,7 +25,7 @@ export async function fetchLessonDuration(
       return await fetchYouTubeDuration(videoId, googleKey);
     }
 
-    return { seconds: null, reason: "unsupported" };
+    return { seconds: 0, reason: "unsupported" };
   } catch (error) {
     console.error("Lesson duration lookup failed.", error);
     return { seconds: null, reason: "failed" };
@@ -37,14 +38,19 @@ async function fetchDriveDuration(fileId: string, key: string | null): Promise<D
     return { seconds: null, reason: "no_drive_key" };
   }
 
-  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=videoMediaMetadata(durationMillis)&key=${key}`;
+  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?fields=mimeType,videoMediaMetadata(durationMillis)&key=${key}`;
   const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
 
   if (!response.ok) {
     return { seconds: null, reason: "failed" };
   }
 
-  const data = (await response.json()) as { videoMediaMetadata?: { durationMillis?: string } };
+  const data = (await response.json()) as { mimeType?: string; videoMediaMetadata?: { durationMillis?: string } };
+
+  if (data.mimeType && !data.mimeType.startsWith("video/")) {
+    return { seconds: 0, reason: "unsupported" };
+  }
+
   const millis = Number(data.videoMediaMetadata?.durationMillis);
   return Number.isFinite(millis) && millis > 0
     ? { seconds: Math.round(millis / 1000) }

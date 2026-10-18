@@ -90,9 +90,9 @@ export async function scanCourseDurations(courseId: string) {
       batch.slice(start, start + DURATION_SCAN_CONCURRENCY).map(async (lesson) => {
         const result = await fetchLessonDuration(lesson.youtubeUrl, lesson.youtubeVideoId, driveKey);
 
-        if (result.seconds) {
+        if (result.seconds !== null) {
           await repository.setLessonDuration(lesson.id, result.seconds);
-          found += 1;
+          if (result.seconds > 0) found += 1;
         } else if (result.reason === "no_drive_key") {
           noDriveKey = true;
         }

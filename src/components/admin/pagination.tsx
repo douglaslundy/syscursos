@@ -6,9 +6,11 @@ type PaginationProps = {
   basePath: string;
   query?: string;
   params?: Record<string, string | null | undefined>;
+  pageSize?: number;
+  pageSizeOptions?: number[];
 };
 
-export function Pagination({ page, pageCount, basePath, query, params: extraParams }: PaginationProps) {
+export function Pagination({ page, pageCount, basePath, query, params: extraParams, pageSize, pageSizeOptions }: PaginationProps) {
   const params = new URLSearchParams();
 
   Object.entries(extraParams ?? {}).forEach(([key, value]) => {
@@ -21,9 +23,15 @@ export function Pagination({ page, pageCount, basePath, query, params: extraPara
     params.set("query", query);
   }
 
-  const hrefFor = (targetPage: number) => {
-    params.set("page", String(targetPage));
-    return `${basePath}?${params.toString()}`;
+  if (pageSize) {
+    params.set("pageSize", String(pageSize));
+  }
+
+  const hrefFor = (targetPage: number, size = pageSize) => {
+    const next = new URLSearchParams(params);
+    next.set("page", String(targetPage));
+    if (size) next.set("pageSize", String(size));
+    return `${basePath}?${next.toString()}`;
   };
 
   return (
@@ -31,6 +39,21 @@ export function Pagination({ page, pageCount, basePath, query, params: extraPara
       <span className="text-copy-muted">
         Pagina {page} de {pageCount}
       </span>
+      {pageSizeOptions ? (
+        <div className="flex items-center gap-1 text-copy-muted">
+          <span>Por pagina:</span>
+          {pageSizeOptions.map((size) => (
+            <Link
+              aria-current={size === pageSize ? "page" : undefined}
+              className="rounded-md border border-stroke-subtle px-2 py-1 text-copy-secondary transition hover:bg-surface-hover aria-[current=page]:bg-brand-primary aria-[current=page]:text-copy-primary"
+              href={hrefFor(1, size)}
+              key={size}
+            >
+              {size}
+            </Link>
+          ))}
+        </div>
+      ) : null}
       <div className="flex gap-2">
         <Link
           aria-disabled={page <= 1}

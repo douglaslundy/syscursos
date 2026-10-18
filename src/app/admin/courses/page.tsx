@@ -21,6 +21,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const coverage = await getDurationCoverage(courses.items.map((course) => course.id));
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const editId = getStringParam(searchParams, "editId");
+  const focusId = getStringParam(searchParams, "focus");
   const editingCourse = courses.items.find((course) => course.id === editId);
 
   return (
@@ -29,7 +30,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
         <h2 className="text-2xl font-semibold tracking-normal">Cursos</h2>
         <p className="text-sm text-muted-foreground">Crie, edite, inative e remova cursos.</p>
       </div>
-      <Feedback status={status} />
+      <Feedback status={focusId ? undefined : status} />
       <div className="mb-6 rounded-md border bg-background p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h3 className="font-medium">{editingCourse ? "Editar curso" : "Novo curso"}</h3>
@@ -58,7 +59,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
       <SearchForm query={pagination.query} />
       <div className="space-y-3">
         {courses.items.map((course) => (
-          <article className="rounded-md border bg-background p-4" key={course.id}>
+          <article className="scroll-mt-4 rounded-md border bg-background p-4" id={`course-${course.id}`} key={course.id}>
             <div className="grid gap-2 md:grid-cols-[1.4fr_1fr_120px]">
               <div>
                 <div className="text-xs text-muted-foreground">Titulo</div>
@@ -81,7 +82,12 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
             {course.coverImageUrl ? (
               <p className="mt-2 break-all text-xs text-muted-foreground">{course.coverImageUrl}</p>
             ) : null}
-            <DurationProgress read={coverage.get(course.id)?.read ?? 0} total={coverage.get(course.id)?.total ?? 0} />
+            {focusId === course.id ? <Feedback status={status} /> : null}
+            <DurationProgress
+              none={coverage.get(course.id)?.none ?? 0}
+              read={coverage.get(course.id)?.read ?? 0}
+              total={coverage.get(course.id)?.total ?? 0}
+            />
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
               <Link
                 className="rounded-md border border-stroke-subtle bg-transparent px-3 py-2 text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
@@ -103,6 +109,9 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
               </Link>
               <form action={scanCourseDurationsAction}>
                 <input name="id" type="hidden" value={course.id} />
+                <input name="page" type="hidden" value={pagination.page} />
+                <input name="pageSize" type="hidden" value={pagination.pageSize} />
+                <input name="query" type="hidden" value={pagination.query} />
                 <SubmitButton>Ler duracoes</SubmitButton>
               </form>
               <form action={deleteCourseAction}>
@@ -122,6 +131,8 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
         basePath="/admin/courses"
         page={courses.page}
         pageCount={courses.pageCount}
+        pageSize={pagination.pageSize}
+        pageSizeOptions={[10, 25, 50, 100]}
         query={pagination.query}
       />
     </section>
