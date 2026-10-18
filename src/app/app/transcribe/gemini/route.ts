@@ -23,9 +23,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 
-  const lesson = await findTranscribableLesson(params.data.courseId, params.data.lessonId);
+  const found = await findTranscribableLesson(params.data.courseId, params.data.lessonId);
 
-  if (!lesson || lesson.transcript) {
+  if (!found || found.lesson.transcript) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 

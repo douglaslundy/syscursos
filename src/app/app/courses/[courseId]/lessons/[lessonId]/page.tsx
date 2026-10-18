@@ -7,7 +7,8 @@ import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
 import { LessonTranscript } from "@/components/student/lesson-transcript";
 import { getLessonFavoriteState } from "@/server/services/favorite-service";
 import { getTranscriptionMethod } from "@/server/services/settings-service";
-import { getStudentLesson } from "@/server/services/student-service";
+import { canResetTranscript } from "@/server/services/transcript-service";
+import { getStudentLesson, requireStudentProfileId } from "@/server/services/student-service";
 import { extractYouTubeVideoId } from "@/server/services/video-platform-service";
 import { studentLessonParamsSchema } from "@/server/validators/student";
 
@@ -18,10 +19,11 @@ type StudentLessonPageProps = {
 
 export default async function StudentLessonPage({ params, searchParams }: StudentLessonPageProps) {
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite, transcriptionMethod] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod, studentId] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
     getTranscriptionMethod(),
+    requireStudentProfileId(),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -143,6 +145,7 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
 
       <LessonTranscript
         courseId={courseId}
+        canReset={canResetTranscript(data.lesson, studentId)}
         isYouTube={extractYouTubeVideoId(data.lesson.youtubeUrl) !== null}
         method={transcriptionMethod}
         lessonId={lessonId}

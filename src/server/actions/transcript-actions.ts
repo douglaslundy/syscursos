@@ -30,10 +30,10 @@ export async function resetTranscriptAction(formData: FormData) {
   }
 
   const { courseId, lessonId } = parsed.data;
-  await resetLessonTranscript(courseId, lessonId);
+  const result = await resetLessonTranscript(courseId, lessonId);
   const path = `/app/courses/${courseId}/lessons/${lessonId}`;
   revalidatePath(path);
-  redirect(`${path}#transcricao`);
+  redirect(`${path}?transcript=${result === "ok" ? "reset" : result}#transcricao`);
 }
 
 const recordedTranscriptSchema = z.object({

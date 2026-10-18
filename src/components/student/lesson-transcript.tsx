@@ -4,6 +4,8 @@ import { generateTranscriptAction, resetTranscriptAction } from "@/server/action
 
 const messages: Record<string, { text: string; ok: boolean }> = {
   ok: { text: "Transcricao gerada.", ok: true },
+  reset: { text: "Transcricao apagada. Voce pode transcrever de novo.", ok: true },
+  not_owner: { text: "Esta transcricao foi feita por outro aluno e so ele pode apagar.", ok: false },
   exists: { text: "Esta aula ja tem transcricao.", ok: true },
   unavailable: {
     text: "Nao foi possivel obter a legenda deste video (sem legenda ou YouTube indisponivel). Tente mais tarde.",
@@ -16,18 +18,19 @@ type LessonTranscriptProps = {
   lessonId: string;
   transcript: string | null;
   isYouTube: boolean;
+  canReset: boolean;
   method: "browser" | "gemini";
   status?: string;
 };
 
-export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, method, status }: LessonTranscriptProps) {
+export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, canReset, method, status }: LessonTranscriptProps) {
   const message = status ? messages[status] : undefined;
 
   return (
     <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4" id="transcricao">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">Transcricao da aula</h2>
-        {transcript ? (
+        {transcript && canReset ? (
           <form action={resetTranscriptAction}>
             <input name="courseId" type="hidden" value={courseId} />
             <input name="lessonId" type="hidden" value={lessonId} />

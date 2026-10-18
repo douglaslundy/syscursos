@@ -1677,3 +1677,4 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 - Qualquer aluno com acesso grava a transcricao (so se estiver vazia). Risco aceito: texto errado/malicioso fica visivel a todos; o produtor nao tem tela para apagar.
 - Nao verificado ponta a ponta: download/velocidade do Whisper, captura de audio da guia com o iframe do Drive, nome do modelo Gemini (`GEMINI_MODEL`) e limites do plano gratuito.
 - Transcricao gravada: Pausar/Retomar, Finalizar abre conferencia (textarea editavel) e so salva ao confirmar; encerrar o compartilhamento tambem vai para conferencia. Tempo `[mm:ss]` conta so gravacao (pausa nao conta). "Apagar e refazer" na aula vale para qualquer aluno com acesso (mesma confianca de quem grava).
+- `Lesson.transcriptAuthorId`: transcricao gravada so e apagada pelo aluno que a fez (ou pelo produtor/admin na lista de aulas). Sem autor (legenda do YouTube ou anterior a este campo) qualquer aluno com acesso apaga.

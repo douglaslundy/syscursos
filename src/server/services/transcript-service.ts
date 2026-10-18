@@ -63,7 +63,7 @@ async function fetchSegments(videoId: string): Promise<Segment[]> {
   }
 }
 
-// Aula ativa do curso, se o aluno logado tem matricula disponivel; senao null.
+// Aula ativa do curso e id do aluno logado, se ele tem matricula disponivel; senao null.
 export async function findTranscribableLesson(courseId: string, lessonId: string) {
   const studentId = await requireStudentProfileId();
   const enrollment = await repository.findEnrollmentForCourse(studentId, courseId);
@@ -72,42 +72,55 @@ export async function findTranscribableLesson(courseId: string, lessonId: string
     return null;
   }
 
-  return repository.getActiveLessonForStudent(courseId, lessonId);
+  const lesson = await repository.getActiveLessonForStudent(courseId, lessonId);
+  return lesson ? { lesson, studentId } : null;
+}
+
+// Transcricao gravada por um aluno so pode ser apagada por ele; a de legenda do YouTube ou antiga (sem autor) por qualquer aluno.
+export function canResetTranscript(lesson: { transcriptAuthorId: string | null }, studentId: string) {
+  return lesson.transcriptAuthorId === null || lesson.transcriptAuthorId === studentId;
 }
 
 // Guarda a transcricao feita pelo navegador do aluno (gravacao + Whisper ou Gemini). Vale para todos; so grava uma vez.
 export async function saveRecordedTranscript(courseId: string, lessonId: string, text: string) {
-  const lesson = await findTranscribableLesson(courseId, lessonId);
+  const found = await findTranscribableLesson(courseId, lessonId);
 
-  if (!lesson) return "forbidden" as const;
-  if (lesson.transcript) return "exists" as const;
+  if (!found) return "forbidden" as const;
+  if (found.lesson.transcript) return "exists" as const;
 
   const clean = text.trim().slice(0, MAX_TRANSCRIPT_CHARS);
 
   if (!clean) return "empty" as const;
 
-  await prisma.lesson.update({ where: { id: lessonId }, data: { transcript: clean } });
+  await prisma.lesson.update({ where: { id: lessonId }, data: { transcript: clean, transcriptAuthorId: found.studentId } });
   return "ok" as const;
 }
 
-// Apaga a transcricao da aula para refazer. Mesmo nivel de confianca de quem a grava: qualquer aluno com acesso.
+// Apaga a transcricao da aula para refazer, se for do proprio aluno (ver canResetTranscript).
 export async function resetLessonTranscript(courseId: string, lessonId: string) {
-  const lesson = await findTranscribableLesson(courseId, lessonId);
+  const found = await findTranscribableLesson(courseId, lessonId);
 
-  if (!lesson) {
+  if (!found) {
     redirect("/app/forbidden");
   }
 
-  await prisma.lesson.update({ where: { id: lessonId }, data: { transcript: null } });
+  if (!canResetTranscript(found.lesson, found.studentId)) {
+    return "not_owner" as const;
+  }
+
+  await prisma.lesson.update({ where: { id: lessonId }, data: { transcript: null, transcriptAuthorId: null } });
+  return "ok" as const;
 }
 
 // Gera e guarda a transcricao (legenda do YouTube) da aula. Vale para todos os alunos; so gera uma vez.
 export async function generateLessonTranscript(courseId: string, lessonId: string): Promise<TranscriptResult> {
-  const lesson = await findTranscribableLesson(courseId, lessonId);
+  const found = await findTranscribableLesson(courseId, lessonId);
 
-  if (!lesson) {
+  if (!found) {
     redirect("/app/forbidden");
   }
+
+  const { lesson } = found;
 
   if (lesson.transcript) {
     return "exists";

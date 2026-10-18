@@ -183,6 +183,7 @@ model Lesson {
   position       Int
   durationSeconds Int?            @map("duration_seconds")
   transcript     String?          @db.Text
+  transcriptAuthorId String?      @map("transcript_author_id") @db.Uuid
   status         LessonStatus     @default(ACTIVE)
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
