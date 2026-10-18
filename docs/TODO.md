@@ -916,4 +916,4 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Planejador de estudos (migracao 20261017180000 aplicada). Pendente: GOOGLE_API_KEY no Vercel para durations do Drive; edicao manual de duracao por aula; smoke no navegador.
 
 - [ ] Testar no Chrome com uma aula do Drive: metodo navegador (Whisper) e metodo Gemini; ajustar modelo/qualidade.
-- [ ] Permitir ao produtor/admin apagar ou refazer a transcricao de uma aula.
+- [x] Produtor/admin apaga a transcricao na lista de aulas do modulo (botao "Apagar transcricao"); um aluno pode gerar de novo.

@@ -153,6 +153,11 @@ export async function removeLesson(id: string) {
   return repository.deleteLesson(producer.organizationId, producer.id, producer.role, id);
 }
 
+export async function clearLessonTranscript(id: string) {
+  const producer = await requireProducer();
+  return repository.clearLessonTranscript(producer.organizationId, producer.id, producer.role, id);
+}
+
 export async function getLessonMaterials(lessonId: string) {
   const producer = await requireProducer();
   return repository.listLessonMaterials(producer.organizationId, producer.id, producer.role, lessonId);

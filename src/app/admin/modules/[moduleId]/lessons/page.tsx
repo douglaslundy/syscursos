@@ -7,6 +7,7 @@ import { SearchForm } from "@/components/admin/search-form";
 import { LessonForm } from "@/components/admin/lesson-form";
 import { SubmitButton } from "@/components/admin/submit-button";
 import {
+  clearLessonTranscriptAction,
   deleteLessonAction,
   deleteLessonMaterialAction,
   saveLessonMaterialAction,
@@ -124,6 +125,15 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
               >
                 Editar
               </Link>
+              {lesson.transcript ? (
+                <form action={clearLessonTranscriptAction}>
+                  <input name="id" type="hidden" value={lesson.id} />
+                  <input name="moduleId" type="hidden" value={module.id} />
+                  <SubmitButton destructive confirmMessage="Apagar a transcricao desta aula? Um aluno podera gerar de novo.">
+                    Apagar transcricao
+                  </SubmitButton>
+                </form>
+              ) : null}
               <form action={deleteLessonAction}>
                 <input name="id" type="hidden" value={lesson.id} />
                 <input name="moduleId" type="hidden" value={module.id} />

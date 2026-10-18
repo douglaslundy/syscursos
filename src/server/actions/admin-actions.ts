@@ -17,6 +17,7 @@ import {
   lookupStudentByEmail,
   rejectEnrollmentRequest,
   removeCourse,
+  clearLessonTranscript,
   removeLesson,
   removeLessonMaterial,
   removeModule,
@@ -134,6 +135,17 @@ export async function deleteLessonAction(formData: FormData) {
   const path = safeAdminRedirect(formData.get("redirectTo")) ?? `/admin/modules/${moduleId}/lessons`;
   await runAdminMutation(path, "deleted", async () => {
     await removeLesson(id);
+    revalidatePath(path);
+    revalidateCourseContent();
+  });
+}
+
+export async function clearLessonTranscriptAction(formData: FormData) {
+  const { id } = parseForm(idSchema, formData, "/admin/courses");
+  const moduleId = requiredString(formData, "moduleId", "/admin/courses");
+  const path = safeAdminRedirect(formData.get("redirectTo")) ?? `/admin/modules/${moduleId}/lessons`;
+  await runAdminMutation(path, "saved", async () => {
+    await clearLessonTranscript(id);
     revalidatePath(path);
     revalidateCourseContent();
   });

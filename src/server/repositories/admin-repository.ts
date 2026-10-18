@@ -519,6 +519,19 @@ export async function deleteLesson(
   });
 }
 
+// Limpa a transcricao para que possa ser gerada de novo.
+export async function clearLessonTranscript(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  id: string,
+) {
+  return prisma.lesson.updateMany({
+    where: { id, module: { course: scopedCourseWhere(organizationId, actorUserId, actorRole) } },
+    data: { transcript: null },
+  });
+}
+
 export async function listLessonMaterials(
   organizationId: string,
   actorUserId: string,
