@@ -1,6 +1,8 @@
 import { requireAnyRole, requireRole } from "@/server/auth/guards";
 import * as repository from "@/server/repositories/admin-repository";
 import * as requestRepository from "@/server/repositories/enrollment-request-repository";
+import { fetchLessonDuration } from "@/server/services/lesson-duration-service";
+import { getGoogleApiKey } from "@/server/services/settings-service";
 import type { PaginationInput } from "@/server/validators/pagination";
 import type {
   AdminProfileInput,
@@ -62,6 +64,37 @@ export async function getCourseOptions() {
 export async function saveCourse(input: CourseInput) {
   const producer = await requireProducer();
   return repository.upsertCourse(producer.organizationId, producer.id, producer.role, input);
+}
+
+const DURATION_SCAN_BATCH = 120;
+const DURATION_SCAN_CONCURRENCY = 8;
+
+// Le a duracao das aulas ainda sem valor. Limita por chamada (tempo de execucao); o produtor repete ate zerar "remaining".
+export async function scanCourseDurations(courseId: string) {
+  const producer = await requireProducer();
+  const lessons = await repository.listCourseLessonsForDuration(producer.organizationId, producer.id, producer.role, courseId);
+  const pending = lessons.filter((lesson) => lesson.durationSeconds === null);
+  const batch = pending.slice(0, DURATION_SCAN_BATCH);
+  const driveKey = await getGoogleApiKey();
+  let found = 0;
+  let noDriveKey = false;
+
+  for (let start = 0; start < batch.length; start += DURATION_SCAN_CONCURRENCY) {
+    await Promise.all(
+      batch.slice(start, start + DURATION_SCAN_CONCURRENCY).map(async (lesson) => {
+        const result = await fetchLessonDuration(lesson.youtubeUrl, lesson.youtubeVideoId, driveKey);
+
+        if (result.seconds) {
+          await repository.setLessonDuration(lesson.id, result.seconds);
+          found += 1;
+        } else if (result.reason === "no_drive_key") {
+          noDriveKey = true;
+        }
+      }),
+    );
+  }
+
+  return { total: lessons.length, found, remaining: pending.length - batch.length, noDriveKey };
 }
 
 export async function removeCourse(id: string) {

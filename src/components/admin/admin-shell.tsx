@@ -12,6 +12,7 @@ const navItems = [
   { href: "/admin/students", label: "Alunos" },
   { href: "/admin/enrollments", label: "Matriculas" },
   { href: "/admin/requests", label: "Solicitacoes" },
+  { href: "/admin/settings", label: "Configuracoes" },
 ];
 
 type AdminShellProps = Readonly<{
@@ -22,11 +23,11 @@ type AdminShellProps = Readonly<{
 export function AdminShell({ user, children }: AdminShellProps) {
   const visibleNavItems = navItems.filter((item) => {
     if (user.role === "ADMIN") {
-      return item.href === "/admin" || item.href === "/admin/users" || item.href === "/admin/me";
+      return ["/admin", "/admin/users", "/admin/me", "/admin/settings"].includes(item.href);
     }
 
     if (user.role === "PRODUCER") {
-      return item.href !== "/admin/users";
+      return item.href !== "/admin/users" && item.href !== "/admin/settings";
     }
 
     return false;

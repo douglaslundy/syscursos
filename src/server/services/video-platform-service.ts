@@ -149,7 +149,7 @@ function isYouTubeUrl(videoUrl: string) {
   }
 }
 
-function getGoogleDriveFileId(videoUrl: string) {
+export function getGoogleDriveFileId(videoUrl: string) {
   try {
     const url = new URL(videoUrl);
 

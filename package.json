@@ -21,6 +21,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "auth:provision": "tsx prisma/provision-auth-users.ts",
+    "db:restore": "tsx prisma/restore-backup.ts",
     "postinstall": "prisma generate",
     "prepare": "husky"
   },

@@ -1656,3 +1656,12 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 - Tabelas `favorite_courses` e `favorite_lessons` (unicas por aluno+item). Alternar favorito valida matricula vigente (e aula ativa).
 - Home do aluno mostra as 3 ultimas aulas assistidas, uma por curso (curso em destaque, aula abaixo, thumbnail); sem historico mantem o bloco "continuar".
 - Menu "Favoritos" -> `/app/favorites/courses` e `/app/favorites/lessons` (agrupado por curso). Botao de favorito na pagina do curso e da aula.
+
+## Planejador de estudos
+- Aula ganhou `durationSeconds`; produtor le via botao "Ler duracoes" (YouTube: pagina publica; Drive: Drive API com `GOOGLE_API_KEY`, arquivo compartilhado). Lote de 120 aulas por clique.
+- `StudyPlan` guarda so data alvo e minutos/dia; o calendario e recalculado a cada acesso sobre as aulas nao concluidas, a partir de hoje (America/Sao_Paulo). Aula nunca e dividida entre dias. Sem duracao: estimativa de 10 min.
+- Preferencias do aluno (dias, inicio, fim) em `StudentProfile`, editadas em /app/me.
+
+## Configuracoes e backup (admin)
+- Chave Google salva criptografada (AES-256-GCM) em `app_settings`; chave de criptografia = `SETTINGS_ENCRYPTION_KEY` ou, se ausente, `SUPABASE_SERVICE_ROLE_KEY` (trocar a chave exige reinformar o segredo). Env `GOOGLE_API_KEY` segue como fallback.
+- Backup: GET /admin/backup (so ADMIN) gera .json.gz com todas as tabelas em ordem de FK, sem `app_settings`. Restore: `npm run db:restore -- arquivo.json.gz [--wipe]` apos `prisma migrate deploy`. Senhas ficam no Supabase Auth, fora do backup. Limite: resposta serverless ~4,5 MB.

@@ -1681,3 +1681,23 @@ async function findAuthUserByEmail(supabase: SupabaseClient, email: string): Pro
     page += 1;
   }
 }
+
+export async function listCourseLessonsForDuration(
+  organizationId: string,
+  actorUserId: string,
+  actorRole: ActorRole,
+  courseId: string,
+) {
+  return prisma.lesson.findMany({
+    where: {
+      status: "ACTIVE",
+      module: { courseId, course: scopedCourseWhere(organizationId, actorUserId, actorRole) },
+    },
+    orderBy: [{ module: { position: "asc" } }, { position: "asc" }],
+    select: { id: true, youtubeUrl: true, youtubeVideoId: true, durationSeconds: true },
+  });
+}
+
+export async function setLessonDuration(lessonId: string, durationSeconds: number) {
+  return prisma.lesson.update({ where: { id: lessonId }, data: { durationSeconds } });
+}

@@ -5,6 +5,21 @@ const messages: Record<string, string> = {
   canceled: "Matricula cancelada com sucesso.",
   approved: "Solicitacao aprovada e matricula liberada.",
   rejected: "Solicitacao recusada.",
+  durations_scanned: "Duracoes lidas. Aulas sem valor (PDF, OneDrive ou arquivo nao compartilhado) usam estimativa no planejador.",
+  durations_partial: "Parte das duracoes foi lida. Clique em Ler duracoes de novo para continuar.",
+  study_prefs_saved: "Preferencias de estudo salvas.",
+  study_prefs_invalid: "Escolha ao menos um dia da semana e um horario final maior que o inicial.",
+  gkey_saved: "Chave salva. Use Testar para confirmar que funciona.",
+  gkey_removed: "Chave removida.",
+  gkey_invalid_format: "A chave parece invalida (20 a 200 caracteres, sem espacos).",
+  gkey_test_ok: "Funcionou: a chave leu os dados de um arquivo do Drive.",
+  gkey_test_empty: "Nenhuma chave para testar. Cole uma chave ou salve antes.",
+  gkey_test_invalid: "Chave invalida. Confira se foi copiada por inteiro.",
+  gkey_test_disabled: "A chave existe, mas a Drive API nao esta ativada no projeto do Google Cloud.",
+  gkey_test_unshared: "A chave foi aceita, mas o arquivo de teste nao esta compartilhado por link (ou a chave tem restricoes).",
+  gkey_test_no_sample: "Nao ha aula do Google Drive cadastrada para usar no teste.",
+  gkey_test_network: "Nao foi possivel falar com o Google. Tente novamente.",
+  durations_no_key: "Aulas do Google Drive exigem a Google API Key. Cadastre em Configuracoes (login de administrador). Nenhuma duracao foi lida.",
   linked_existing: "Aluno ja possuia cadastro na plataforma e foi vinculado com sucesso a sua lista.",
   student_lookup_found: "Aluno encontrado na plataforma. Os dados foram carregados e o proximo passo e somente vincular.",
   student_lookup_not_found: "Aluno nao encontrado na plataforma. Preencha os campos para realizar um novo cadastro.",
@@ -63,7 +78,7 @@ export function Feedback({ status }: FeedbackProps) {
 }
 
 function feedbackClassName(status: string) {
-  const isError = !["saved", "deleted", "renewed", "canceled", "linked_existing"].includes(status);
+  const isError = !["saved", "deleted", "renewed", "canceled", "linked_existing", "durations_scanned", "durations_partial", "study_prefs_saved", "gkey_saved", "gkey_removed", "gkey_test_ok"].includes(status);
 
   return isError
     ? "mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"

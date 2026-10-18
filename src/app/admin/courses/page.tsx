@@ -4,13 +4,15 @@ import { Feedback } from "@/components/admin/feedback";
 import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { deleteCourseAction, saveCourseAction } from "@/server/actions/admin-actions";
+import { deleteCourseAction, saveCourseAction, scanCourseDurationsAction } from "@/server/actions/admin-actions";
 import { getCourses } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 
 type CoursesPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
+
+export const maxDuration = 60;
 
 export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   const pagination = getPagination(searchParams);
@@ -96,6 +98,10 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
               >
                 Alunos ({course._count.enrollments})
               </Link>
+              <form action={scanCourseDurationsAction}>
+                <input name="id" type="hidden" value={course.id} />
+                <SubmitButton>Ler duracoes</SubmitButton>
+              </form>
               <form action={deleteCourseAction}>
                 <input name="id" type="hidden" value={course.id} />
                 <SubmitButton

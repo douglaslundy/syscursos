@@ -3430,3 +3430,6 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ## 2026-10-17 - Cursos publicos / solicitacoes
 - tsc, vitest (134 testes) e next lint verdes. Sem teste novo para a aprovacao (transacao Prisma); build nao rodado.
 - Autorizacao server-side: solicitar exige STUDENT logado e curso publico+ativo; aprovar/recusar filtram por organizationId+producerId.
+
+## Planejador de estudos
+- Testes unitarios do calculo (study-planner). Lint/tsc/build ok. Sem teste de integracao do service nem smoke visual.

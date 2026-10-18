@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, Circle, PlayCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, Circle, PlayCircle } from "lucide-react";
 
 import { ContinueLessonBlock } from "@/components/student/continue-lesson-block";
 import { CourseBlocked } from "@/components/student/course-blocked";
@@ -34,8 +34,15 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-copy-primary md:text-4xl">
             {data.course.title}
           </h1>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <FavoriteButton courseId={courseId} isFavorite={isFavorite} />
+            <Link
+              className="inline-flex min-h-10 items-center gap-2 rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+              href={`/app/courses/${courseId}/plan`}
+            >
+              <CalendarDays aria-hidden className="h-4 w-4" />
+              Cronograma
+            </Link>
           </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-copy-secondary">
             {data.course.description ?? "Conteudo liberado para seu estudo."}

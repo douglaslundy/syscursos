@@ -1,0 +1,167 @@
+import Link from "next/link";
+
+import { cn } from "@/lib/utils";
+import type { CronogramaDay, CronogramaLesson } from "@/server/services/study-plan-service";
+import { addDays, weekdayOf } from "@/server/services/study-planner";
+
+const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+const MONTH_LABELS = [
+  "Janeiro",
+  "Fevereiro",
+  "Marco",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+const VISIBLE_PER_DAY = 3;
+
+export function formatMinutes(minutes: number) {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest}min`;
+  return rest === 0 ? `${hours}h` : `${hours}h${String(rest).padStart(2, "0")}`;
+}
+
+export function formatClock(minuteOfDay: number) {
+  const value = minuteOfDay % 1440;
+  return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+}
+
+export function formatDate(date: string) {
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}/${year}`;
+}
+
+function monthsOf(days: CronogramaDay[]) {
+  const months: string[] = [];
+
+  for (const day of days) {
+    const key = day.date.slice(0, 7);
+    if (!months.includes(key)) months.push(key);
+  }
+
+  return months;
+}
+
+function monthCells(month: string) {
+  const first = `${month}-01`;
+  const [year, monthNumber] = month.split("-").map(Number);
+  const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const blanks = Array.from({ length: weekdayOf(first) }, () => null);
+  return [...blanks, ...Array.from({ length: daysInMonth }, (_, index) => addDays(first, index))];
+}
+
+function LessonChip({
+  courseId,
+  date,
+  lesson,
+  today,
+}: {
+  courseId: string;
+  date: string;
+  lesson: CronogramaLesson;
+  today: string;
+}) {
+  const state = lesson.completed ? "done" : date < today ? "late" : "pending";
+  const label = { done: "Assistida", late: "Atrasada", pending: "Pendente" }[state];
+
+  return (
+    <Link
+      className="block rounded-md bg-sky-100 px-2 py-1 text-left text-slate-900 transition hover:bg-sky-200"
+      href={`/app/courses/${courseId}/lessons/${lesson.id}`}
+      title={`${lesson.title} - ${label}`}
+    >
+      <span className="flex items-center gap-1.5">
+        <span
+          aria-label={label}
+          className={cn(
+            "h-2 w-2 shrink-0 rounded-full",
+            state === "done" && "bg-green-500",
+            state === "late" && "bg-red-500",
+            state === "pending" && "bg-slate-400",
+          )}
+        />
+        <span className={cn("truncate text-xs font-semibold", state === "done" && "line-through opacity-70")}>
+          {lesson.title}
+        </span>
+      </span>
+      <span className="block pl-3.5 text-[11px] text-slate-600">
+        {formatClock(lesson.startMinute)} - {formatClock(lesson.endMinute)}
+      </span>
+    </Link>
+  );
+}
+
+export function StudyCalendar({ courseId, days, today }: { courseId: string; days: CronogramaDay[]; today: string }) {
+  const byDate = new Map(days.map((day) => [day.date, day]));
+
+  return (
+    <div className="space-y-8 overflow-x-auto">
+      {monthsOf(days).map((month) => {
+        const [year, monthNumber] = month.split("-").map(Number);
+
+        return (
+          <section className="min-w-[860px]" key={month}>
+            <h3 className="mb-2 text-base font-semibold text-copy-primary">
+              {MONTH_LABELS[monthNumber - 1]} {year}
+            </h3>
+            <div className="grid grid-cols-7 border-l border-t border-stroke-subtle text-center text-xs text-copy-muted">
+              {WEEKDAY_LABELS.map((label) => (
+                <div className="border-b border-r border-stroke-subtle py-1" key={label}>
+                  {label}
+                </div>
+              ))}
+              {monthCells(month).map((date, index) => {
+                const lessons = (date ? byDate.get(date)?.lessons : undefined) ?? [];
+                const extra = lessons.slice(VISIBLE_PER_DAY);
+
+                return (
+                  <div
+                    className="min-h-28 space-y-1 border-b border-r border-stroke-subtle p-1.5 text-left"
+                    key={date ?? `blank-${index}`}
+                  >
+                    {date ? (
+                      <div
+                        className={cn(
+                          "mb-1 text-center text-xs font-semibold text-copy-secondary",
+                          date === today && "mx-auto w-fit rounded-md border border-brand-primary px-1.5 text-brand-primary",
+                        )}
+                      >
+                        {Number(date.slice(8))}
+                      </div>
+                    ) : null}
+                    {date
+                      ? lessons
+                          .slice(0, VISIBLE_PER_DAY)
+                          .map((lesson) => (
+                            <LessonChip courseId={courseId} date={date} key={lesson.id} lesson={lesson} today={today} />
+                          ))
+                      : null}
+                    {date && extra.length > 0 ? (
+                      <details className="space-y-1">
+                        <summary className="cursor-pointer text-xs text-copy-secondary underline">
+                          Mais {extra.length}
+                        </summary>
+                        <div className="mt-1 space-y-1">
+                          {extra.map((lesson) => (
+                            <LessonChip courseId={courseId} date={date} key={lesson.id} lesson={lesson} today={today} />
+                          ))}
+                        </div>
+                      </details>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+}

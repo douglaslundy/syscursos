@@ -29,6 +29,7 @@ import {
   saveManagedUser,
   saveModule,
   saveStudent,
+  scanCourseDurations,
   updateOwnAdminProfile,
 } from "@/server/services/admin-service";
 import {
@@ -255,6 +256,18 @@ export async function cancelEnrollmentAction(formData: FormData) {
   await runAdminMutation(path, "canceled", async () => {
     await cancelEnrollmentService(id);
     revalidatePath(path);
+  });
+}
+
+export async function scanCourseDurationsAction(formData: FormData) {
+  const path = "/admin/courses";
+  const { id } = parseForm(idSchema, formData, path);
+  let status = "durations_scanned";
+  await runAdminMutation(path, "durations_scanned", async () => {
+    const result = await scanCourseDurations(id);
+    status = result.noDriveKey && result.found === 0 ? "durations_no_key" : result.remaining > 0 ? "durations_partial" : "durations_scanned";
+    revalidatePath(path);
+    redirect(adminStatusPath(path, status));
   });
 }
 

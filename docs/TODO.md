@@ -912,3 +912,5 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [ ] Login ainda ignora `?next=`: apos entrar, o aluno cai em `/app` (link "Ver cursos disponiveis" leva a `/cursos`).
 - [x] Favoritos (cursos/aulas) e 3 ultimos cursos na home do aluno.
 - [x] Migration `20261017150000_student_favorites` aplicada (2026-10-17).
+
+- [x] Planejador de estudos (migracao 20261017180000 aplicada). Pendente: GOOGLE_API_KEY no Vercel para durations do Drive; edicao manual de duracao por aula; smoke no navegador.

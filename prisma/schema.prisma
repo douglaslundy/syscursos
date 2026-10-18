@@ -107,6 +107,10 @@ model StudentProfile {
   enrollmentRequests EnrollmentRequest[]
   favoriteCourses FavoriteCourse[]
   favoriteLessons FavoriteLesson[]
+  studyPlans  StudyPlan[]
+  studyWeekdays Int[]          @default([1, 2, 3, 4, 5]) @map("study_weekdays")
+  studyStartMinute Int         @default(1140) @map("study_start_minute")
+  studyEndMinute Int           @default(1260) @map("study_end_minute")
   producers   ProducerStudent[]  @relation("ProducerStudentStudent")
 
   @@map("student_profiles")
@@ -130,6 +134,7 @@ model Course {
   enrollments Enrollment[]
   enrollmentRequests EnrollmentRequest[]
   favorites FavoriteCourse[]
+  studyPlans StudyPlan[]
 
   @@index([organizationId, producerId, status])
   @@index([isPublic, status])
@@ -176,6 +181,7 @@ model Lesson {
   youtubeVideoId String?          @map("youtube_video_id") @db.VarChar(32)
   coverImageUrl  String?          @map("cover_image_url") @db.VarChar(500)
   position       Int
+  durationSeconds Int?            @map("duration_seconds")
   status         LessonStatus     @default(ACTIVE)
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -296,4 +302,28 @@ model LessonProgress {
   @@index([lessonId])
   @@index([studentId, status])
   @@map("lesson_progress")
+}
+
+model StudyPlan {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId    String         @map("student_id") @db.Uuid
+  courseId     String         @map("course_id") @db.Uuid
+  targetDate   DateTime       @map("target_date") @db.Date
+  dailyMinutes Int            @map("daily_minutes")
+  schedule     Json           @default("[]")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@map("study_plans")
+}
+
+model AppSetting {
+  key       String   @id @db.VarChar(80)
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("app_settings")
 }
