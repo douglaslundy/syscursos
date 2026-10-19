@@ -24,7 +24,16 @@ type TranscriberProps = {
 type DisplayOptions = DisplayMediaStreamOptions & { preferCurrentTab?: boolean };
 
 function supported() {
-  return typeof navigator !== "undefined" && !!navigator.mediaDevices?.getDisplayMedia && typeof MediaRecorder !== "undefined";
+  // Celular nao compartilha audio da guia (mesmo com "site para computador"): a captura so funciona no Chrome/Edge desktop.
+  const touchOnly = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches && !window.matchMedia("(any-pointer: fine)").matches;
+  const mobileAgent = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+  return (
+    typeof navigator !== "undefined" &&
+    !touchOnly &&
+    !mobileAgent &&
+    !!navigator.mediaDevices?.getDisplayMedia &&
+    typeof MediaRecorder !== "undefined"
+  );
 }
 
 async function decodeToPcm(blob: Blob) {
@@ -279,12 +288,7 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     setElapsed(0);
 
     try {
-      if (method === "browser") {
-        setPhase("loading");
-        setMessage("Preparando o modelo de transcricao (so demora na primeira vez)...");
-        workerRef.current = await loadWorker();
-      }
-
+      // Pede a captura antes de baixar o modelo: o navegador so abre o seletor logo apos o clique, e nao vale baixar o modelo se o aluno cancelar.
       const options: DisplayOptions = { video: true, audio: true, preferCurrentTab: true };
       const stream = await navigator.mediaDevices.getDisplayMedia(options);
 
@@ -294,6 +298,12 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
       }
 
       streamRef.current = stream;
+      if (method === "browser") {
+        setPhase("loading");
+        setMessage("Preparando o modelo de transcricao (so demora na primeira vez)...");
+        workerRef.current = await loadWorker();
+      }
+
       // Se o compartilhamento for encerrado pelo navegador, o que foi captado vai para conferencia, nao e salvo direto.
       stream.getAudioTracks()[0].onended = () => void finish();
       startSegment(0, 0);
