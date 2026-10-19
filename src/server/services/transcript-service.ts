@@ -142,7 +142,7 @@ export async function generateLessonTranscript(courseId: string, lessonId: strin
     await prisma.lesson.update({ where: { id: lessonId }, data: { transcript: text } });
     return "ok";
   } catch (error) {
-    console.error("Transcript generation failed.", error);
+    console.error("Transcript generation failed.", { videoId, name: error instanceof Error ? error.name : typeof error, message: error instanceof Error ? error.message : String(error) });
     return "unavailable";
   }
 }

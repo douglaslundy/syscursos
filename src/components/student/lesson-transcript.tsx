@@ -8,7 +8,7 @@ const messages: Record<string, { text: string; ok: boolean }> = {
   not_owner: { text: "Esta transcricao foi feita por outro aluno e so ele pode apagar.", ok: false },
   exists: { text: "Esta aula ja tem transcricao.", ok: true },
   unavailable: {
-    text: "Nao foi possivel obter a legenda deste video (sem legenda ou YouTube indisponivel). Tente mais tarde.",
+    text: "Nao foi possivel obter a legenda deste video (sem legenda ou YouTube bloqueou o servidor). Voce pode transcrever gravando o audio, logo abaixo.",
     ok: false,
   },
 };
@@ -57,7 +57,7 @@ export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, ca
             {transcript}
           </p>
         </details>
-      ) : isYouTube ? (
+      ) : isYouTube && status !== "unavailable" ? (
         <p className="mt-2 text-sm text-copy-secondary">
           Gera o texto da fala a partir da legenda do video (aulas do YouTube).
         </p>
