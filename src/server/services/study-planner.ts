@@ -9,7 +9,9 @@ export type PlannerLesson = {
   seconds: number;
 };
 
-export type ScheduledLesson = PlannerLesson & { startMinute: number; endMinute: number };
+export type PlannerCourse = { courseId: string; lessons: PlannerLesson[] };
+
+export type ScheduledLesson = PlannerLesson & { courseId: string; startMinute: number; endMinute: number };
 
 export type PlanDay = {
   date: string;
@@ -19,7 +21,7 @@ export type PlanDay = {
 };
 
 type ScheduleInput = {
-  lessons: PlannerLesson[];
+  courses: PlannerCourse[];
   startDate: string;
   weekdays: number[];
   startMinute: number;
@@ -43,45 +45,61 @@ export function totalSeconds(lessons: PlannerLesson[]) {
   return lessons.reduce((sum, lesson) => sum + lesson.seconds, 0);
 }
 
-// Distribui as aulas em ordem nos dias de estudo; uma aula nunca e dividida entre dias.
+// Cada dia de estudo reparte o tempo igualmente entre os cursos que ainda tem aula; curso pequeno termina antes
+// e sua parte passa para os demais. Sobra de um dia vira credito do curso (aula nunca e dividida entre dias).
 export function buildSchedule(input: ScheduleInput & { dailyMinutes: number }): PlanDay[] {
-  const { lessons, startDate, weekdays, startMinute, dailyMinutes } = input;
+  const { courses, startDate, weekdays, startMinute, dailyMinutes } = input;
   const days: PlanDay[] = [];
 
   if (weekdays.length === 0 || dailyMinutes <= 0) {
     return days;
   }
 
-  const capSeconds = dailyMinutes * 60;
-  let index = 0;
+  const next = courses.map(() => 0);
+  const credit = courses.map(() => 0);
 
-  for (let offset = 0; offset < MAX_PLAN_DAYS && index < lessons.length; offset += 1) {
+  for (let offset = 0; offset < MAX_PLAN_DAYS; offset += 1) {
+    const active = courses.flatMap((course, index) => (next[index] < course.lessons.length ? [index] : []));
+
+    if (active.length === 0) break;
+
     const date = addDays(startDate, offset);
 
-    if (!weekdays.includes(weekdayOf(date))) {
-      continue;
-    }
+    if (!weekdays.includes(weekdayOf(date))) continue;
 
     const day: PlanDay = { date, startMinute, minutes: 0, lessons: [] };
     let used = 0;
 
-    while (index < lessons.length && (day.lessons.length === 0 || used + lessons[index].seconds <= capSeconds)) {
-      const lessonStart = startMinute + Math.ceil(used / 60);
-      used += lessons[index].seconds;
-      day.lessons.push({ ...lessons[index], startMinute: lessonStart, endMinute: startMinute + Math.ceil(used / 60) });
-      index += 1;
+    for (const index of active) {
+      credit[index] += (dailyMinutes * 60) / active.length;
+      const { courseId, lessons } = courses[index];
+
+      while (next[index] < lessons.length && lessons[next[index]].seconds <= credit[index]) {
+        const lesson = lessons[next[index]];
+        const lessonStart = startMinute + Math.ceil(used / 60);
+        used += lesson.seconds;
+        credit[index] -= lesson.seconds;
+        next[index] += 1;
+        day.lessons.push({ ...lesson, courseId, startMinute: lessonStart, endMinute: startMinute + Math.ceil(used / 60) });
+      }
     }
 
-    day.minutes = Math.ceil(used / 60);
-    days.push(day);
+    if (day.lessons.length > 0) {
+      day.minutes = Math.ceil(used / 60);
+      days.push(day);
+    }
   }
 
   return days;
 }
 
-// Menor carga diaria (em minutos) que termina o conteudo ate a data alvo. Null: nenhum dia de estudo disponivel.
-export function minutesPerDayForDeadline(input: ScheduleInput & { targetDate: string }) {
-  const { lessons, startDate, weekdays, targetDate } = input;
+export function countLessons(courses: PlannerCourse[]) {
+  return courses.reduce((sum, course) => sum + course.lessons.length, 0);
+}
+
+// Menor carga diaria (em minutos, ate maxMinutes) que termina tudo ate a data alvo. Null: nenhum dia de estudo disponivel.
+export function minutesPerDayForDeadline(input: ScheduleInput & { targetDate: string; maxMinutes: number }) {
+  const { startDate, weekdays, targetDate, maxMinutes } = input;
   let studyDays = 0;
 
   for (let offset = 0; offset <= diffDays(startDate, targetDate); offset += 1) {
@@ -92,19 +110,25 @@ export function minutesPerDayForDeadline(input: ScheduleInput & { targetDate: st
     return null;
   }
 
-  const total = totalSeconds(lessons);
-  let minutes = Math.max(1, Math.ceil(total / 60 / studyDays));
-
-  // Aulas inteiras podem estourar o dia; sobe 1 min ate caber no prazo.
-  while (minutes * 60 < total) {
+  const total = countLessons(input.courses);
+  const fits = (minutes: number) => {
     const days = buildSchedule({ ...input, dailyMinutes: minutes });
-    const last = days[days.length - 1];
+    const scheduled = days.reduce((sum, day) => sum + day.lessons.length, 0);
+    return scheduled === total && (days.at(-1)?.date ?? startDate) <= targetDate;
+  };
 
-    if (!last || last.date <= targetDate) break;
-    minutes += 1;
+  let low = 1;
+  let high = maxMinutes;
+
+  if (!fits(high)) return high;
+
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (fits(mid)) high = mid;
+    else low = mid + 1;
   }
 
-  return minutes;
+  return low;
 }
 
 function toUtc(date: string) {

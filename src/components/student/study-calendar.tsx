@@ -20,6 +20,15 @@ const MONTH_LABELS = [
   "Dezembro",
 ];
 const VISIBLE_PER_DAY = 3;
+// Uma cor por curso do cronograma (ate 5), na ordem em que foram escolhidos.
+export const COURSE_COLORS = [
+  "bg-sky-100 hover:bg-sky-200",
+  "bg-emerald-100 hover:bg-emerald-200",
+  "bg-amber-100 hover:bg-amber-200",
+  "bg-violet-100 hover:bg-violet-200",
+  "bg-rose-100 hover:bg-rose-200",
+];
+type CalendarCourse = { id: string; title: string };
 
 export function formatMinutes(minutes: number) {
   const hours = Math.floor(minutes / 60);
@@ -58,12 +67,12 @@ function monthCells(month: string) {
 }
 
 function LessonChip({
-  courseId,
+  colorClass,
   date,
   lesson,
   today,
 }: {
-  courseId: string;
+  colorClass: string;
   date: string;
   lesson: CronogramaLesson;
   today: string;
@@ -73,8 +82,8 @@ function LessonChip({
 
   return (
     <Link
-      className="block rounded-md bg-sky-100 px-2 py-1 text-left text-slate-900 transition hover:bg-sky-200"
-      href={`/app/courses/${courseId}/lessons/${lesson.id}`}
+      className={cn("block rounded-md px-2 py-1 text-left text-slate-900 transition", colorClass)}
+      href={`/app/courses/${lesson.courseId}/lessons/${lesson.id}`}
       title={`${lesson.title} - ${label}`}
     >
       <span className="flex items-center gap-1.5">
@@ -98,8 +107,9 @@ function LessonChip({
   );
 }
 
-export function StudyCalendar({ courseId, days, today }: { courseId: string; days: CronogramaDay[]; today: string }) {
+export function StudyCalendar({ courses, days, today }: { courses: CalendarCourse[]; days: CronogramaDay[]; today: string }) {
   const byDate = new Map(days.map((day) => [day.date, day]));
+  const colorOf = (courseId: string) => COURSE_COLORS[Math.max(0, courses.findIndex((course) => course.id === courseId)) % COURSE_COLORS.length];
 
   return (
     <div className="space-y-8 overflow-x-auto">
@@ -140,7 +150,7 @@ export function StudyCalendar({ courseId, days, today }: { courseId: string; day
                       ? lessons
                           .slice(0, VISIBLE_PER_DAY)
                           .map((lesson) => (
-                            <LessonChip courseId={courseId} date={date} key={lesson.id} lesson={lesson} today={today} />
+                            <LessonChip colorClass={colorOf(lesson.courseId)} date={date} key={lesson.id} lesson={lesson} today={today} />
                           ))
                       : null}
                     {date && extra.length > 0 ? (
@@ -150,7 +160,7 @@ export function StudyCalendar({ courseId, days, today }: { courseId: string; day
                         </summary>
                         <div className="mt-1 space-y-1">
                           {extra.map((lesson) => (
-                            <LessonChip courseId={courseId} date={date} key={lesson.id} lesson={lesson} today={today} />
+                            <LessonChip colorClass={colorOf(lesson.courseId)} date={date} key={lesson.id} lesson={lesson} today={today} />
                           ))}
                         </div>
                       </details>

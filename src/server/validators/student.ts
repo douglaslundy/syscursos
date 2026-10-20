@@ -70,15 +70,14 @@ export function sanitizeNoteContent(value: string) {
 
 const optionalText = (value: unknown) => (typeof value === "string" && value.trim() !== "" ? value.trim() : undefined);
 
-// Exatamente um entre: data final, numero de dias, minutos por dia.
+// 1 a 5 cursos e exatamente um entre: data final ou minutos por dia.
 export const studyPlanSchema = z
   .object({
-    courseId: z.string().uuid(),
+    courseIds: z.array(z.string().uuid()).min(1).max(5),
     targetDate: z.preprocess(optionalText, z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()),
-    days: z.preprocess(optionalText, z.coerce.number().int().min(1).max(3650).optional()),
     minutesPerDay: z.preprocess(optionalText, z.coerce.number().int().min(1).max(960).optional()),
   })
-  .refine((value) => [value.targetDate, value.days, value.minutesPerDay].filter((v) => v !== undefined).length === 1);
+  .refine((value) => [value.targetDate, value.minutesPerDay].filter((v) => v !== undefined).length === 1);
 
 const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const toMinute = (value: string) => Number(value.slice(0, 2)) * 60 + Number(value.slice(3));

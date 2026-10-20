@@ -1678,3 +1678,10 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 - Nao verificado ponta a ponta: download/velocidade do Whisper, captura de audio da guia com o iframe do Drive, nome do modelo Gemini (`GEMINI_MODEL`) e limites do plano gratuito.
 - Transcricao gravada: Pausar/Retomar, Finalizar abre conferencia (textarea editavel) e so salva ao confirmar; encerrar o compartilhamento tambem vai para conferencia. Tempo `[mm:ss]` conta so gravacao (pausa nao conta). "Apagar e refazer" na aula vale para qualquer aluno com acesso (mesma confianca de quem grava).
 - `Lesson.transcriptAuthorId`: transcricao gravada so e apagada pelo aluno que a fez (ou pelo produtor/admin na lista de aulas). Sem autor (legenda do YouTube ou anterior a este campo) qualquer aluno com acesso apaga.
+
+## Cronograma unico com ate 5 cursos
+- Substitui o planejador por curso. `StudySchedule` (1 por aluno): ids dos cursos (max 5), data alvo, minutos/dia e o calendario em JSON (so ids de aula + horario); titulo e conclusao sao remontados a cada acesso. A tabela antiga `study_plans` ficou sem uso (nao foi apagada, para nao perder dados).
+- Botao "Cronograma de estudos" na home do aluno -> `/app/schedule`. O aluno marca os cursos, depois informa minutos/dia OU data final.
+- Divisao: a cada dia de estudo o tempo e repartido igualmente entre os cursos que ainda tem aula; a sobra de um dia vira credito do curso (aula nunca e dividida). Curso pequeno termina antes e sua parte passa aos demais. Data final: busca binaria do menor minuto/dia que termina no prazo (max 16 h).
+- Curso concluido sai da grade ativa; com menos de 5 ativos e outros cursos disponiveis, a tela avisa que ainda cabem mais cursos. Validade: erro `after_expiry` se alguma aula de um curso cair depois do fim da matricula dele.
+

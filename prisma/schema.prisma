@@ -108,6 +108,7 @@ model StudentProfile {
   favoriteCourses FavoriteCourse[]
   favoriteLessons FavoriteLesson[]
   studyPlans  StudyPlan[]
+  studySchedule StudySchedule?
   studyWeekdays Int[]          @default([1, 2, 3, 4, 5]) @map("study_weekdays")
   studyStartMinute Int         @default(1140) @map("study_start_minute")
   studyEndMinute Int           @default(1260) @map("study_end_minute")
@@ -320,6 +321,21 @@ model StudyPlan {
 
   @@unique([studentId, courseId])
   @@map("study_plans")
+}
+
+// Cronograma unico do aluno com ate 5 cursos; o calendario fica em `schedule` e e remontado com os dados atuais a cada acesso.
+model StudySchedule {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId    String         @unique @map("student_id") @db.Uuid
+  courseIds    String[]       @map("course_ids") @db.Uuid
+  targetDate   DateTime       @map("target_date") @db.Date
+  dailyMinutes Int            @map("daily_minutes")
+  schedule     Json           @default("[]")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("study_schedules")
 }
 
 model AppSetting {

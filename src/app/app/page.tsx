@@ -34,6 +34,12 @@ export default async function StudentHomePage({ searchParams }: StudentHomePageP
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover"
+            href="/app/schedule"
+          >
+            Cronograma de estudos
+          </Link>
+          <Link
             className="inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
             href="/app/notebooks"
           >

@@ -3,21 +3,29 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { saveStudyPlan, saveStudyPreferences } from "@/server/services/study-plan-service";
+import { removeStudySchedule, saveStudyPreferences, saveStudySchedule } from "@/server/services/study-plan-service";
 import { studyPlanSchema, studyPreferencesSchema } from "@/server/validators/student";
 
 export async function saveStudyPlanAction(formData: FormData) {
-  const parsed = studyPlanSchema.safeParse(Object.fromEntries(formData.entries()));
+  const parsed = studyPlanSchema.safeParse({
+    courseIds: formData.getAll("courseIds"),
+    targetDate: formData.get("targetDate"),
+    minutesPerDay: formData.get("minutesPerDay"),
+  });
 
   if (!parsed.success) {
-    const courseId = formData.get("courseId");
-    redirect(typeof courseId === "string" ? `/app/courses/${courseId}/plan?status=invalid` : "/app");
+    redirect("/app/schedule?status=invalid&edit=1");
   }
 
-  const { courseId, ...input } = parsed.data;
-  const error = await saveStudyPlan(courseId, input);
-  revalidatePath(`/app/courses/${courseId}/plan`);
-  redirect(`/app/courses/${courseId}/plan?status=${error ?? "saved"}`);
+  const error = await saveStudySchedule(parsed.data);
+  revalidatePath("/app/schedule");
+  redirect(error ? `/app/schedule?status=${error}&edit=1` : "/app/schedule?status=saved");
+}
+
+export async function removeStudyPlanAction() {
+  await removeStudySchedule();
+  revalidatePath("/app/schedule");
+  redirect("/app/schedule?status=removed");
 }
 
 export async function saveStudyPreferencesAction(formData: FormData) {

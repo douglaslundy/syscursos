@@ -53,7 +53,7 @@ export default async function StudentMePage({ searchParams }: StudentMePageProps
 
       <form action={saveStudyPreferencesAction} className="mt-6 grid max-w-2xl gap-3 rounded-md border bg-background p-4">
         <h2 className="text-base font-semibold">Preferencias de estudo</h2>
-        <p className="text-sm text-muted-foreground">Usadas pelo planejador de estudos de cada curso.</p>
+        <p className="text-sm text-muted-foreground">Usadas no seu cronograma de estudos.</p>
         <fieldset className="flex flex-wrap gap-3 text-sm">
           <legend className="mb-1 text-sm">Dias da semana</legend>
           {WEEKDAYS.map((label, day) => (

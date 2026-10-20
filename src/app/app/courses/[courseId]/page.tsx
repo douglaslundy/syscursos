@@ -38,7 +38,7 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
             <FavoriteButton courseId={courseId} isFavorite={isFavorite} />
             <Link
               className="inline-flex min-h-10 items-center gap-2 rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
-              href={`/app/courses/${courseId}/plan`}
+              href="/app/schedule"
             >
               <CalendarDays aria-hidden className="h-4 w-4" />
               Cronograma
