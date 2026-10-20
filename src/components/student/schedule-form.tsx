@@ -10,6 +10,7 @@ type ScheduleFormProps = {
   action: (formData: FormData) => void | Promise<void>;
   options: Option[];
   selected: string[];
+  modules: Record<string, "sequential" | "modules">;
   maxCourses: number;
   minDate: string;
   defaultMinutes: number;
@@ -18,8 +19,9 @@ type ScheduleFormProps = {
 const inputClass =
   "w-full rounded-md border border-stroke-subtle bg-surface px-3 py-2 text-sm text-copy-primary disabled:opacity-40";
 
-export function ScheduleForm({ action, options, selected, maxCourses, minDate, defaultMinutes }: ScheduleFormProps) {
+export function ScheduleForm({ action, options, selected, modules, maxCourses, minDate, defaultMinutes }: ScheduleFormProps) {
   const [chosen, setChosen] = useState<string[]>(selected);
+  const [courseModes, setCourseModes] = useState(modules);
   const [mode, setMode] = useState<"minutes" | "date">("minutes");
   const full = chosen.length >= maxCourses;
 
@@ -70,7 +72,44 @@ export function ScheduleForm({ action, options, selected, maxCourses, minDate, d
 
       {chosen.length > 0 ? (
         <fieldset className="space-y-3">
-          <legend className="text-sm font-semibold text-copy-primary">2. Como quer estudar?</legend>
+          <legend className="text-sm font-semibold text-copy-primary">2. Como dividir as aulas de cada curso?</legend>
+          {options
+            .filter((option) => chosen.includes(option.id))
+            .map((option) => {
+              const value = courseModes[option.id] ?? "sequential";
+
+              return (
+                <div className="space-y-1 rounded-md border border-stroke-subtle px-3 py-2 text-sm" key={option.id}>
+                  <p className="font-medium text-copy-primary">{option.title}</p>
+                  {(["sequential", "modules"] as const).map((item) => (
+                    <label className="flex items-start gap-2 text-copy-secondary" key={item}>
+                      <input
+                        checked={value === item}
+                        className="mt-1"
+                        name={`mode_${option.id}`}
+                        onChange={() => setCourseModes((current) => ({ ...current, [option.id]: item }))}
+                        type="radio"
+                        value={item}
+                      />
+                      <span>
+                        {item === "sequential" ? "Sequencial (padrao): uma aula depois da outra" : "Dividir por modulos"}
+                        <span className="block text-xs text-copy-muted">
+                          {item === "sequential"
+                            ? "Segue a ordem do curso."
+                            : "Os modulos avancam juntos, com o mesmo tempo por semana para cada um."}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              );
+            })}
+        </fieldset>
+      ) : null}
+
+      {chosen.length > 0 ? (
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-semibold text-copy-primary">3. Como quer estudar?</legend>
           <label className="flex items-center gap-2 text-sm text-copy-secondary">
             <input checked={mode === "minutes"} onChange={() => setMode("minutes")} type="radio" />
             Quantos minutos por dia

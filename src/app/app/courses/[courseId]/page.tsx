@@ -3,10 +3,12 @@ import { CalendarDays, CheckCircle2, Circle, PlayCircle } from "lucide-react";
 
 import { ContinueLessonBlock } from "@/components/student/continue-lesson-block";
 import { CourseBlocked } from "@/components/student/course-blocked";
+import { CourseScheduleMode } from "@/components/student/course-schedule-mode";
 import { FavoriteButton } from "@/components/student/favorite-button";
 import { EmptyState } from "@/components/student/empty-state";
 import { ProgressBar } from "@/components/student/progress-bar";
 import { getCourseFavoriteState } from "@/server/services/favorite-service";
+import { getCourseScheduleMode } from "@/server/services/study-plan-service";
 import { getStudentCourse } from "@/server/services/student-service";
 import { getLessonThumbnailUrl, getLessonVideoEmbed } from "@/server/services/youtube-service";
 import { studentCourseParamsSchema } from "@/server/validators/student";
@@ -17,7 +19,11 @@ type StudentCoursePageProps = {
 
 export default async function StudentCoursePage({ params }: StudentCoursePageProps) {
   const { courseId } = studentCourseParamsSchema.parse(params);
-  const [data, isFavorite] = await Promise.all([getStudentCourse(courseId), getCourseFavoriteState(courseId)]);
+  const [data, isFavorite, scheduleMode] = await Promise.all([
+    getStudentCourse(courseId),
+    getCourseFavoriteState(courseId),
+    getCourseScheduleMode(courseId),
+  ]);
 
   if (data.status !== "AVAILABLE") {
     return <CourseBlocked status={data.status} />;
@@ -44,6 +50,7 @@ export default async function StudentCoursePage({ params }: StudentCoursePagePro
               Cronograma
             </Link>
           </div>
+          {scheduleMode && data.modules.length > 1 ? <CourseScheduleMode courseId={courseId} mode={scheduleMode} /> : null}
           <p className="mt-3 max-w-3xl text-sm leading-6 text-copy-secondary">
             {data.course.description ?? "Conteudo liberado para seu estudo."}
           </p>

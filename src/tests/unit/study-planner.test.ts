@@ -47,6 +47,19 @@ describe("study planner", () => {
     expect(days.flatMap((day) => day.lessons)).toHaveLength(8);
   });
 
+  it("splits a course time equally between its modules when byModule is on", () => {
+    const inModule = (moduleId: string, id: string): PlannerLesson => ({ ...lesson(id, 30), moduleId });
+    const modular: PlannerCourse = {
+      courseId: "c",
+      byModule: true,
+      lessons: [inModule("m1", "a1"), inModule("m1", "a2"), inModule("m2", "b1"), inModule("m2", "b2")],
+    };
+    const days = buildSchedule({ ...base, courses: [modular], dailyMinutes: 60 });
+
+    expect(days.map((day) => day.lessons.map((l) => l.id))).toEqual([["a1", "b1"], ["a2", "b2"]]);
+    expect(buildSchedule({ ...base, courses: [{ ...modular, byModule: false }], dailyMinutes: 60 })[0].lessons.map((l) => l.id)).toEqual(["a1", "a2"]);
+  });
+
   it("finds a daily load that finishes by the deadline", () => {
     const input = { ...base, courses: [course("a", 5, 45), course("b", 5, 45)], targetDate: "2026-10-23", maxMinutes: 960 };
     const minutes = minutesPerDayForDeadline(input);

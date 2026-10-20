@@ -2,8 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 
-import { removeStudySchedule, saveStudyPreferences, saveStudySchedule } from "@/server/services/study-plan-service";
+import {
+  removeStudySchedule,
+  saveStudyPreferences,
+  saveStudySchedule,
+  setCourseScheduleMode,
+  type CourseModes,
+} from "@/server/services/study-plan-service";
 import { studyPlanSchema, studyPreferencesSchema } from "@/server/validators/student";
 
 export async function saveStudyPlanAction(formData: FormData) {
@@ -17,7 +24,22 @@ export async function saveStudyPlanAction(formData: FormData) {
     redirect("/app/schedule?status=invalid&edit=1");
   }
 
-  const error = await saveStudySchedule(parsed.data);
+  const modes: CourseModes = Object.fromEntries(
+    parsed.data.courseIds.map((id) => [id, formData.get(`mode_${id}`) === "modules" ? "modules" : "sequential"]),
+  );
+  const error = await saveStudySchedule({ ...parsed.data, modes });
+  revalidatePath("/app/schedule");
+  redirect(error ? `/app/schedule?status=${error}&edit=1` : "/app/schedule?status=saved");
+}
+
+export async function setCourseModeAction(formData: FormData) {
+  const courseId = z.string().uuid().safeParse(formData.get("courseId"));
+
+  if (!courseId.success) {
+    redirect("/app/schedule?status=invalid");
+  }
+
+  const error = await setCourseScheduleMode(courseId.data, formData.get("mode") === "modules" ? "modules" : "sequential");
   revalidatePath("/app/schedule");
   redirect(error ? `/app/schedule?status=${error}&edit=1` : "/app/schedule?status=saved");
 }

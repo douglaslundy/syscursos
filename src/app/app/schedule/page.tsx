@@ -70,6 +70,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
           maxCourses={MAX_SCHEDULE_COURSES}
           minDate={view.today}
           options={options}
+          modules={plan?.modes ?? {}}
           selected={selected}
         />
       ) : plan ? (
@@ -98,6 +99,7 @@ export default async function SchedulePage({ searchParams }: SchedulePageProps) 
                 >
                   {course.title}
                   {course.remainingLessons === 0 ? " (concluido)" : ` (${course.remainingLessons} aulas)`}
+                  {plan.modes[course.id] === "modules" ? " - por modulos" : ""}
                 </li>
               ))}
             </ul>

@@ -15,7 +15,14 @@ export const MAX_SCHEDULE_COURSES = 5;
 const MIN_DAILY_MINUTES = 1;
 const MAX_DAILY_MINUTES = 16 * 60;
 
-export type StudyPlanInput = { courseIds: string[]; targetDate?: string; minutesPerDay?: number };
+export type CourseMode = "sequential" | "modules";
+export type CourseModes = Record<string, CourseMode>;
+export type StudyPlanInput = {
+  courseIds: string[];
+  modes?: CourseModes;
+  targetDate?: string;
+  minutesPerDay?: number;
+};
 export type StudyPlanError =
   | "no_lessons"
   | "past_date"
@@ -44,16 +51,18 @@ async function listEnrolledCourses(studentId: string): Promise<ScheduleCourse[]>
 }
 
 // Aulas restantes agrupadas por curso, na ordem dos ids recebidos.
-async function loadPlannerCourses(studentId: string, courseIds: string[]) {
+async function loadPlannerCourses(studentId: string, courseIds: string[], modes: CourseModes = {}) {
   const rows = await plans.listRemainingLessons(studentId, courseIds);
   const courses: PlannerCourse[] = courseIds.map((courseId) => ({
     courseId,
+    byModule: modes[courseId] === "modules",
     lessons: rows
       .filter((row) => row.module.courseId === courseId)
       .map((row) => ({
         id: row.id,
         title: row.title,
         moduleTitle: row.module.title,
+        moduleId: row.module.id,
         seconds: row.durationSeconds || FALLBACK_LESSON_SECONDS,
       })),
   }));
@@ -98,6 +107,7 @@ export async function getStudyScheduleView() {
     options,
     plan: {
       courses: planCourses,
+      modes: readModes(stored.courseModes),
       targetDate: stored.targetDate.toISOString().slice(0, 10),
       dailyMinutes: stored.dailyMinutes,
       days,
@@ -122,7 +132,8 @@ export async function saveStudySchedule(input: StudyPlanInput): Promise<StudyPla
 
   if (courseIds.length === 0 || chosen.some((course) => !course)) return "invalid_courses";
 
-  const { courses } = await loadPlannerCourses(studentId, courseIds);
+  const modes = Object.fromEntries(courseIds.map((id) => [id, input.modes?.[id] === "modules" ? "modules" : "sequential"])) as CourseModes;
+  const { courses } = await loadPlannerCourses(studentId, courseIds, modes);
 
   if (countLessons(courses) === 0) return "no_lessons";
 
@@ -167,11 +178,36 @@ export async function saveStudySchedule(input: StudyPlanInput): Promise<StudyPla
   }));
   await plans.upsertStudySchedule(studentId, {
     courseIds,
+    courseModes: modes,
     targetDate: new Date(`${input.targetDate ?? finish}T00:00:00.000Z`),
     dailyMinutes,
     schedule,
   });
   return null;
+}
+
+// Troca o modo (sequencial ou por modulos) de um curso que ja esta no cronograma e refaz o calendario com os mesmos minutos por dia.
+export async function setCourseScheduleMode(courseId: string, mode: CourseMode): Promise<StudyPlanError | null> {
+  const stored = await plans.getStudySchedule(await requireStudentProfileId());
+
+  if (!stored?.courseIds.includes(courseId)) return "invalid_courses";
+
+  return saveStudySchedule({
+    courseIds: stored.courseIds,
+    modes: { ...readModes(stored.courseModes), [courseId]: mode },
+    minutesPerDay: stored.dailyMinutes,
+  });
+}
+
+// Modo do curso no cronograma atual; null quando o curso nao esta nele.
+export async function getCourseScheduleMode(courseId: string): Promise<CourseMode | null> {
+  const stored = await plans.getStudySchedule(await requireStudentProfileId());
+
+  return stored?.courseIds.includes(courseId) ? (readModes(stored.courseModes)[courseId] ?? "sequential") : null;
+}
+
+function readModes(value: unknown): CourseModes {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as CourseModes) : {};
 }
 
 export async function removeStudySchedule() {

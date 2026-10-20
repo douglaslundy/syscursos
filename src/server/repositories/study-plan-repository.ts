@@ -9,7 +9,7 @@ export async function getStudySchedule(studentId: string) {
 
 export async function upsertStudySchedule(
   studentId: string,
-  data: { courseIds: string[]; targetDate: Date; dailyMinutes: number; schedule: Prisma.InputJsonValue },
+  data: { courseIds: string[]; courseModes: Prisma.InputJsonValue; targetDate: Date; dailyMinutes: number; schedule: Prisma.InputJsonValue },
 ) {
   return prisma.studySchedule.upsert({ where: { studentId }, create: { studentId, ...data }, update: data });
 }
@@ -31,7 +31,7 @@ export async function listRemainingLessons(studentId: string, courseIds: string[
       id: true,
       title: true,
       durationSeconds: true,
-      module: { select: { title: true, courseId: true } },
+      module: { select: { id: true, title: true, courseId: true } },
     },
   });
 }

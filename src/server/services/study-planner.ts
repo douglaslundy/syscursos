@@ -6,10 +6,12 @@ export type PlannerLesson = {
   id: string;
   title: string;
   moduleTitle: string;
+  moduleId?: string;
   seconds: number;
 };
 
-export type PlannerCourse = { courseId: string; lessons: PlannerLesson[] };
+// byModule: o tempo do curso e dividido igualmente entre seus modulos (cada modulo segue em ordem); senao, sequencial.
+export type PlannerCourse = { courseId: string; lessons: PlannerLesson[]; byModule?: boolean };
 
 export type ScheduledLesson = PlannerLesson & { courseId: string; startMinute: number; endMinute: number };
 
@@ -45,8 +47,23 @@ export function totalSeconds(lessons: PlannerLesson[]) {
   return lessons.reduce((sum, lesson) => sum + lesson.seconds, 0);
 }
 
-// Cada dia de estudo reparte o tempo igualmente entre os cursos que ainda tem aula; curso pequeno termina antes
-// e sua parte passa para os demais. Sobra de um dia vira credito do curso (aula nunca e dividida entre dias).
+// Aulas do curso em fluxos: um so (sequencial) ou um por modulo, na ordem em que os modulos aparecem.
+function streamsOf(course: PlannerCourse) {
+  if (!course.byModule) return [course.lessons];
+
+  const byModule = new Map<string, PlannerLesson[]>();
+
+  for (const lesson of course.lessons) {
+    const key = lesson.moduleId ?? lesson.moduleTitle;
+    byModule.set(key, [...(byModule.get(key) ?? []), lesson]);
+  }
+
+  return Array.from(byModule.values());
+}
+
+// Cada dia de estudo reparte o tempo igualmente entre os cursos que ainda tem aula (e, no curso dividido por modulos,
+// igualmente entre os modulos que ainda tem aula); curso ou modulo pequeno termina antes e sua parte passa aos demais.
+// Sobra de um dia vira credito do fluxo (aula nunca e dividida entre dias).
 export function buildSchedule(input: ScheduleInput & { dailyMinutes: number }): PlanDay[] {
   const { courses, startDate, weekdays, startMinute, dailyMinutes } = input;
   const days: PlanDay[] = [];
@@ -55,11 +72,11 @@ export function buildSchedule(input: ScheduleInput & { dailyMinutes: number }): 
     return days;
   }
 
-  const next = courses.map(() => 0);
-  const credit = courses.map(() => 0);
+  const streams = courses.map((course) => streamsOf(course).map((lessons) => ({ lessons, next: 0, credit: 0 })));
+  const pending = (list: (typeof streams)[number]) => list.filter((stream) => stream.next < stream.lessons.length);
 
   for (let offset = 0; offset < MAX_PLAN_DAYS; offset += 1) {
-    const active = courses.flatMap((course, index) => (next[index] < course.lessons.length ? [index] : []));
+    const active = streams.flatMap((list, index) => (pending(list).length > 0 ? [index] : []));
 
     if (active.length === 0) break;
 
@@ -71,16 +88,20 @@ export function buildSchedule(input: ScheduleInput & { dailyMinutes: number }): 
     let used = 0;
 
     for (const index of active) {
-      credit[index] += (dailyMinutes * 60) / active.length;
-      const { courseId, lessons } = courses[index];
+      const open = pending(streams[index]);
+      const courseId = courses[index].courseId;
 
-      while (next[index] < lessons.length && lessons[next[index]].seconds <= credit[index]) {
-        const lesson = lessons[next[index]];
-        const lessonStart = startMinute + Math.ceil(used / 60);
-        used += lesson.seconds;
-        credit[index] -= lesson.seconds;
-        next[index] += 1;
-        day.lessons.push({ ...lesson, courseId, startMinute: lessonStart, endMinute: startMinute + Math.ceil(used / 60) });
+      for (const stream of open) {
+        stream.credit += (dailyMinutes * 60) / active.length / open.length;
+
+        while (stream.next < stream.lessons.length && stream.lessons[stream.next].seconds <= stream.credit) {
+          const lesson = stream.lessons[stream.next];
+          const lessonStart = startMinute + Math.ceil(used / 60);
+          used += lesson.seconds;
+          stream.credit -= lesson.seconds;
+          stream.next += 1;
+          day.lessons.push({ ...lesson, courseId, startMinute: lessonStart, endMinute: startMinute + Math.ceil(used / 60) });
+        }
       }
     }
 

@@ -328,6 +328,7 @@ model StudySchedule {
   id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   studentId    String         @unique @map("student_id") @db.Uuid
   courseIds    String[]       @map("course_ids") @db.Uuid
+  courseModes  Json           @default("{}") @map("course_modes")
   targetDate   DateTime       @map("target_date") @db.Date
   dailyMinutes Int            @map("daily_minutes")
   schedule     Json           @default("[]")
