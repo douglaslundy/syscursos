@@ -3,14 +3,18 @@ import Link from "next/link";
 import { CourseBlocked } from "@/components/student/course-blocked";
 import { FavoriteButton } from "@/components/student/favorite-button";
 import { LessonCompletionPanel } from "@/components/student/lesson-completion-panel";
+import { LessonStudyTools } from "@/components/student/lesson-study-tools";
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
 import { LessonTranscript } from "@/components/student/lesson-transcript";
+import { getAiAvailability, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { getLessonFavoriteState } from "@/server/services/favorite-service";
 import { getTranscriptionMethod } from "@/server/services/settings-service";
 import { canResetTranscript } from "@/server/services/transcript-service";
 import { getStudentLesson, requireStudentProfileId } from "@/server/services/student-service";
 import { extractYouTubeVideoId } from "@/server/services/video-platform-service";
 import { studentLessonParamsSchema } from "@/server/validators/student";
+
+export const maxDuration = 60;
 
 type StudentLessonPageProps = {
   params: { courseId: string; lessonId: string };
@@ -19,11 +23,13 @@ type StudentLessonPageProps = {
 
 export default async function StudentLessonPage({ params, searchParams }: StudentLessonPageProps) {
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite, transcriptionMethod, studentId] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
     getTranscriptionMethod(),
     requireStudentProfileId(),
+    getAiAvailability(),
+    listLessonAiItems(lessonId),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -152,6 +158,16 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
         status={typeof searchParams?.transcript === "string" ? searchParams.transcript : undefined}
         transcript={data.lesson.transcript}
       />
+
+      {data.lesson.transcript ? (
+        <LessonStudyTools
+          aiEnabled={ai.enabled}
+          courseId={courseId}
+          initialItems={aiItems}
+          lessonId={lessonId}
+          techniques={ai.techniques}
+        />
+      ) : null}
     </section>
   );
 }

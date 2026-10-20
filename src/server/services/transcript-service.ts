@@ -108,7 +108,11 @@ export async function resetLessonTranscript(courseId: string, lessonId: string) 
     return "not_owner" as const;
   }
 
-  await prisma.lesson.update({ where: { id: lessonId }, data: { transcript: null, transcriptAuthorId: null } });
+  // Resumos, flashcards e mapas mentais derivam da transcricao antiga: saem junto com ela.
+  await prisma.$transaction([
+    prisma.lesson.update({ where: { id: lessonId }, data: { transcript: null, transcriptAuthorId: null } }),
+    prisma.lessonAiContent.deleteMany({ where: { lessonId } }),
+  ]);
   return "ok" as const;
 }
 

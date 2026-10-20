@@ -13,6 +13,8 @@ type NoteAutosaveEditorProps = {
   textareaId: string;
   placeholder: string;
   className?: string;
+  // Link do PDF das anotacoes; fica desabilitado enquanto nao ha nada salvo.
+  pdfHref?: string;
 };
 
 export function NoteAutosaveEditor({
@@ -24,6 +26,7 @@ export function NoteAutosaveEditor({
   textareaId,
   placeholder,
   className = "mt-6 rounded-md border bg-card p-5 shadow-sm",
+  pdfHref,
 }: NoteAutosaveEditorProps) {
   const [content, setContent] = useState(initialContent);
   const [lastSavedContent, setLastSavedContent] = useState(initialContent);
@@ -107,6 +110,24 @@ export function NoteAutosaveEditor({
       />
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-muted-foreground">{content.length}/12000</span>
+        {pdfHref ? (
+          lastSavedContent.trim() ? (
+            <a
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+              href={pdfHref}
+            >
+              Baixar anotacoes em PDF
+            </a>
+          ) : (
+            <span
+              aria-disabled="true"
+              className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-muted opacity-50"
+              title="Escreva e salve uma anotacao para baixar"
+            >
+              Baixar anotacoes em PDF
+            </span>
+          )
+        ) : null}
         <button
           className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover disabled:cursor-not-allowed disabled:opacity-60"
           disabled={isPending || content === lastSavedContent}

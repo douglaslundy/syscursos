@@ -30,6 +30,14 @@ export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, ca
     <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4" id="transcricao">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">Transcricao da aula</h2>
+        {transcript ? (
+          <a
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+            href={`/app/courses/${courseId}/lessons/${lessonId}/pdf/transcript`}
+          >
+            Baixar transcricao em PDF
+          </a>
+        ) : null}
         {transcript && canReset ? (
           <form action={resetTranscriptAction}>
             <input name="courseId" type="hidden" value={courseId} />

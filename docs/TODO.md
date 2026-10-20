@@ -917,3 +917,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 
 - [ ] Testar no Chrome com uma aula do Drive: metodo navegador (Whisper) e metodo Gemini; ajustar modelo/qualidade.
 - [x] Produtor/admin apaga a transcricao na lista de aulas do modulo (botao "Apagar transcricao"); um aluno pode gerar de novo.
+
+- [x] IA nas aulas (resumo por tecnica, flashcards, mapa mental), PDFs (transcricao, anotacoes, resumo, flashcards, mapa) e painel de consumo de tokens. Migration `20261021120000_ai_content`.
+- [ ] Testar com chaves reais (OpenAI e Gemini): nomes dos modelos, JSON de flashcards/mapa e qualidade dos resumos; smoke no navegador do modal e do PDF.
+- [ ] Opcional: repeticao espacada nos flashcards, botao de regerar conteudo, limite de geracoes por aluno.

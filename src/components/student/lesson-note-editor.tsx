@@ -13,6 +13,7 @@ export function LessonNoteEditor({ courseId, lessonId, initialContent }: LessonN
       description="Autosave ativo enquanto voce escreve."
       initialContent={initialContent}
       lessonId={lessonId}
+      pdfHref={`/app/courses/${courseId}/lessons/${lessonId}/pdf/notes`}
       placeholder="Escreva seu resumo desta aula..."
       textareaId="lesson-note-content"
       title="Anotacoes da aula"

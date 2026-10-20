@@ -109,6 +109,7 @@ model StudentProfile {
   favoriteLessons FavoriteLesson[]
   studyPlans  StudyPlan[]
   studySchedule StudySchedule?
+  aiUsages    AiUsage[]
   studyWeekdays Int[]          @default([1, 2, 3, 4, 5]) @map("study_weekdays")
   studyStartMinute Int         @default(1140) @map("study_start_minute")
   studyEndMinute Int           @default(1260) @map("study_end_minute")
@@ -136,6 +137,7 @@ model Course {
   enrollmentRequests EnrollmentRequest[]
   favorites FavoriteCourse[]
   studyPlans StudyPlan[]
+  aiUsages AiUsage[]
 
   @@index([organizationId, producerId, status])
   @@index([isPublic, status])
@@ -193,6 +195,7 @@ model Lesson {
   progress       LessonProgress[]
   materials      LessonMaterial[]
   favorites      FavoriteLesson[]
+  aiContents     LessonAiContent[]
 
   @@unique([moduleId, position])
   @@index([moduleId, status])
@@ -345,4 +348,47 @@ model AppSetting {
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("app_settings")
+}
+
+enum AiContentKind {
+  SUMMARY
+  FLASHCARDS
+  MINDMAP
+}
+
+// Resumo, flashcards ou mapa mental gerado por IA: um por (aula, tipo, tecnica) e reaproveitado por todos os alunos.
+model LessonAiContent {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId    String        @map("lesson_id") @db.Uuid
+  kind        AiContentKind
+  technique   String        @default("") @db.VarChar(32)
+  content     String        @db.Text
+  provider    String        @db.VarChar(20)
+  model       String        @db.VarChar(60)
+  createdById String?       @map("created_by_id") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  lesson      Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, kind, technique])
+  @@map("lesson_ai_contents")
+}
+
+// Uma linha por chamada a IA, para o painel de consumo de tokens.
+model AiUsage {
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider     String           @db.VarChar(20)
+  model        String           @db.VarChar(60)
+  kind         AiContentKind
+  inputTokens  Int              @map("input_tokens")
+  outputTokens Int              @map("output_tokens")
+  studentId    String?          @map("student_id") @db.Uuid
+  courseId     String?          @map("course_id") @db.Uuid
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  student      StudentProfile?  @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  course       Course?          @relation(fields: [courseId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([courseId])
+  @@index([studentId])
+  @@map("ai_usage_logs")
 }

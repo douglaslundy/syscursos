@@ -3435,3 +3435,7 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Testes unitarios do calculo (study-planner). Lint/tsc/build ok. Sem teste de integracao do service nem smoke visual.
 
 - Transcricao Drive: tsc, lint, vitest (143) e build ok; fluxo de gravacao/Whisper/Gemini sem teste manual no navegador.
+
+
+- IA nas aulas: testes unitarios de parsers, prompts, tecnicas, baralho, layout do mapa, intervalo de mes, provedores (fetch simulado), servico de geracao (cache sem gasto de tokens, registro de consumo, erros) e geracao real de PDF. Consulta SQL do painel validada no banco. Sem chamada real a OpenAI/Gemini e sem teste visual no navegador.
+- Seguranca: chaves criptografadas e fora do backup (AppSetting excluido); geracao e PDF exigem matricula disponivel; painel e configuracao so ADMIN; filtros do painel validados (UUID, provedor, mes).
