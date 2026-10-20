@@ -79,10 +79,18 @@ function parse(text: string) {
       continue;
     }
 
-    throw new Error(`Linha nao reconhecida: ${line}`);
+    // Linha solta antes de uma URL = titulo de videoaula.
+    if (pendingTitle) throw new Error(`Titulo sem URL: ${pendingTitle}`);
+    pendingTitle = clean(line);
   }
 
-  return modules;
+  if (pendingTitle) throw new Error(`Titulo sem URL: ${pendingTitle}`);
+
+  // Ordem na plataforma: planilhas (PDF) primeiro, videoaulas depois, com os nomes pedidos.
+  const names: Record<string, string> = { "Videoaulas": "Correflix", "Planilhas e materiais em PDF": "Planilhas de Treino" };
+  const renamed = modules.map((item) => ({ ...item, title: names[item.title] ?? item.title }));
+
+  return renamed.sort((a, b) => Number(b.title === "Planilhas de Treino") - Number(a.title === "Planilhas de Treino")).map((item, index) => ({ ...item, position: index + 1 }));
 }
 
 async function main() {
