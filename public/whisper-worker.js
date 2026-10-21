@@ -11,9 +11,21 @@ function report(event) {
   }
 }
 
-async function load() {
+// O transformers.js guarda os arquivos do modelo no Cache API ("transformers-cache") e reemite o progresso ao ler do cache,
+// entao so da para saber se vai baixar olhando o cache antes de carregar.
+async function isCached() {
+  try {
+    if (!("caches" in self)) return false;
+    const cache = await caches.open("transformers-cache");
+    return (await cache.keys()).some((request) => request.url.includes(MODEL) && request.url.endsWith(".onnx"));
+  } catch {
+    return false;
+  }
+}
+
+async function load(skipGpu) {
   if (transcriber) return;
-  if (typeof navigator !== "undefined" && "gpu" in navigator) {
+  if (!skipGpu && typeof navigator !== "undefined" && "gpu" in navigator) {
     try {
       transcriber = await pipeline("automatic-speech-recognition", MODEL, {
         device: "webgpu",
@@ -23,6 +35,7 @@ async function load() {
       return;
     } catch {
       transcriber = null;
+      postMessage({ type: "gpu_failed" });
     }
   }
   transcriber = await pipeline("automatic-speech-recognition", MODEL, { dtype: "q8", progress_callback: report });
@@ -32,7 +45,8 @@ self.onmessage = async (event) => {
   const message = event.data;
   try {
     if (message.type === "load") {
-      await load();
+      postMessage({ type: "cache", cached: await isCached() });
+      await load(message.skipGpu === true);
       postMessage({ type: "ready" });
     } else if (message.type === "run") {
       const output = await transcriber(message.audio, {

@@ -41,6 +41,20 @@ export function transcribeWav(key: string, wav: Buffer) {
   return generate(key, [{ text: PROMPT }, { inline_data: { mime_type: "audio/wav", data: wav.toString("base64") } }]);
 }
 
+const YOUTUBE_PROMPT =
+  "Transcreva fielmente a fala deste trecho de video em portugues do Brasil. Responda somente com o texto falado, em paragrafos corridos, sem marcacoes de tempo, sem comentarios e sem descrever sons ou imagens. Se nao houver fala, responda com texto vazio.";
+
+// O Gemini le o video publico do YouTube pelos servidores do Google, sem passar pelo bloqueio do YouTube a nuvem.
+export function transcribeYoutubeRange(key: string, videoId: string, startSeconds: number, endSeconds: number) {
+  return generate(key, [
+    { text: YOUTUBE_PROMPT },
+    {
+      fileData: { fileUri: `https://www.youtube.com/watch?v=${videoId}` },
+      videoMetadata: { startOffset: `${startSeconds}s`, endOffset: `${endSeconds}s` },
+    },
+  ]);
+}
+
 export function pingGemini(key: string) {
   return generate(key, [{ text: "Responda apenas: ok" }]);
 }

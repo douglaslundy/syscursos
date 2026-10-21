@@ -239,11 +239,9 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
   return (
     <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4" id="estudo-ia">
       <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">Estudar com inteligencia artificial</h2>
-      <p className="mt-2 text-sm text-copy-secondary">
-        Resumo, flashcards e mapa mental feitos a partir da transcricao. O que ja foi gerado por qualquer aluno abre na
-        hora, sem gerar de novo.
-        {aiEnabled || items.length > 0 ? "" : " A IA ainda nao foi configurada pelo administrador."}
-      </p>
+      {aiEnabled || items.length > 0 ? null : (
+        <p className="mt-2 text-sm text-copy-secondary">A IA ainda nao foi configurada pelo administrador.</p>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
         <button className={buttonClass} disabled={!available("SUMMARY") || techniques.length === 0} onClick={() => open("summary")} type="button">
           Resumo da aula

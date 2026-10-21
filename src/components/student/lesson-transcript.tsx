@@ -8,7 +8,7 @@ const messages: Record<string, { text: string; ok: boolean }> = {
   not_owner: { text: "Esta transcricao foi feita por outro aluno e so ele pode apagar.", ok: false },
   exists: { text: "Esta aula ja tem transcricao.", ok: true },
   unavailable: {
-    text: "Nao foi possivel obter a legenda deste video (sem legenda ou YouTube bloqueou o servidor). Voce pode transcrever gravando o audio, logo abaixo.",
+    text: "Nao foi possivel obter a legenda deste video: ele nao tem legenda ou o YouTube bloqueou o servidor da plataforma (comum em servidores de nuvem). Use uma das opcoes de transcricao logo abaixo.",
     ok: false,
   },
 };
@@ -20,10 +20,12 @@ type LessonTranscriptProps = {
   isYouTube: boolean;
   canReset: boolean;
   method: "browser" | "gemini";
+  durationSeconds: number | null;
+  youtubeGemini: boolean;
   status?: string;
 };
 
-export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, canReset, method, status }: LessonTranscriptProps) {
+export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, canReset, method, durationSeconds, youtubeGemini, status }: LessonTranscriptProps) {
   const message = status ? messages[status] : undefined;
 
   return (
@@ -65,12 +67,12 @@ export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, ca
             {transcript}
           </p>
         </details>
-      ) : isYouTube && status !== "unavailable" ? (
+      ) : isYouTube && status !== "unavailable" && !youtubeGemini ? (
         <p className="mt-2 text-sm text-copy-secondary">
           Gera o texto da fala a partir da legenda do video (aulas do YouTube).
         </p>
       ) : (
-        <LessonTranscriber courseId={courseId} lessonId={lessonId} method={method} />
+        <LessonTranscriber courseId={courseId} durationSeconds={durationSeconds} lessonId={lessonId} method={method} youtubeGemini={youtubeGemini} />
       )}
     </section>
   );

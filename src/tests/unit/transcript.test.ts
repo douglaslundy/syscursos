@@ -31,3 +31,12 @@ describe("formatTranscript", () => {
     expect(text).toBe("[00:00] Ola & bem-vindos ao curso\n[01:05] Segunda linha");
   });
 });
+
+describe("isCaptchaError", () => {
+  it("recognises the captcha error of the YouTube library and nothing else", async () => {
+    const { isCaptchaError } = await import("@/server/services/transcript-service");
+
+    expect(isCaptchaError(new Error("YouTube is receiving too many requests from this IP and now requires solving a captcha"))).toBe(true);
+    expect(isCaptchaError(new Error("No transcripts are available for this video"))).toBe(false);
+  });
+});

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { LessonTrailSidebar } from "@/components/student/lesson-trail-sidebar";
 import { LessonVideoPlayer } from "@/components/student/lesson-video-player";
+import { announceVideoEnded, isTranscribing, onTranscribingChange } from "@/lib/transcription/guard";
 import { completeLessonAction } from "@/server/actions/student-actions";
 
 type TrailModule = {
@@ -80,6 +81,9 @@ export function LessonCompletionPanel({
     ? `/app/courses/${courseId}/lessons/${nextLessonId}`
     : null;
 
+  // Transcricao em andamento (ou ainda nao salva) nunca pode ser interrompida pela troca automatica de aula.
+  useEffect(() => onTranscribingChange((busy) => busy && setIsCountingDown(false)), []);
+
   useEffect(() => {
     if (!isCountingDown || !nextLessonHref) {
       return;
@@ -88,7 +92,7 @@ export function LessonCompletionPanel({
     let canceled = false;
     setSecondsLeft(AUTO_ADVANCE_SECONDS);
     const navTimer = setTimeout(() => {
-      if (!canceled) {
+      if (!canceled && !isTranscribing()) {
         pushRef.current(nextLessonHref);
       }
     }, AUTO_ADVANCE_SECONDS * 1000);
@@ -120,7 +124,7 @@ export function LessonCompletionPanel({
       setProgress((current) => adjustProgress(current, result.isCompleted ? 1 : -1));
       setFeedback(result.isCompleted ? "Aula marcada como concluida." : "Marcacao de conclusao removida.");
 
-      if (result.isCompleted && nextLessonHref) {
+      if (result.isCompleted && nextLessonHref && !isTranscribing()) {
         setSecondsLeft(AUTO_ADVANCE_SECONDS);
         setIsCountingDown(true);
       } else {
@@ -137,7 +141,14 @@ export function LessonCompletionPanel({
     <>
       <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
         <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
-          <LessonVideoPlayer onEnded={() => setCompletion(true)} title={title} videoEmbed={videoEmbed} />
+          <LessonVideoPlayer
+            onEnded={() => {
+              announceVideoEnded();
+              setCompletion(true);
+            }}
+            title={title}
+            videoEmbed={videoEmbed}
+          />
         </div>
         <LessonTrailSidebar
           completedLessonIds={effectiveCompletedLessonIds}

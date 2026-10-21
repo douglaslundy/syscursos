@@ -8,7 +8,7 @@ import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
 import { LessonTranscript } from "@/components/student/lesson-transcript";
 import { getAiAvailability, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { getLessonFavoriteState } from "@/server/services/favorite-service";
-import { getTranscriptionMethod } from "@/server/services/settings-service";
+import { getGeminiApiKey, getTranscriptionMethod } from "@/server/services/settings-service";
 import { canResetTranscript } from "@/server/services/transcript-service";
 import { getStudentLesson, requireStudentProfileId } from "@/server/services/student-service";
 import { extractYouTubeVideoId } from "@/server/services/video-platform-service";
@@ -23,13 +23,14 @@ type StudentLessonPageProps = {
 
 export default async function StudentLessonPage({ params, searchParams }: StudentLessonPageProps) {
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
     getTranscriptionMethod(),
     requireStudentProfileId(),
     getAiAvailability(),
     listLessonAiItems(lessonId),
+    getGeminiApiKey(),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -152,8 +153,10 @@ export default async function StudentLessonPage({ params, searchParams }: Studen
       <LessonTranscript
         courseId={courseId}
         canReset={canResetTranscript(data.lesson, studentId)}
+        durationSeconds={data.lesson.durationSeconds}
         isYouTube={extractYouTubeVideoId(data.lesson.youtubeUrl) !== null}
         method={transcriptionMethod}
+        youtubeGemini={Boolean(geminiKey) && extractYouTubeVideoId(data.lesson.youtubeUrl) !== null}
         lessonId={lessonId}
         status={typeof searchParams?.transcript === "string" ? searchParams.transcript : undefined}
         transcript={data.lesson.transcript}

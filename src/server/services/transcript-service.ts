@@ -49,6 +49,12 @@ export function formatTranscript(segments: Segment[]) {
   return lines.join("\n");
 }
 
+// Captcha/429 vale para qualquer idioma. Os demais erros (sem legenda, "video indisponivel") tambem aparecem quando o
+// YouTube recusa IP de nuvem, entao a biblioteca nao distingue "sem legenda" de "servidor bloqueado".
+export function isCaptchaError(error: unknown) {
+  return /too ?many|captcha|429/i.test(error instanceof Error ? `${error.name} ${error.message}` : String(error));
+}
+
 async function fetchSegments(videoId: string): Promise<Segment[]> {
   // A lib devolve offset/duration em ms ou em s conforme a fonte; duracao de trecho >= 100 so existe em ms.
   const toSegments = (items: Array<{ text: string; offset: number; duration: number }>) => {
@@ -58,7 +64,9 @@ async function fetchSegments(videoId: string): Promise<Segment[]> {
 
   try {
     return toSegments(await YoutubeTranscript.fetchTranscript(videoId, { lang: "pt" }));
-  } catch {
+  } catch (error) {
+    if (isCaptchaError(error)) throw error;
+
     return toSegments(await YoutubeTranscript.fetchTranscript(videoId));
   }
 }

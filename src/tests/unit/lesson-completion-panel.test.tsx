@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LessonCompletionPanel } from "@/components/student/lesson-completion-panel";
+import { setTranscribing } from "@/lib/transcription/guard";
 import { completeLessonAction } from "@/server/actions/student-actions";
 
 const pushMock = vi.hoisted(() => vi.fn());
@@ -100,6 +101,59 @@ describe("LessonCompletionPanel", () => {
     });
 
     expect(pushMock).toHaveBeenCalledWith("/app/courses/course-id/lessons/lesson-2");
+  });
+
+  it("does not auto-advance while a transcription is in progress", async () => {
+    vi.useFakeTimers();
+    vi.mocked(completeLessonAction).mockResolvedValue({ ok: true, isCompleted: true });
+    setTranscribing(true);
+
+    render(
+      <LessonCompletionPanel
+        {...baseProps}
+        initialIsCompleted={false}
+        nextLessonId="lesson-2"
+        nextLessonTitle="Aula 2"
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Marcar como concluida" }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(6000);
+    });
+
+    expect(screen.queryByText(/Proxima aula: Aula 2/)).not.toBeInTheDocument();
+    expect(pushMock).not.toHaveBeenCalled();
+    setTranscribing(false);
+  });
+
+  it("cancels a running countdown when a transcription starts", async () => {
+    vi.useFakeTimers();
+    vi.mocked(completeLessonAction).mockResolvedValue({ ok: true, isCompleted: true });
+
+    render(
+      <LessonCompletionPanel
+        {...baseProps}
+        initialIsCompleted={false}
+        nextLessonId="lesson-2"
+        nextLessonTitle="Aula 2"
+      />,
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Marcar como concluida" }));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    await act(async () => {
+      setTranscribing(true);
+      await vi.advanceTimersByTimeAsync(6000);
+    });
+
+    expect(pushMock).not.toHaveBeenCalled();
+    setTranscribing(false);
   });
 
   it("lets the student cancel the auto-advance countdown", async () => {

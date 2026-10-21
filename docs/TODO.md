@@ -921,3 +921,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] IA nas aulas (resumo por tecnica, flashcards, mapa mental), PDFs (transcricao, anotacoes, resumo, flashcards, mapa) e painel de consumo de tokens. Migration `20261021120000_ai_content`.
 - [ ] Testar com chaves reais (OpenAI e Gemini): nomes dos modelos, JSON de flashcards/mapa e qualidade dos resumos; smoke no navegador do modal e do PDF.
 - [ ] Opcional: repeticao espacada nos flashcards, botao de regerar conteudo, limite de geracoes por aluno.
+
+- [x] Transcricao: Gemini para aulas do YouTube, aviso de modelo em cache, bloqueio de troca automatica de aula, fim automatico, rascunho local.
+- [ ] Testar com chave Gemini valida: transcricao de video do YouTube por trechos (formato `videoMetadata`) e se o Gemini recusa trecho alem do fim do video (aulas sem duracao).
+- [ ] Smoke no navegador logado: gravacao do Drive com fim automatico e recuperacao do rascunho.

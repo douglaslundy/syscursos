@@ -3,22 +3,34 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { SILENCE_LEVEL, rms, shouldAutoFinish } from "@/lib/transcription/auto-finish";
+import { nextChunk } from "@/lib/transcription/chunks";
+import { type TranscriptDraft, clearDraft, loadDraft, saveDraft } from "@/lib/transcription/draft";
 import { clock, joinSegments } from "@/lib/transcription/format";
+import { VIDEO_ENDED_EVENT, setTranscribing } from "@/lib/transcription/guard";
 import { encodeWav } from "@/lib/transcription/wav";
 import { saveRecordedTranscriptAction } from "@/server/actions/transcript-actions";
 
 const SEGMENT_SECONDS = 60;
 const SAMPLE_RATE = 16_000;
 const MIN_SAMPLES = SAMPLE_RATE / 2;
+const NO_GPU_KEY = "syscursos:whisper-no-gpu";
+const ENDED_GRACE_MS = 2500;
 
 type Method = "browser" | "gemini";
-type Phase = "idle" | "loading" | "recording" | "paused" | "finishing" | "review" | "saving" | "done" | "error";
+type Phase = "idle" | "loading" | "recording" | "paused" | "finishing" | "importing" | "review" | "saving" | "done" | "error";
 type Part = { start: number; text: string };
+
+// Fases com trabalho em andamento ou texto ainda nao salvo: a aula nao pode avancar sozinha.
+const BUSY_PHASES: Phase[] = ["loading", "recording", "paused", "finishing", "importing", "review", "saving"];
 
 type TranscriberProps = {
   courseId: string;
   lessonId: string;
   method: Method;
+  durationSeconds: number | null;
+  // Aula do YouTube com chave do Gemini: da para transcrever sem gravar o audio.
+  youtubeGemini: boolean;
 };
 
 type DisplayOptions = DisplayMediaStreamOptions & { preferCurrentTab?: boolean };
@@ -46,12 +58,22 @@ async function decodeToPcm(blob: Blob) {
   }
 }
 
+function youtubeErrorMessage(error: unknown) {
+  const code = error instanceof Error ? error.message : "";
+
+  if (code === "invalid_key") return "A chave do Gemini foi recusada ou nao tem acesso ao modelo. Avise o administrador.";
+  if (code === "not_configured") return "A transcricao pelo Gemini nao esta configurada.";
+  if (code === "quota") return "O limite de uso do Gemini foi atingido. Tente mais tarde ou grave o audio da aula.";
+  if (code === "empty") return "O Gemini nao encontrou fala neste video.";
+  return "Nao foi possivel transcrever pelo Gemini agora. Voce pode gravar o audio da aula.";
+}
+
 const primaryButton =
   "rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-copy-primary disabled:opacity-60";
 const secondaryButton =
   "rounded-md border border-stroke-subtle px-4 py-2 text-sm font-medium text-copy-secondary hover:bg-surface-hover";
 
-export function LessonTranscriber({ courseId, lessonId, method }: TranscriberProps) {
+export function LessonTranscriber({ courseId, lessonId, method, durationSeconds, youtubeGemini }: TranscriberProps) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState("");
@@ -60,6 +82,7 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
   const [total, setTotal] = useState(0);
   const [draft, setDraft] = useState("");
   const [canRecord, setCanRecord] = useState(true);
+  const [saved, setSaved] = useState<TranscriptDraft | null>(null);
 
   const workerRef = useRef<Worker | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -74,6 +97,17 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
   const stoppingRef = useRef(false);
   const elapsedRef = useRef(0);
   const seqRef = useRef(0);
+  const phaseRef = useRef<Phase>("idle");
+  const cachedRef = useRef(false);
+  const silentRef = useRef(0);
+  const monitorRef = useRef<{ context: AudioContext; analyser: AnalyserNode } | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const finishRef = useRef<(notice?: string) => Promise<void>>(async () => undefined);
+
+  const changePhase = useCallback((next: Phase) => {
+    phaseRef.current = next;
+    setPhase(next);
+  }, []);
 
   const stopTimers = useCallback(() => {
     if (rotateRef.current) window.clearTimeout(rotateRef.current);
@@ -88,21 +122,79 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     streamRef.current = null;
     workerRef.current?.terminate();
     workerRef.current = null;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    void monitorRef.current?.context.close();
+    monitorRef.current = null;
   }, [stopTimers]);
 
   useEffect(() => {
     setCanRecord(supported());
-    return cleanup;
-  }, [cleanup]);
+    setSaved(loadDraft(lessonId));
+    return () => {
+      cleanup();
+      setTranscribing(false);
+    };
+  }, [cleanup, lessonId]);
+
+  // Avisa o resto da pagina (player, "proxima aula") e o navegador enquanto ha transcricao a perder.
+  const busy = BUSY_PHASES.includes(phase);
+
+  useEffect(() => {
+    setTranscribing(busy);
+
+    if (!busy) return;
+
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [busy]);
+
+  // O texto em conferencia tambem fica guardado no navegador ate ser salvo no banco.
+  useEffect(() => {
+    if (phase !== "review") return;
+
+    const timer = window.setTimeout(() => saveDraft(lessonId, draft), 500);
+    return () => window.clearTimeout(timer);
+  }, [phase, draft, lessonId]);
+
+  // O player do YouTube avisa quando o video acaba; um instante depois a gravacao e encerrada, para pegar o fim da fala.
+  useEffect(() => {
+    let timer: number | undefined;
+    const onEnded = () => {
+      if (phaseRef.current === "recording") timer = window.setTimeout(() => void finishRef.current("Fim da aula detectado: gravacao finalizada. "), ENDED_GRACE_MS);
+    };
+
+    window.addEventListener(VIDEO_ENDED_EVENT, onEnded);
+    return () => {
+      window.removeEventListener(VIDEO_ENDED_EVENT, onEnded);
+      window.clearTimeout(timer);
+    };
+  }, []);
 
   function loadWorker() {
     return new Promise<Worker>((resolve, reject) => {
       const worker = new Worker("/whisper-worker.js", { type: "module" });
-      worker.onmessage = (event: MessageEvent<{ type: string; percent?: number; id?: number; text?: string; message?: string }>) => {
+      worker.onmessage = (event: MessageEvent<{ type: string; percent?: number; id?: number; text?: string; message?: string; cached?: boolean }>) => {
         const data = event.data;
 
-        if (data.type === "progress") setMessage(`Baixando o modelo de transcricao: ${data.percent}%`);
-        else if (data.type === "ready") resolve(worker);
+        if (data.type === "cache") {
+          cachedRef.current = data.cached === true;
+          setMessage(
+            cachedRef.current
+              ? "Carregando o modelo de transcricao ja salvo neste navegador..."
+              : "Baixando o modelo de transcricao (so na primeira vez; depois fica salvo neste navegador)...",
+          );
+        } else if (data.type === "gpu_failed") {
+          try {
+            window.localStorage.setItem(NO_GPU_KEY, "1");
+          } catch {
+            // sem armazenamento: so perde a lembranca
+          }
+        } else if (data.type === "progress") {
+          // O transformers.js reemite o progresso ao ler do cache: so mostra percentual quando de fato baixa.
+          if (!cachedRef.current) setMessage(`Baixando o modelo de transcricao: ${data.percent}%`);
+        } else if (data.type === "ready") resolve(worker);
         else if (data.type === "result" && data.id !== undefined) pendingRef.current.get(data.id)?.(data.text ?? "");
         else if (data.type === "error") {
           if (data.id !== undefined) pendingRef.current.get(data.id)?.("");
@@ -110,7 +202,16 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
         }
       };
       worker.onerror = () => reject(new Error("worker"));
-      worker.postMessage({ type: "load" });
+
+      let skipGpu = false;
+
+      try {
+        skipGpu = window.localStorage.getItem(NO_GPU_KEY) === "1";
+      } catch {
+        // sem armazenamento: tenta a GPU
+      }
+
+      worker.postMessage({ type: "load", skipGpu });
     });
   }
 
@@ -158,6 +259,7 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
       }
 
       partsRef.current[seq] = { start, text };
+      saveDraft(lessonId, joinSegments(partsRef.current.filter((part): part is Part => part !== undefined)));
       setDone((value) => value + 1);
     });
   }
@@ -184,10 +286,28 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     }, SEGMENT_SECONDS * 1000);
   }
 
+  // Nivel do som da guia agora (0 a 1); sem medidor devolve 1 para nunca contar silencio.
+  function currentLevel() {
+    const monitor = monitorRef.current;
+
+    if (!monitor) return 1;
+
+    const samples = new Float32Array(monitor.analyser.fftSize);
+    monitor.analyser.getFloatTimeDomainData(samples);
+    return rms(samples);
+  }
+
   function startTick() {
+    silentRef.current = 0;
     tickRef.current = window.setInterval(() => {
       elapsedRef.current += 1;
       setElapsed(elapsedRef.current);
+      silentRef.current = currentLevel() < SILENCE_LEVEL ? silentRef.current + 1 : 0;
+
+      // O Drive nao avisa quando o video acaba: com a duracao da aula conhecida, o fim e tempo cumprido + silencio.
+      if (shouldAutoFinish({ elapsed: elapsedRef.current, durationSeconds, silentSeconds: silentRef.current })) {
+        void finishRef.current("Fim da aula detectado: gravacao finalizada. ");
+      }
     }, 1000);
   }
 
@@ -210,23 +330,30 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
   async function pause() {
     stopTimers();
     await closeCurrentSegment();
-    setPhase("paused");
+    changePhase("paused");
     setMessage("Gravacao pausada. Pause tambem o video e clique em Retomar quando continuar a aula.");
   }
 
   function resume() {
     startSegment(seqRef.current + 1, elapsedRef.current);
     startTick();
-    setPhase("recording");
+    changePhase("recording");
     setMessage("");
   }
 
-  // Para a gravacao e mostra o texto para conferir; nada e salvo ate o aluno confirmar.
-  async function finish() {
+  // Mostra o texto para conferir; nada vai ao banco ate o aluno confirmar, mas o rascunho fica no navegador.
+  function toReview(text: string, note: string, notice = "") {
+    saveDraft(lessonId, text);
+    setDraft(text);
+    changePhase("review");
+    setMessage(notice + note);
+  }
+
+  async function finish(notice = "") {
     if (stoppingRef.current) return;
 
     stoppingRef.current = true;
-    setPhase("finishing");
+    changePhase("finishing");
     setMessage("Terminando os ultimos trechos...");
     stopTimers();
     await closeCurrentSegment();
@@ -234,46 +361,141 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     await queueRef.current;
     workerRef.current?.terminate();
     workerRef.current = null;
+    void monitorRef.current?.context.close();
+    monitorRef.current = null;
 
     const text = joinSegments(partsRef.current.filter((part): part is Part => part !== undefined));
 
     if (!text) {
-      setPhase("error");
+      changePhase("error");
       setMessage("Nao foi captada nenhuma fala. Confira se a aula tocou com som e se o audio da guia foi compartilhado.");
       return;
     }
 
-    setDraft(text);
-    setPhase("review");
-    setMessage(
+    toReview(
+      text,
       failedRef.current > 0
         ? `${failedRef.current} trecho(s) de 1 minuto falharam e estao marcados no texto.`
         : "Confira o texto, corrija se precisar e salve.",
+      notice,
     );
+  }
+
+  finishRef.current = finish;
+
+  async function requestYoutubeChunk(startSeconds: number, endSeconds: number, signal: AbortSignal) {
+    const url = `/app/transcribe/youtube-gemini?courseId=${courseId}&lessonId=${lessonId}&start=${startSeconds}&end=${endSeconds}`;
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await fetch(url, { method: "POST", signal });
+
+      if (response.ok) return ((await response.json()) as { text: string }).text;
+
+      const error = ((await response.json().catch(() => ({}))) as { error?: string }).error ?? "failed";
+
+      if (response.status === 429 || error === "quota") {
+        if (attempt === 2) throw new Error("quota");
+
+        await new Promise((resolve) => setTimeout(resolve, 15_000));
+        continue;
+      }
+
+      if (["invalid_key", "not_configured", "forbidden", "unsupported"].includes(error)) throw new Error(error);
+
+      // Sem a duracao, o Gemini recusa o trecho que passa do fim do video: o que veio ate la e a aula.
+      if (attempt === 2) throw new Error(durationSeconds ? "failed" : "range");
+    }
+
+    throw new Error("failed");
+  }
+
+  // Aulas do YouTube: o Gemini le o video pelos servidores do Google, em trechos de 5 min, sem gravar nada aqui.
+  async function importFromYoutube() {
+    const controller = new AbortController();
+    const parts: Part[] = [];
+    let cursor = 0;
+    let emptyRun = 0;
+
+    abortRef.current = controller;
+    changePhase("importing");
+
+    try {
+      for (let chunk = nextChunk(cursor, durationSeconds); chunk; chunk = nextChunk(cursor, durationSeconds)) {
+        setMessage(`Transcrevendo pelo Gemini: ${clock(chunk.start)}${durationSeconds ? ` de ${clock(durationSeconds)}` : ""}...`);
+
+        const text = await requestYoutubeChunk(chunk.start, chunk.end, controller.signal);
+
+        if (text) parts.push({ start: chunk.start, text });
+
+        saveDraft(lessonId, joinSegments(parts));
+        emptyRun = text ? 0 : emptyRun + 1;
+        cursor = chunk.end;
+
+        // Sem duracao conhecida, dois trechos seguidos sem fala indicam o fim do video.
+        if (!durationSeconds && emptyRun >= 2) break;
+      }
+
+      const text = joinSegments(parts);
+
+      if (!text) throw new Error("empty");
+
+      toReview(text, "Confira o texto, corrija se precisar e salve.");
+    } catch (error) {
+      if (controller.signal.aborted) return;
+
+      const partial = joinSegments(parts);
+
+      if (partial && error instanceof Error && error.message === "range") {
+        toReview(partial, "Confira o texto, corrija se precisar e salve.");
+        return;
+      }
+
+      changePhase("error");
+      setMessage(youtubeErrorMessage(error));
+    } finally {
+      abortRef.current = null;
+    }
   }
 
   function discard() {
     stoppingRef.current = true;
     cleanup();
     partsRef.current = [];
+    clearDraft(lessonId);
+    setSaved(null);
     setDraft("");
     setMessage("");
-    setPhase("idle");
+    changePhase("idle");
   }
 
   async function save() {
-    setPhase("saving");
+    changePhase("saving");
     setMessage("Salvando a transcricao...");
 
     const result = await saveRecordedTranscriptAction({ courseId, lessonId, text: draft });
 
     if (result === "ok" || result === "exists") {
-      setPhase("done");
+      // So agora o banco tem o texto: o rascunho local pode sair.
+      clearDraft(lessonId);
+      changePhase("done");
       setMessage("Transcricao salva.");
       router.refresh();
     } else {
-      setPhase("review");
-      setMessage("Nao foi possivel salvar. Tente de novo.");
+      changePhase("review");
+      setMessage("Nao foi possivel salvar. Tente de novo; o texto continua guardado neste navegador.");
+    }
+  }
+
+  function monitorAudio(stream: MediaStream) {
+    try {
+      const context = new AudioContext();
+      const analyser = context.createAnalyser();
+
+      context.createMediaStreamSource(new MediaStream(stream.getAudioTracks())).connect(analyser);
+      monitorRef.current = { context, analyser };
+    } catch {
+      // Sem medidor, so o fim do video (YouTube) e o botao Finalizar encerram.
+      monitorRef.current = null;
     }
   }
 
@@ -283,6 +505,7 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     failedRef.current = 0;
     queueRef.current = Promise.resolve();
     elapsedRef.current = 0;
+    cachedRef.current = false;
     setDone(0);
     setTotal(0);
     setElapsed(0);
@@ -298,9 +521,13 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
       }
 
       streamRef.current = stream;
+      // Pede ao navegador para nao apagar o modelo baixado quando faltar espaco.
+      void navigator.storage?.persist?.();
+      monitorAudio(stream);
+
       if (method === "browser") {
-        setPhase("loading");
-        setMessage("Preparando o modelo de transcricao (so demora na primeira vez)...");
+        changePhase("loading");
+        setMessage("Preparando o modelo de transcricao...");
         workerRef.current = await loadWorker();
       }
 
@@ -308,11 +535,11 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
       stream.getAudioTracks()[0].onended = () => void finish();
       startSegment(0, 0);
       startTick();
-      setPhase("recording");
+      changePhase("recording");
       setMessage("");
     } catch (error) {
       cleanup();
-      setPhase("error");
+      changePhase("error");
       setMessage(
         error instanceof Error && error.message === "no_audio"
           ? 'Sem audio. Na janela do navegador, escolha a guia desta aula e marque "Compartilhar audio da guia".'
@@ -323,7 +550,10 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     }
   }
 
-  if (!canRecord) {
+  const active = phase === "recording" || phase === "paused";
+  const idle = phase === "idle" || phase === "error" || phase === "done";
+
+  if (!canRecord && !youtubeGemini) {
     return (
       <p className="mt-2 text-sm text-copy-secondary">
         Para transcrever esta aula, use o Chrome ou o Edge em um computador.
@@ -331,26 +561,55 @@ export function LessonTranscriber({ courseId, lessonId, method }: TranscriberPro
     );
   }
 
-  const active = phase === "recording" || phase === "paused";
-  const idle = phase === "idle" || phase === "error" || phase === "done";
-
   return (
     <div className="mt-2 space-y-3 text-sm text-copy-secondary">
-      {idle ? (
+      {idle && saved ? (
+        <div className="space-y-2 rounded-md border border-brand-primary/40 p-3">
+          <p>
+            Ha uma transcricao desta aula que nao foi salva (guardada neste navegador em{" "}
+            {new Date(saved.savedAt).toLocaleString("pt-BR")}). Pode estar incompleta.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              className={primaryButton}
+              onClick={() => toReview(saved.text, "Rascunho recuperado. Confira o texto, corrija se precisar e salve.")}
+              type="button"
+            >
+              Revisar e salvar
+            </button>
+            <button className={secondaryButton} onClick={discard} type="button">
+              Descartar rascunho
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {idle && canRecord ? (
         <p>
           Como fazer: clique em Transcrever, escolha a guia desta aula e marque &quot;Compartilhar audio da guia&quot;.
           Depois volte o video ao inicio e de play. A transcricao acompanha a aula em tempo real: deixe a guia aberta,
-          com som, ate o fim e clique em Finalizar. Se precisar parar, use Pausar e depois Retomar.{" "}
+          com som, ate o fim. A gravacao termina sozinha quando a aula acaba (se nao terminar, clique em Finalizar). Se
+          precisar parar, use Pausar e depois Retomar.{" "}
           {method === "browser"
-            ? "O texto e feito no seu computador; na primeira vez e baixado um modelo de 80 a 150 MB."
+            ? "O texto e feito no seu computador; na primeira vez e baixado um modelo de 80 a 150 MB, que fica salvo no navegador."
             : "O audio e enviado em pedacos de 1 minuto ao Gemini e nao fica guardado."}
         </p>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
-        {idle ? (
-          <button className={primaryButton} onClick={() => void start()} type="button">
-            Transcrever esta aula
+        {idle && youtubeGemini ? (
+          <button className={primaryButton} onClick={() => void importFromYoutube()} type="button">
+            Transcrever pelo Gemini (sem gravar)
+          </button>
+        ) : null}
+        {idle && canRecord ? (
+          <button className={youtubeGemini ? secondaryButton : primaryButton} onClick={() => void start()} type="button">
+            Transcrever gravando o audio
+          </button>
+        ) : null}
+        {phase === "importing" ? (
+          <button className={secondaryButton} onClick={discard} type="button">
+            Cancelar
           </button>
         ) : null}
         {phase === "recording" ? (
