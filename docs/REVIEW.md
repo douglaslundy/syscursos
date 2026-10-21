@@ -3475,3 +3475,8 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Verificado logado: lista de cursos, curso "Assunto Infinito" (9 modulos, 42 aulas), Revisao, Progresso (sequencia, meta, grafico), Busca global, Avisos, Playlists, Cadernos, aula do Drive (marcadores, notas, modo foco, Pomodoro, duvidas) e aula com transcricao (busca, marcas de tempo, PDF, chat). Sem erros no console. Marcador criado e apagado com sucesso (tabela `lesson_bookmarks`).
 - Aviso benigno no console: `postMessage` do player do YouTube (origem `youtube-nocookie`) na carga; o player funciona.
 - Botoes de IA (resumo, flashcards, quiz, chat) ficam desativados com "A IA ainda nao foi configurada": esperado sem chave valida. NAO verificado: geracao por IA, prova final, certificado, cron, gravacao do Drive, painel admin/produtor.
+
+## 2026-10-22 - E2E publico e tailwind.config
+- `src/tests/e2e/study-public.spec.ts`: 5 testes sem login (redirecionamento da area do aluno, PWA, verificacao de certificado inexistente, cron sem segredo, cabecalhos de seguranca). Passam com `npx playwright test study-public`. Os testes que abrem navegador (`public.spec.ts`) exigem `npx playwright install` (binario nao instalado nesta maquina) e nao foram rodados.
+- `tailwind.config.ts` usava `require("tailwindcss-animate")`, que quebra o `next dev` no Node 24 (`ReferenceError: require is not defined`); trocado por `import`. `playwright.config.ts` com `workers: 1`.
+- Fluxos logados seguem sem E2E automatizado (nao ha conta de teste dedicada).
