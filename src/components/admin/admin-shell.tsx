@@ -12,22 +12,26 @@ const navItems = [
   { href: "/admin/students", label: "Alunos" },
   { href: "/admin/enrollments", label: "Matriculas" },
   { href: "/admin/requests", label: "Solicitacoes" },
+  { href: "/admin/questions", label: "Duvidas" },
+  { href: "/admin/reports", label: "Relatorios" },
+  { href: "/admin/health", label: "Saude do sistema" },
   { href: "/admin/settings", label: "Configuracoes" },
 ];
 
 type AdminShellProps = Readonly<{
   user: AuthenticatedUser;
+  pendingQuestions?: number;
   children: React.ReactNode;
 }>;
 
-export function AdminShell({ user, children }: AdminShellProps) {
+export function AdminShell({ user, pendingQuestions = 0, children }: AdminShellProps) {
   const visibleNavItems = navItems.filter((item) => {
     if (user.role === "ADMIN") {
-      return ["/admin", "/admin/users", "/admin/me", "/admin/settings"].includes(item.href);
+      return ["/admin", "/admin/users", "/admin/me", "/admin/settings", "/admin/health"].includes(item.href);
     }
 
     if (user.role === "PRODUCER") {
-      return item.href !== "/admin/users" && item.href !== "/admin/settings";
+      return item.href !== "/admin/users" && item.href !== "/admin/settings" && item.href !== "/admin/health";
     }
 
     return false;
@@ -49,6 +53,9 @@ export function AdminShell({ user, children }: AdminShellProps) {
                 key={item.href}
               >
                 {item.label}
+                {item.href === "/admin/questions" && pendingQuestions > 0 ? (
+                  <span className="ml-2 rounded-full bg-brand-primary px-2 text-xs text-copy-primary">{pendingQuestions}</span>
+                ) : null}
               </Link>
             ))}
           </nav>

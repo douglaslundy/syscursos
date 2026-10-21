@@ -13,6 +13,7 @@ import {
   saveOpenAiApiKey,
   testAiKey,
 } from "@/server/services/ai/ai-settings-service";
+import { askLessonChat, type ChatResult } from "@/server/services/ai/chat-service";
 import { recordAudit } from "@/server/services/audit-service";
 import { generateAiContent, type AiGenerateResult } from "@/server/services/ai/ai-content-service";
 
@@ -82,4 +83,13 @@ export async function saveActiveProviderAction(formData: FormData) {
 export async function saveTechniquesAction(formData: FormData) {
   await saveActiveTechniques(formData.getAll("technique").filter((value): value is string => typeof value === "string"));
   redirect(`${AI_PATH}?status=ai_techniques_saved`);
+}
+
+const chatSchema = z.object({ courseId: z.string().uuid(), lessonId: z.string().uuid(), question: z.string().trim().min(3).max(500) });
+
+// Chamada pelo aluno: pergunta sobre a aula respondida pela IA so com a transcricao.
+export async function askLessonChatAction(input: z.infer<typeof chatSchema>): Promise<ChatResult> {
+  const parsed = chatSchema.safeParse(input);
+
+  return parsed.success ? askLessonChat(parsed.data) : { ok: false, error: "invalid" };
 }

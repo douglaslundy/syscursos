@@ -5,6 +5,8 @@ import { FavoriteButton } from "@/components/student/favorite-button";
 import { AddToPlaylist } from "@/components/student/add-to-playlist";
 import { LessonBookmarks } from "@/components/student/lesson-bookmarks";
 import { LessonCompletionPanel } from "@/components/student/lesson-completion-panel";
+import { LessonChat } from "@/components/student/lesson-chat";
+import { LessonQuestions } from "@/components/student/lesson-questions";
 import { LessonStudyTools } from "@/components/student/lesson-study-tools";
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
 import { LessonTranscript } from "@/components/student/lesson-transcript";
@@ -12,6 +14,7 @@ import { listBookmarks } from "@/server/services/bookmark-service";
 import { getAiAvailability, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { getLessonFavoriteState } from "@/server/services/favorite-service";
 import { listPlaylists } from "@/server/services/playlist-service";
+import { listLessonQuestions } from "@/server/services/question-service";
 import { listQuizAttempts } from "@/server/services/quiz-service";
 import { getGeminiApiKey, getTranscriptionMethod } from "@/server/services/settings-service";
 import { canResetTranscript } from "@/server/services/transcript-service";
@@ -38,7 +41,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
   const params = await props.params;
   const searchParams = await props.searchParams;
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks, playlists] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks, playlists, questions] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
     getTranscriptionMethod(),
@@ -49,6 +52,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
     requireStudentProfileId().then((id) => listQuizAttempts(id, lessonId)).catch(optional([])),
     requireStudentProfileId().then((id) => listBookmarks(id, lessonId)).catch(optional([])),
     listPlaylists().catch(optional([])),
+    listLessonQuestions(lessonId).catch(optional([])),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -183,6 +187,10 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         status={typeof searchParams?.transcript === "string" ? searchParams.transcript : undefined}
         transcript={data.lesson.transcript}
       />
+
+      {data.lesson.transcript ? <LessonChat courseId={courseId} enabled={ai.enabled} lessonId={lessonId} /> : null}
+
+      <LessonQuestions courseId={courseId} initial={questions} lessonId={lessonId} />
 
       {data.lesson.transcript ? (
         <LessonStudyTools

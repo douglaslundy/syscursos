@@ -10,7 +10,7 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 
 - Concluido e commitado: `d439dbd` (jspdf 4.2.1, cabecalhos de seguranca, cache de configuracoes, analise).
 - ATENCAO: o codigo novo le colunas/tabelas da migracao `20261022120000_study_features` (ex.: `lesson_progress.position_seconds`). Aplicar `prisma migrate deploy` ANTES de rodar/deployar, senao as paginas de aula quebram. Ainda nao aplicada (aguardando autorizacao do usuario).
-- Commitados: `d731e02` (Next 15), `6875137` (seguranca). Etapas 4, 5 e parte da 6 prontas (quiz, revisao, progresso, player, marcadores, Pomodoro); lembrete por cron, busca, exportacao e playlists tambem prontos (etapa 7 concluida). Proximo: etapa 8.
+- Commitados: `d731e02` (Next 15), `6875137` (seguranca). Etapas 4, 5 e parte da 6 prontas (quiz, revisao, progresso, player, marcadores, Pomodoro); lembrete por cron, busca, exportacao e playlists tambem prontos (etapa 7 concluida); etapa 8 concluida (duvidas, avisos, chat, relatorios, saude). Proximo: etapa 9 (prova final e certificado), depois 10 (PWA/acessibilidade), refatoracoes pendentes da etapa 2 e fechamento.
 - Commitado `d731e02`: migracao Next 14 -> 15.5.28 (build e 198 testes OK), schema + migracao `20261022120000_study_features` (nao aplicada), libs `src/lib/ai/quiz.ts`, `src/lib/study/srs.ts`, `src/lib/study/streak.ts`, prompts de quiz/prova/chat, quiz no `ai-content-service` (tipo `QUIZ`, limite por aluno, chamada unica para pedidos simultaneos).
 
 ## Etapas
@@ -60,11 +60,11 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 - [x] Playlists/trilhas do aluno (`/app/playlists`, botao "Adicionar a playlist" na aula).
 
 ### 8. Duvidas, notificacoes, relatorios, saude
-- [ ] Duvidas por aula (`LessonQuestion`): aluno pergunta, produtor/admin responde em `/admin/questions`; respostas visiveis na aula.
-- [ ] Notificacoes (`Notification`): sino com contador no menu do aluno e `/app/notifications`; aviso ao produtor de duvida nova.
-- [ ] Chat com a aula (`/app/.../chat` ou painel): resposta so com a transcricao, cita minuto, limite por aluno, uso registrado como `CHAT`.
-- [ ] Relatorio do produtor `/admin/reports`: notas por aula, onde os alunos abandonam, questoes mais erradas, duvidas sem resposta.
-- [ ] Painel de saude `/admin/health`: custo de IA por curso, aulas sem duracao e sem transcricao, ultimas acoes (`AuditLog`).
+- [x] Duvidas por aula (`LessonQuestion`): aluno pergunta, produtor/admin responde em `/admin/questions`; respostas visiveis na aula.
+- [x] Notificacoes (`Notification`): sino com contador no menu do aluno e `/app/notifications`; aviso ao produtor de duvida nova.
+- [x] Chat com a aula (`/app/.../chat` ou painel): resposta so com a transcricao, cita minuto, limite por aluno, uso registrado como `CHAT`.
+- [x] Relatorio do produtor `/admin/reports`: notas por aula, onde os alunos abandonam, questoes mais erradas, duvidas sem resposta.
+- [x] Painel de saude `/admin/health`: custo de IA por curso, aulas sem duracao e sem transcricao, ultimas acoes (`AuditLog`).
 
 ### 9. Prova final e certificado
 - [ ] Prova final do curso (`CourseExam` gerada uma vez por IA e compartilhada; tentativas em `QuizAttempt`).
