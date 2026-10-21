@@ -3457,3 +3457,7 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Nova tabela `rate_limit_events` (migration `20261022180000_rate_limit_events`, aplicada no banco real): `hitGlobal` conta tentativas no banco, valendo para todas as instancias; se o banco falhar, cai no contador em memoria. Usado por `allowLogin` e `allowRegister`. Limites de IA seguem como estavam.
 - Limite: contar e inserir nao e atomico; rajadas simultaneas podem passar do limite por poucos pedidos.
 - Tentativa de subir o vitest para 5 (corrige o `tinypool` critico) falhou: exige vite 6+ e o projeto usa vite 5; fica para quando houver migracao do toolchain de testes. Nada foi alterado em `package.json`.
+
+## 2026-10-22 - Limite de IA por aluno global
+- `allowAiCall` passou a usar `hitGlobal` (banco, 5 chamadas por minuto por aluno), com reserva em memoria. Vale para resumos, quiz, prova final e chat. Nos testes o banco e simulado sem `rateLimitEvent`, entao aparece log de erro esperado do fallback em memoria.
+- Nao feito: `React.cache` na busca de matricula (cada acao e uma requisicao separada, ganho pequeno); trava entre instancias para geracao simultanea (hoje so ha dedupe por instancia e o conflito `P2002` descarta o segundo resultado, com possivel gasto duplicado raro).

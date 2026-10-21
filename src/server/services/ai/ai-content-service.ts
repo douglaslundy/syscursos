@@ -1,5 +1,6 @@
 import { Prisma, type AiContentKind } from "@prisma/client";
 
+import { hitGlobal, resetRateLimits } from "@/server/security/rate-limit";
 import { parseFlashcards, parseMindMap } from "@/lib/ai/parsers";
 import { parseQuiz } from "@/lib/ai/quiz";
 import { buildPrompt, type AiKind } from "@/lib/ai/prompts";
@@ -58,25 +59,16 @@ export async function deleteLessonAiItems(lessonId: string) {
 // Tipos sem tecnica de resumo: um unico conteudo por aula.
 const TECHNIQUELESS = new Set<LessonAiKind>(["FLASHCARDS", "QUIZ"]);
 
-// Quem pede varias geracoes seguidas (ou falhando) gasta tokens: limite por aluno, por instancia.
+// Quem pede varias geracoes seguidas (ou falhando) gasta tokens: limite por aluno, global (banco).
 const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 5;
-const recentCalls = new Map<string, number[]>();
 
 export function resetAiRateLimit() {
-  recentCalls.clear();
+  resetRateLimits();
 }
 
-export function allowAiCall(studentId: string, now = Date.now()) {
-  const calls = (recentCalls.get(studentId) ?? []).filter((time) => now - time < RATE_WINDOW_MS);
-
-  if (calls.length >= RATE_MAX) {
-    recentCalls.set(studentId, calls);
-    return false;
-  }
-
-  recentCalls.set(studentId, [...calls, now]);
-  return true;
+export function allowAiCall(studentId: string) {
+  return hitGlobal(`ai:${studentId}`, RATE_MAX, RATE_WINDOW_MS);
 }
 
 // Dois alunos pedindo o mesmo conteudo ao mesmo tempo compartilham uma unica chamada a IA.
@@ -130,7 +122,7 @@ async function runGenerate(input: {
   const credentials = await getActiveAiCredentials();
 
   if (!credentials) return { ok: false, error: "no_provider" };
-  if (!allowAiCall(found.studentId)) return { ok: false, error: "rate_limited" };
+  if (!(await allowAiCall(found.studentId))) return { ok: false, error: "rate_limited" };
 
   const prompt = buildPrompt({
     kind: input.kind,

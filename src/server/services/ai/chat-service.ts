@@ -31,7 +31,7 @@ export async function askLessonChat(input: { courseId: string; lessonId: string;
     return { ok: false, error: "daily_limit" };
   }
 
-  if (!allowAiCall(found.studentId)) return { ok: false, error: "rate_limited" };
+  if (!(await allowAiCall(found.studentId))) return { ok: false, error: "rate_limited" };
 
   const prompt = buildChatPrompt({ lessonTitle: found.lesson.title, transcript: found.lesson.transcript.slice(0, MAX_TRANSCRIPT_CHARS), question });
   const result = await callProvider(credentials.provider, credentials.key, prompt);

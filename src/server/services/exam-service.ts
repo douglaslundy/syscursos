@@ -78,7 +78,7 @@ async function runEnsure(courseId: string): Promise<{ ok: true; quiz: Quiz; crea
   const credentials = await getActiveAiCredentials();
 
   if (!credentials) return { ok: false, error: "no_provider" };
-  if (!allowAiCall(studentId)) return { ok: false, error: "rate_limited" };
+  if (!(await allowAiCall(studentId))) return { ok: false, error: "rate_limited" };
 
   const course = await prisma.course.findUnique({ where: { id: courseId }, select: { title: true } });
   const result = await callProvider(credentials.provider, credentials.key, buildExamPrompt({ courseTitle: course?.title ?? "Curso", lessons: material }));
