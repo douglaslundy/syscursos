@@ -1,7 +1,7 @@
 import { UserRole } from "@prisma/client";
 
 import { Feedback } from "@/components/admin/feedback";
-import { saveManagedUserAction } from "@/server/actions/admin-actions";
+import { saveManagedUserAction } from "@/server/actions/admin-people-actions";
 
 type UsersPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;

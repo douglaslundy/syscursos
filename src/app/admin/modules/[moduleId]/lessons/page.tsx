@@ -11,7 +11,7 @@ import {
   deleteLessonAction,
   deleteLessonMaterialAction,
   saveLessonMaterialAction,
-} from "@/server/actions/admin-actions";
+} from "@/server/actions/admin-content-actions";
 import { getLessonMaterials, getLessons } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 

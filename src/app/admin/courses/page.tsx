@@ -5,7 +5,7 @@ import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { DurationProgress } from "@/components/admin/duration-progress";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { deleteCourseAction, saveCourseAction, scanCourseDurationsAction } from "@/server/actions/admin-actions";
+import { deleteCourseAction, saveCourseAction, scanCourseDurationsAction } from "@/server/actions/admin-content-actions";
 import { getCourses, getDurationCoverage } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 

@@ -5,7 +5,7 @@ import { Feedback } from "@/components/admin/feedback";
 import { LessonForm } from "@/components/admin/lesson-form";
 import { Pagination } from "@/components/admin/pagination";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { deleteLessonAction } from "@/server/actions/admin-actions";
+import { deleteLessonAction } from "@/server/actions/admin-content-actions";
 import { getCourseOptions, getLessons, getModuleOptions } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 

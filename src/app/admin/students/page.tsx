@@ -10,7 +10,7 @@ import {
   linkStudentToProducerAction,
   saveStudentAction,
   verifyStudentEmailAction,
-} from "@/server/actions/admin-actions";
+} from "@/server/actions/admin-people-actions";
 import { getStudentForEdit, getStudents, lookupStudentByEmail } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 

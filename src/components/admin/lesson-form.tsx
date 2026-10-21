@@ -1,5 +1,5 @@
 import { SubmitButton } from "@/components/admin/submit-button";
-import { saveLessonAction } from "@/server/actions/admin-actions";
+import { saveLessonAction } from "@/server/actions/admin-content-actions";
 
 type LessonFormProps = {
   moduleId: string;

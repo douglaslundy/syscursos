@@ -4,7 +4,7 @@ import { Feedback } from "@/components/admin/feedback";
 import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { cancelEnrollmentAction, saveEnrollmentAction } from "@/server/actions/admin-actions";
+import { cancelEnrollmentAction, saveEnrollmentAction } from "@/server/actions/admin-people-actions";
 import {
   getCourseOptions,
   getEnrollments,

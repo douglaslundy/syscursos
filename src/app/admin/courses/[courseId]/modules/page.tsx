@@ -4,7 +4,7 @@ import { Feedback } from "@/components/admin/feedback";
 import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { deleteModuleAction, saveModuleAction } from "@/server/actions/admin-actions";
+import { deleteModuleAction, saveModuleAction } from "@/server/actions/admin-content-actions";
 import { getModuleForEdit, getModules } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
 

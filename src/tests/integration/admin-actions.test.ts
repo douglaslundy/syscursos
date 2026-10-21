@@ -59,7 +59,7 @@ describe("admin student actions", () => {
   });
 
   it("updates a student without changing the password when password is blank", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ password: "" }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=saved",
@@ -78,7 +78,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for an invalid student email", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ email: "invalid-email" }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_invalid_email",
@@ -87,7 +87,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status when a new student has no initial password", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
     const formData = studentForm({ password: "" });
     formData.delete("studentUserId");
     formData.delete("studentProfileId");
@@ -97,7 +97,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status when the optional new password is too short", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ password: "123" }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_invalid_password",
@@ -106,7 +106,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for an invalid student user id", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ userId: "invalid-id" }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_invalid_user_id",
@@ -115,7 +115,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for an invalid student profile id", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ studentProfileId: "invalid-id" }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_invalid_profile_id",
@@ -124,7 +124,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for an invalid student name", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ name: "A" }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_invalid_name",
@@ -133,7 +133,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for an invalid student document", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ document: "1".repeat(33) }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_invalid_document",
@@ -142,7 +142,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for an invalid student phone", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ phone: "1".repeat(33) }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_invalid_phone",
@@ -151,7 +151,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for an invalid student status", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
 
     await expect(saveStudentAction(studentForm({ status: "BLOCKED" }))).rejects.toThrow(
       "REDIRECT:/admin/students?status=student_invalid_status",
@@ -160,7 +160,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status when the edited student is not in producer scope", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
     const { StudentMutationError } = await import("@/server/repositories/admin-repository");
     saveStudentMock.mockRejectedValue(
       new StudentMutationError("student_not_found", "Aluno nao encontrado para este produtor."),
@@ -172,7 +172,7 @@ describe("admin student actions", () => {
   });
 
   it("redirects with linked_existing when the student is only linked to the producer", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
     const formData = studentForm({ password: "password123" });
     formData.delete("studentUserId");
     formData.delete("studentProfileId");
@@ -184,7 +184,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for Supabase Auth email failures", async () => {
-    const { saveStudentAction } = await import("@/server/actions/admin-actions");
+    const { saveStudentAction } = await import("@/server/actions/admin-people-actions");
     saveStudentMock.mockRejectedValue(new Error("Erro ao atualizar acesso do aluno: email already exists"));
 
     await expect(saveStudentAction(studentForm())).rejects.toThrow(
@@ -193,7 +193,7 @@ describe("admin student actions", () => {
   });
 
   it("returns a specific status for unexpected lesson failures", async () => {
-    const { saveLessonAction } = await import("@/server/actions/admin-actions");
+    const { saveLessonAction } = await import("@/server/actions/admin-content-actions");
     const formData = new FormData();
     formData.set("moduleId", "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633");
     formData.set("title", "Aula");
@@ -211,7 +211,7 @@ describe("admin student actions", () => {
   });
 
   it("invalidates the student course-content cache when a lesson is saved", async () => {
-    const { saveLessonAction } = await import("@/server/actions/admin-actions");
+    const { saveLessonAction } = await import("@/server/actions/admin-content-actions");
     const formData = new FormData();
     formData.set("moduleId", "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633");
     formData.set("title", "Aula");
@@ -228,7 +228,7 @@ describe("admin student actions", () => {
   });
 
   it("invalidates the student course-content cache when a course is deleted", async () => {
-    const { deleteCourseAction } = await import("@/server/actions/admin-actions");
+    const { deleteCourseAction } = await import("@/server/actions/admin-content-actions");
     const formData = new FormData();
     formData.set("id", "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633");
 
@@ -238,7 +238,7 @@ describe("admin student actions", () => {
   });
 
   it("redirects with lookup=found when an e-mail already exists", async () => {
-    const { verifyStudentEmailAction } = await import("@/server/actions/admin-actions");
+    const { verifyStudentEmailAction } = await import("@/server/actions/admin-people-actions");
     const formData = new FormData();
     formData.set("email", "student@example.com");
     lookupStudentByEmailMock.mockResolvedValue({ studentProfileId: "student-profile-id" });
@@ -249,7 +249,7 @@ describe("admin student actions", () => {
   });
 
   it("redirects with lookup=not_found when an e-mail does not exist", async () => {
-    const { verifyStudentEmailAction } = await import("@/server/actions/admin-actions");
+    const { verifyStudentEmailAction } = await import("@/server/actions/admin-people-actions");
     const formData = new FormData();
     formData.set("email", "new@example.com");
     lookupStudentByEmailMock.mockResolvedValue(null);
@@ -260,7 +260,7 @@ describe("admin student actions", () => {
   });
 
   it("links an existing student to the producer", async () => {
-    const { linkStudentToProducerAction } = await import("@/server/actions/admin-actions");
+    const { linkStudentToProducerAction } = await import("@/server/actions/admin-people-actions");
     const formData = new FormData();
     formData.set("studentProfileId", "2b8d0d2c-d34e-4a6b-94e1-2cf03e39a633");
 

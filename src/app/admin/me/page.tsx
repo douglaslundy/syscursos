@@ -1,5 +1,5 @@
 import { Feedback } from "@/components/admin/feedback";
-import { saveOwnAdminProfileAction } from "@/server/actions/admin-actions";
+import { saveOwnAdminProfileAction } from "@/server/actions/admin-people-actions";
 import { requireAnyRole } from "@/server/auth/guards";
 
 type AdminMePageProps = {

@@ -3,7 +3,7 @@ import { SubmitButton } from "@/components/admin/submit-button";
 import {
   approveEnrollmentRequestAction,
   rejectEnrollmentRequestAction,
-} from "@/server/actions/admin-actions";
+} from "@/server/actions/admin-people-actions";
 import { getPendingEnrollmentRequests } from "@/server/services/admin-service";
 
 type RequestsPageProps = {
