@@ -8,8 +8,9 @@ import { SILENCE_LEVEL, rms, shouldAutoFinish } from "@/lib/transcription/auto-f
 import { nextChunk } from "@/lib/transcription/chunks";
 import { type TranscriptDraft, clearDraft, loadDraft, saveDraft } from "@/lib/transcription/draft";
 import { clock, joinSegments } from "@/lib/transcription/format";
-import { VIDEO_ENDED_EVENT, setTranscribing } from "@/lib/transcription/guard";
+import { setTranscribing } from "@/lib/transcription/guard";
 import { encodeWav } from "@/lib/transcription/wav";
+import { useBusyGuard, useDraftAutosave, useVideoEnded } from "@/components/student/use-transcriber-effects";
 import { saveRecordedTranscriptAction } from "@/server/actions/transcript-actions";
 
 const SEGMENT_SECONDS = 60;
@@ -104,40 +105,15 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
     };
   }, [cleanup, lessonId]);
 
-  // Avisa o resto da pagina (player, "proxima aula") e o navegador enquanto ha transcricao a perder.
   const busy = BUSY_PHASES.includes(phase);
 
-  useEffect(() => {
-    setTranscribing(busy);
-
-    if (!busy) return;
-
-    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [busy]);
-
-  // O texto em conferencia tambem fica guardado no navegador ate ser salvo no banco.
-  useEffect(() => {
-    if (phase !== "review") return;
-
-    const timer = window.setTimeout(() => saveDraft(lessonId, draft), 500);
-    return () => window.clearTimeout(timer);
-  }, [phase, draft, lessonId]);
-
-  // O player do YouTube avisa quando o video acaba; um instante depois a gravacao e encerrada, para pegar o fim da fala.
-  useEffect(() => {
-    let timer: number | undefined;
-    const onEnded = () => {
-      if (phaseRef.current === "recording") timer = window.setTimeout(() => void finishRef.current("Fim da aula detectado: gravacao finalizada. "), ENDED_GRACE_MS);
-    };
-
-    window.addEventListener(VIDEO_ENDED_EVENT, onEnded);
-    return () => {
-      window.removeEventListener(VIDEO_ENDED_EVENT, onEnded);
-      window.clearTimeout(timer);
-    };
-  }, []);
+  useBusyGuard(busy);
+  useDraftAutosave(phase === "review", lessonId, draft);
+  useVideoEnded(
+    () => phaseRef.current === "recording",
+    () => void finishRef.current("Fim da aula detectado: gravacao finalizada. "),
+    ENDED_GRACE_MS,
+  );
 
   function loadWorker() {
     return new Promise<Worker>((resolve, reject) => {

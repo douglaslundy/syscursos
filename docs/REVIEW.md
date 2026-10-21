@@ -3465,3 +3465,8 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ## 2026-10-22 - Toolchain de testes atualizado
 - `vitest` 5, `vite` 7 e `@vitejs/plugin-react` 5 (so devDependencies). `npm audit` caiu de 25 para 20 avisos e os 2 criticos (`tinypool`) sumiram; 246 testes, tsc, lint e build verdes.
 - Restam 10 avisos de producao (braces, esbuild, postcss, postcss-selector-parser) presos a versoes maiores de `next`/`tailwindcss`. Nao alterados.
+
+## 2026-10-22 - Hooks simples do lesson-transcriber
+- `useBusyGuard`, `useDraftAutosave` e `useVideoEnded` extraidos para `use-transcriber-effects.ts`, com 4 testes (jsdom, timers falsos). Comportamento igual ao anterior.
+- NAO extraidos: gravacao (MediaRecorder), worker do Whisper e fila de trechos, que dividem refs e estado; sem teste em navegador com microfone o risco de quebrar a gravacao e alto.
+- Nao feitos por dependerem de decisao ou de verificacao visual: confirmacao de e-mail (SMTP), CSP ativo, tailwind 4.
