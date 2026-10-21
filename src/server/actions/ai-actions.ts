@@ -13,6 +13,7 @@ import {
   saveOpenAiApiKey,
   testAiKey,
 } from "@/server/services/ai/ai-settings-service";
+import { recordAudit } from "@/server/services/audit-service";
 import { generateAiContent, type AiGenerateResult } from "@/server/services/ai/ai-content-service";
 
 const generateSchema = z.object({
@@ -58,6 +59,7 @@ export async function saveAiKeyAction(formData: FormData) {
   }
 
   await (provider === "gemini" ? saveGeminiAiKey(key) : saveOpenAiApiKey(key));
+  await recordAudit("ai.key_save", "setting", provider);
   redirect(`${AI_PATH}?status=ai_key_saved`);
 }
 
@@ -68,6 +70,7 @@ export async function testAiKeyAction(formData: FormData) {
 
 export async function removeOpenAiKeyAction() {
   await removeOpenAiApiKey();
+  await recordAudit("ai.key_remove", "setting", "openai");
   redirect(`${AI_PATH}?status=ai_key_removed`);
 }
 

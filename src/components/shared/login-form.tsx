@@ -20,6 +20,7 @@ const errorMessages: Record<string, string> = {
   invalid_credentials: "Credenciais invalidas.",
   forbidden: "Usuario sem permissao para esta area.",
   inactive: "Usuario inativo.",
+  rate_limited: "Muitas tentativas. Aguarde alguns minutos e tente de novo.",
   server: "Nao foi possivel concluir o login agora. Tente novamente em instantes.",
 };
 

@@ -17,6 +17,8 @@ type RegisterFormProps = {
 const errorMessages: Record<string, string> = {
   invalid_input: "Revise os campos e tente novamente.",
   conflict: "Ja existe usuario com este e-mail.",
+  rate_limited: "Muitas tentativas. Aguarde alguns minutos e tente de novo.",
+  closed: "O cadastro de novos alunos esta fechado no momento. Fale com o administrador.",
   server: "Nao foi possivel concluir o cadastro agora. Tente novamente em instantes.",
 };
 
@@ -35,6 +37,7 @@ export function RegisterForm({
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <form action={registerAction} className="w-full max-w-sm space-y-5">
         <input name="audience" type="hidden" value={audience} />
+        <input aria-hidden="true" autoComplete="off" className="hidden" name="website" tabIndex={-1} type="text" />
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold tracking-normal">{title}</h1>
           <p className="text-sm text-muted-foreground">{description}</p>

@@ -9,6 +9,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { loginSchema, registerSchema } from "@/server/auth/schemas";
 import { withDbRetry } from "@/server/db/retry";
 import { getDefaultPathForRole } from "@/server/permissions/rbac";
+import { allowLogin, allowRegister } from "@/server/security/rate-limit";
+import { isRegistrationOpen } from "@/server/services/settings-service";
 
 export async function loginAction(formData: FormData) {
   const audience = parseAudience(formData.get("audience"));
@@ -20,6 +22,10 @@ export async function loginAction(formData: FormData) {
 
   if (!parsed.success) {
     redirect(`${loginPath}?error=invalid_input`);
+  }
+
+  if (!(await allowLogin(parsed.data.email))) {
+    redirect(`${loginPath}?error=rate_limited`);
   }
 
   const supabase = await createSupabaseServerClient(audience);
@@ -120,6 +126,18 @@ export async function registerAction(formData: FormData) {
 
   if (audience === "admin") {
     redirect("/login/admin?error=forbidden");
+  }
+
+  if (formData.get("website")) {
+    redirect(`${registerPath}?error=invalid_input`);
+  }
+
+  if (!(await allowRegister())) {
+    redirect(`${registerPath}?error=rate_limited`);
+  }
+
+  if (!(await isRegistrationOpen())) {
+    redirect(`${registerPath}?error=closed`);
   }
 
   const parsed = registerSchema.safeParse({

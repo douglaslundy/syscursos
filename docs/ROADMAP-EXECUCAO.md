@@ -9,7 +9,7 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 ## Estado (atualize aqui)
 
 - Concluido e commitado: `d439dbd` (jspdf 4.2.1, cabecalhos de seguranca, cache de configuracoes, analise).
-- Em andamento, ainda NAO commitado: migracao Next 14 -> 15.5.28 (build e 198 testes OK), schema + migracao `20261022120000_study_features` (nao aplicada), libs `src/lib/ai/quiz.ts`, `src/lib/study/srs.ts`, `src/lib/study/streak.ts`, prompts de quiz/prova/chat, quiz no `ai-content-service` (tipo `QUIZ`, limite por aluno, chamada unica para pedidos simultaneos).
+- Commitado `d731e02`: migracao Next 14 -> 15.5.28 (build e 198 testes OK), schema + migracao `20261022120000_study_features` (nao aplicada), libs `src/lib/ai/quiz.ts`, `src/lib/study/srs.ts`, `src/lib/study/streak.ts`, prompts de quiz/prova/chat, quiz no `ai-content-service` (tipo `QUIZ`, limite por aluno, chamada unica para pedidos simultaneos).
 
 ## Etapas
 
@@ -19,11 +19,11 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 - [ ] Rodar `npm audit fix` para o que sobrar (ws, postcss etc.) sem mudanca maior; reavaliar `tailwindcss` (aviso so de ferramenta de build).
 
 ### 2. Seguranca e desempenho (correcoes abertas)
-- [ ] Limite de tentativas no login e no cadastro (por IP e por e-mail), mensagem `rate_limited` nos formularios.
-- [ ] Interruptor "cadastro de alunos aberto" no painel (`AppSetting registration_open`, padrao aberto) para fechar o cadastro publico; honeypot no formulario. Confirmacao de e-mail depende de SMTP no Supabase: registrar como pendencia do usuario.
-- [ ] Auditoria: `src/server/services/audit-service.ts` gravando `AuditLog` nas acoes sensiveis do admin (apagar curso/modulo/aula/aluno, matriculas, usuarios, chaves, backup, aprovacao de pedidos).
-- [ ] CSP em modo `Report-Only` (YouTube, Drive, Hugging Face, worker) em `next.config.mjs`.
-- [ ] `getAdminConsumptionMetrics` com limite/paginacao (hoje sem `LIMIT`).
+- [x] Limite de tentativas no login e no cadastro (por IP e por e-mail), mensagem `rate_limited` nos formularios.
+- [x] Interruptor "cadastro de alunos aberto" no painel (`AppSetting registration_open`, padrao aberto) para fechar o cadastro publico; honeypot no formulario. Confirmacao de e-mail depende de SMTP no Supabase: registrar como pendencia do usuario.
+- [x] Auditoria: `src/server/services/audit-service.ts` gravando `AuditLog` nas acoes sensiveis do admin (apagar curso/modulo/aula/aluno, matriculas, usuarios, chaves, backup, aprovacao de pedidos).
+- [x] CSP em modo `Report-Only` (YouTube, Drive, Hugging Face, worker) em `next.config.mjs`.
+- [x] `getAdminConsumptionMetrics` com limite/paginacao (hoje sem `LIMIT`).
 - [ ] Dividir `admin-repository.ts` (1.742 linhas) e `admin-actions.ts` (740) por dominio, mantendo a API publica; extrair hooks de `lesson-transcriber.tsx`.
 - [ ] Transcricao longa carregada sob demanda na pagina da aula.
 - [ ] Reaproveitar `React.cache` na busca de matricula repetida entre `findTranscribableLesson` e `getStudentLesson`.

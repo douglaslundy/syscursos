@@ -18,6 +18,8 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
+vi.mock("@/server/services/audit-service", () => ({ recordAudit: vi.fn() }));
+
 vi.mock("next/cache", () => ({
   revalidatePath: revalidatePathMock,
   revalidateTag: revalidateTagMock,

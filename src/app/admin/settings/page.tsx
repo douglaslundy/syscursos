@@ -5,10 +5,11 @@ import { SubmitButton } from "@/components/admin/submit-button";
 import {
   removeGoogleKeyAction,
   saveGoogleKeyAction,
+  saveRegistrationOpenAction,
   testGoogleKeyAction,
 } from "@/server/actions/settings-actions";
 import { requireRole } from "@/server/auth/guards";
-import { getGoogleKeyStatus } from "@/server/services/settings-service";
+import { getGoogleKeyStatus, isRegistrationOpen } from "@/server/services/settings-service";
 
 type SettingsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -18,7 +19,7 @@ export default async function AdminSettingsPage(props: { searchParams: Promise<S
   const searchParams = await props.searchParams;
   await requireRole("ADMIN");
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
-  const key = await getGoogleKeyStatus();
+  const [key, registrationOpen] = await Promise.all([getGoogleKeyStatus(), isRegistrationOpen()]);
 
   return (
     <section className="space-y-8">
@@ -105,6 +106,19 @@ export default async function AdminSettingsPage(props: { searchParams: Promise<S
             Consumo de tokens
           </Link>
         </div>
+      </div>
+
+      <div className="max-w-2xl space-y-3 rounded-md border bg-background p-4">
+        <h3 className="text-base font-semibold">Cadastro de alunos</h3>
+        <p className="text-sm text-muted-foreground">
+          Hoje o cadastro publico cria a conta sem confirmar o e-mail. Feche o cadastro para que so o painel crie
+          alunos. O cadastro aberto tem limite de tentativas por IP.
+        </p>
+        <p className="text-sm">Situacao: {registrationOpen ? "aberto" : "fechado"}.</p>
+        <form action={saveRegistrationOpenAction}>
+          <input name="open" type="hidden" value={registrationOpen ? "false" : "true"} />
+          <SubmitButton>{registrationOpen ? "Fechar cadastro" : "Abrir cadastro"}</SubmitButton>
+        </form>
       </div>
 
       <div className="max-w-2xl space-y-3 rounded-md border bg-background p-4">

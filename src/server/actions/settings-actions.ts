@@ -7,12 +7,19 @@ import {
   removeGoogleApiKey,
   saveGeminiApiKey,
   saveGoogleApiKey,
+  saveRegistrationOpen,
   saveTranscriptionMethod,
   testGeminiApiKey,
   testGoogleApiKey,
 } from "@/server/services/settings-service";
+import { recordAudit } from "@/server/services/audit-service";
 
 const PATH = "/admin/settings";
+
+export async function saveRegistrationOpenAction(formData: FormData) {
+  await saveRegistrationOpen(formData.get("open") === "true");
+  redirect(`${PATH}?status=saved`);
+}
 
 function readKey(formData: FormData) {
   const value = formData.get("apiKey");
@@ -27,6 +34,7 @@ export async function saveGoogleKeyAction(formData: FormData) {
   }
 
   await saveGoogleApiKey(key);
+  await recordAudit("settings.google_key_save", "setting");
   redirect(`${PATH}?status=gkey_saved`);
 }
 
@@ -37,6 +45,7 @@ export async function testGoogleKeyAction(formData: FormData) {
 
 export async function removeGoogleKeyAction() {
   await removeGoogleApiKey();
+  await recordAudit("settings.google_key_remove", "setting");
   redirect(`${PATH}?status=gkey_removed`);
 }
 
@@ -65,6 +74,7 @@ export async function saveGeminiKeyAction(formData: FormData) {
   }
 
   await saveGeminiApiKey(key);
+  await recordAudit("settings.gemini_key_save", "setting");
   redirect(`${TRANSCRIPTION_PATH}?status=gemini_saved`);
 }
 
@@ -75,5 +85,6 @@ export async function testGeminiKeyAction(formData: FormData) {
 
 export async function removeGeminiKeyAction() {
   await removeGeminiApiKey();
+  await recordAudit("settings.gemini_key_remove", "setting");
   redirect(`${TRANSCRIPTION_PATH}?status=gemini_removed`);
 }

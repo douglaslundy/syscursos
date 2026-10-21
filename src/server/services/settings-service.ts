@@ -114,6 +114,24 @@ async function testYouTubeApi(key: string): Promise<GoogleKeyTestResult> {
   return response.ok ? "ok" : "youtube_disabled";
 }
 
+// --- Cadastro publico de alunos: aberto por padrao; o admin pode fechar ---
+const REGISTRATION_KEY = "registration_open";
+
+export async function isRegistrationOpen() {
+  const row = await appSettings.findUnique({ where: { key: REGISTRATION_KEY } });
+
+  return row?.value !== "false";
+}
+
+export async function saveRegistrationOpen(open: boolean) {
+  await requireRole("ADMIN");
+  await appSettings.upsert({
+    where: { key: REGISTRATION_KEY },
+    create: { key: REGISTRATION_KEY, value: String(open) },
+    update: { value: String(open) },
+  });
+}
+
 // --- Transcricao de aulas (Drive): metodo escolhido pelo admin e chave do Gemini ---
 const GEMINI_KEY = "gemini_api_key";
 const METHOD_KEY = "transcription_method";

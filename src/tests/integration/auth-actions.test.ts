@@ -28,6 +28,11 @@ vi.mock("@/lib/supabase/server", () => ({
   },
 }));
 
+const allowLoginMock = vi.hoisted(() => vi.fn(async () => true));
+
+vi.mock("@/server/security/rate-limit", () => ({ allowLogin: allowLoginMock, allowRegister: vi.fn(async () => true) }));
+vi.mock("@/server/services/settings-service", () => ({ isRegistrationOpen: vi.fn(async () => true) }));
+
 vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     user: {
@@ -186,6 +191,14 @@ describe("loginAction", () => {
 
     expect(createSupabaseServerClientMock).toHaveBeenCalledWith("client");
     expect(signOutMock).toHaveBeenCalledOnce();
+  });
+
+  it("blocks the attempt before calling Supabase when the rate limit is hit", async () => {
+    const { loginAction } = await import("@/server/actions/auth-actions");
+    allowLoginMock.mockResolvedValueOnce(false);
+
+    await expect(loginAction(loginForm("admin@example.com"))).rejects.toThrow("REDIRECT:/login/client?error=rate_limited");
+    expect(signInWithPasswordMock).not.toHaveBeenCalled();
   });
 
   it("redirects to a controlled login error when the application database is unavailable", async () => {

@@ -10,6 +10,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { revalidateAuthUser } from "@/server/auth/session";
 import { revalidateCourseContent } from "@/server/cache/course-content";
 import { StudentMutationError } from "@/server/repositories/admin-repository";
+import { recordAudit } from "@/server/services/audit-service";
 import {
   approveEnrollmentRequest,
   cancelEnrollment as cancelEnrollmentService,
@@ -76,6 +77,7 @@ export async function deleteCourseAction(formData: FormData) {
   const { id } = parseForm(idSchema, formData, path);
   await runAdminMutation(path, "deleted", async () => {
     await removeCourse(id);
+    await recordAudit("course.delete", "course", id);
     revalidatePath(path);
     revalidateCourseContent();
   });
@@ -97,6 +99,7 @@ export async function deleteModuleAction(formData: FormData) {
   const path = `/admin/courses/${courseId}/modules`;
   await runAdminMutation(path, "deleted", async () => {
     await removeModule(id);
+    await recordAudit("module.delete", "module", id);
     revalidatePath(path);
     revalidateCourseContent();
   });
@@ -135,6 +138,7 @@ export async function deleteLessonAction(formData: FormData) {
   const path = safeAdminRedirect(formData.get("redirectTo")) ?? `/admin/modules/${moduleId}/lessons`;
   await runAdminMutation(path, "deleted", async () => {
     await removeLesson(id);
+    await recordAudit("lesson.delete", "lesson", id);
     revalidatePath(path);
     revalidateCourseContent();
   });
@@ -146,6 +150,7 @@ export async function clearLessonTranscriptAction(formData: FormData) {
   const path = safeAdminRedirect(formData.get("redirectTo")) ?? `/admin/modules/${moduleId}/lessons`;
   await runAdminMutation(path, "saved", async () => {
     await clearLessonTranscript(id);
+    await recordAudit("lesson.clear_transcript", "lesson", id);
     revalidatePath(path);
     revalidateCourseContent();
   });
@@ -171,6 +176,7 @@ export async function deleteLessonMaterialAction(formData: FormData) {
 
   await runAdminMutation(path, "deleted", async () => {
     await removeLessonMaterial(id);
+    await recordAudit("material.delete", "material", id);
     revalidatePath(path);
     revalidatePath(`/app/courses/${requiredString(formData, "courseId", "/admin/courses")}`);
     revalidateCourseContent();
@@ -240,6 +246,7 @@ export async function deleteStudentAction(formData: FormData) {
   const { id } = parseForm(idSchema, formData, path);
   await runAdminMutation(path, "deleted", async () => {
     await removeStudent(id);
+    await recordAudit("student.delete", "student", id);
     revalidatePath(path);
   });
 }
@@ -249,6 +256,7 @@ export async function saveEnrollmentAction(formData: FormData) {
   const input = parseForm(enrollmentSchema, formData, path);
   await runAdminMutation(path, "saved", async () => {
     await saveEnrollment(input);
+    await recordAudit("enrollment.save", "enrollment", null);
     revalidatePath(path);
   });
 }
@@ -258,6 +266,7 @@ export async function renewEnrollmentAction(formData: FormData) {
   const input = parseForm(renewEnrollmentSchema, formData, path);
   await runAdminMutation(path, "renewed", async () => {
     await renewEnrollmentService(input);
+    await recordAudit("enrollment.renew", "enrollment", null);
     revalidatePath(path);
   });
 }
@@ -267,6 +276,7 @@ export async function cancelEnrollmentAction(formData: FormData) {
   const { id } = parseForm(cancelEnrollmentSchema, formData, path);
   await runAdminMutation(path, "canceled", async () => {
     await cancelEnrollmentService(id);
+    await recordAudit("enrollment.cancel", "enrollment", id);
     revalidatePath(path);
   });
 }
@@ -304,6 +314,7 @@ export async function approveEnrollmentRequestAction(formData: FormData) {
   const input = parseForm(approveEnrollmentRequestSchema, formData, path);
   await runAdminMutation(path, "approved", async () => {
     await approveEnrollmentRequest(input.id, input.expiresAt);
+    await recordAudit("request.approve", "enrollment_request", input.id);
     revalidatePath(path);
   });
 }
@@ -313,6 +324,7 @@ export async function rejectEnrollmentRequestAction(formData: FormData) {
   const { id } = parseForm(idSchema, formData, path);
   await runAdminMutation(path, "rejected", async () => {
     await rejectEnrollmentRequest(id);
+    await recordAudit("request.reject", "enrollment_request", id);
     revalidatePath(path);
   });
 }
@@ -322,6 +334,7 @@ export async function saveManagedUserAction(formData: FormData) {
   const input = parseForm(managedUserSchema, formData, path);
   await runAdminMutation(path, "saved", async () => {
     await saveManagedUser(input);
+    await recordAudit("user.save", "user", null);
     revalidatePath(path);
   });
 }

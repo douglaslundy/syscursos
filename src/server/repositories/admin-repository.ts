@@ -1355,6 +1355,9 @@ export async function updateAdminProfile(
   });
 }
 
+// Sem limite a consulta agrega todos os alunos; com milhares de alunos o filtro por produtor/aluno do painel reduz a lista.
+export const CONSUMPTION_LIMIT = 100;
+
 export async function getAdminConsumptionMetrics(
   organizationId: string,
   actorUserId: string,
@@ -1428,6 +1431,7 @@ export async function getAdminConsumptionMetrics(
       ${studentFilter ? Prisma.sql`AND s.id = ${studentFilter}::uuid` : Prisma.sql``}
     GROUP BY s.id, u.name, u.email, u.last_login_at
     ORDER BY u.name ASC
+    LIMIT ${CONSUMPTION_LIMIT}
   `);
 
   return rows.map((row) => ({

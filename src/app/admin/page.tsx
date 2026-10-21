@@ -124,6 +124,7 @@ export default async function AdminPage(props: { searchParams: Promise<AdminPage
           {user.role === "ADMIN"
             ? "Dados consolidados dos alunos vinculados aos produtores."
             : "Dados dos alunos vinculados ao seu produtor."}
+          {dashboard.studentConsumption.length >= 100 ? " Mostrando os 100 primeiros por nome; use os filtros para ver os demais." : ""}
         </p>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
