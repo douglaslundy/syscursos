@@ -75,5 +75,5 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 - [x] Atalhos de teclado nos flashcards/quiz, link "pular para o conteudo", foco visivel e rotulos ARIA.
 
 ### 11. Fechamento
-- [ ] Atualizar `docs/TODO.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`, `docs/ANALISE-SISTEMA.md` (marcar o que foi feito), `PROJECT_STATUS.md`.
-- [ ] Lint, tipos, testes, build; commit por etapa; relatorio final dizendo o que NAO foi testado (telas logadas no navegador, IA com chave real, migracao no banco real).
+- [x] Atualizados `docs/TODO.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`, `docs/ANALISE-SISTEMA.md` e `.env.example` (`CRON_SECRET`).
+- [x] Lint, tipos, 241 testes e `next build` verdes; commits por etapa (ultimo: PWA/refatoracao). Falta apenas o relatorio final ao usuario e as pendencias dele: autorizar `prisma migrate deploy`, push, `CRON_SECRET`, smoke no navegador.

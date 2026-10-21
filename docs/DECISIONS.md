@@ -1711,3 +1711,15 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 - Cabecalhos de seguranca basicos em `next.config.mjs`. CSP completa adiada: precisa de lista de origens testada no navegador.
 - `AppSetting` lido via `src/server/services/app-settings.ts` (cache em memoria de 30 s por instancia, limpo em toda escrita) para tirar 5 a 7 consultas de cada visita a aula.
 - Relatorio completo e lista de recursos em `docs/ANALISE-SISTEMA.md`.
+## Recursos de estudo, prova/certificado e endurecimento (2026-10-22)
+
+- **Quiz compartilhado:** o quiz de aula e `LessonAiContent` kind `QUIZ` (uma linha por aula, tecnica vazia): a primeira geracao gasta tokens e todos os outros alunos leem a linha salva. A prova final fica em `CourseExam` (uma por curso). Pedidos simultaneos do mesmo conteudo dividem uma chamada (mapa `inFlight`) e a corrida entre instancias cai no unique do banco (P2002 -> usa o salvo).
+- **Correcao no servidor:** `submitQuiz`/`submitExam` corrigem contra o conteudo salvo e gravam `QuizAttempt`; questoes erradas entram na fila de revisao (`FlashcardReview`, chave `quiz:<hash>`).
+- **Limite de IA:** 5 geracoes por minuto por aluno e instancia (`allowAiCall`), chat limitado a 30/dia (consulta em `AiUsage`). Contador em memoria: nao e global entre instancias.
+- **Repeticao espacada:** SM-2 simplificado em `src/lib/study/srs.ts`; chave do cartao e hash FNV-1a do enunciado.
+- **Certificado:** exige 100% das aulas e, com IA ativa (ou prova ja gerada), nota >= 70% na prova. Pagina publica `/verificar/<codigo>` expoe so nome, curso e data.
+- **Tempo de estudo:** batimentos de 30 s enquanto a aba esta visivel (maximo 60 s por chamada), um registro por dia (`StudyDay`, fuso de Sao Paulo). Sequencia e meta semanal derivam dele.
+- **Ordem de deploy:** o codigo le colunas novas (`lesson_progress.position_seconds`, `student_profiles.weekly_goal_minutes`) e tabelas novas; aplicar a migration antes. Dados extras da pagina da aula/curso usam `.catch` para nao derrubar o essencial se uma tabela faltar.
+- **Next 15:** `params`/`searchParams`/`cookies()` assincronos; o codemod oficial nao rodou (pacote do registro quebrado), a conversao foi feita a mao e validada com tsc, build e testes.
+- **Seguranca:** limite de tentativas em memoria por IP/e-mail, honeypot no cadastro, interruptor de cadastro aberto, auditoria (`AuditLog`) das acoes sensiveis, CSP so em Report-Only ate testar no navegador. Confirmacao de e-mail depende de SMTP no Supabase.
+- **PWA:** service worker nao guarda paginas privadas; so tela offline e estaticos. Notificacoes sao dentro do sistema (sem e-mail/push: nao ha provedor).

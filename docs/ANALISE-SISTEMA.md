@@ -87,3 +87,7 @@ Plataforma
 - Fluxos logados no navegador (gravacao do Drive, fim automatico, rascunho) e o botao do Gemini com chave valida.
 - Migracao do Next para 15.5.x e seus efeitos.
 - Configuracao real do Supabase (limite de login, politicas do bucket) e da Vercel.
+## 7. Andamento (atualizado em 2026-10-22)
+
+Feito: Next 15.5.28, jspdf 4.2.1, cabecalhos e CSP Report-Only, limite de tentativas, interruptor de cadastro, auditoria, limite do dashboard, `admin-repository` dividido, transcricao paginada, e os recursos 1 a 15 da secao 5 (quiz compartilhado, revisao espacada, chat, marcadores e transcricao clicavel, busca, velocidade/retomar/foco, sequencia e metas, certificado, Pomodoro, duvidas e avisos, playlists, exportacao, prova final, relatorios, PWA, atalhos, painel de saude).
+Pendente: aplicar a migration, `CRON_SECRET`, confirmacao de e-mail no cadastro, CSP ativo, dividir `admin-actions.ts` e `lesson-transcriber.tsx`, testar tudo no navegador logado.

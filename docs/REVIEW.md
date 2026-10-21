@@ -3439,3 +3439,8 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 
 - IA nas aulas: testes unitarios de parsers, prompts, tecnicas, baralho, layout do mapa, intervalo de mes, provedores (fetch simulado), servico de geracao (cache sem gasto de tokens, registro de consumo, erros) e geracao real de PDF. Consulta SQL do painel validada no banco. Sem chamada real a OpenAI/Gemini e sem teste visual no navegador.
 - Seguranca: chaves criptografadas e fora do backup (AppSetting excluido); geracao e PDF exigem matricula disponivel; painel e configuracao so ADMIN; filtros do painel validados (UUID, provedor, mes).
+## 2026-10-22 - Correcoes e recursos de estudo
+- tsc, next lint, vitest (241 testes) e next build verdes na migracao para Next 15.
+- Testes novos: rate limit, quiz (parser, correcao, compartilhamento sem gasto de IA), SRS, sequencias, busca/exportacao/playlists, tempo de estudo/marcadores/lembretes, duvidas e chat, prova final e certificado.
+- NAO verificado: migration aplicada no banco real, telas logadas no navegador, IA com chave real, cron na Vercel, service worker instalado, CSP no navegador. Fluxo de gravacao/Whisper continua sem teste manual.
+- Riscos: contadores de limite em memoria (por instancia); confirmacao de e-mail do cadastro continua pendente; `admin-actions.ts` e `lesson-transcriber.tsx` seguem grandes.

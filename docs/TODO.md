@@ -925,3 +925,15 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Transcricao: Gemini para aulas do YouTube, aviso de modelo em cache, bloqueio de troca automatica de aula, fim automatico, rascunho local.
 - [ ] Testar com chave Gemini valida: transcricao de video do YouTube por trechos (formato `videoMetadata`) e se o Gemini recusa trecho alem do fim do video (aulas sem duracao).
 - [ ] Smoke no navegador logado: gravacao do Drive com fim automatico e recuperacao do rascunho.
+## 2026-10-22 - Correcoes da analise e recursos de estudo (ver `docs/ROADMAP-EXECUCAO.md`)
+- [x] Next 14 -> 15.5.28 (cookies/params assincronos), jspdf 4.2.1, cabecalhos de seguranca e CSP em modo Report-Only.
+- [x] Limite de tentativas em login/cadastro, interruptor de cadastro aberto, honeypot, log de auditoria, cache de configuracoes, limite no dashboard de consumo, `admin-repository` dividido.
+- [x] Quiz por aula gerado por IA e salvo no banco (reaproveitado por todos os alunos), prova final do curso, certificado com verificacao publica.
+- [x] Revisao espacada (SM-2) com fila do dia, progresso (sequencia, meta semanal, grafico), lembrete por cron, marcadores, transcricao clicavel e com busca, velocidade/retomar/modo foco, Pomodoro.
+- [x] Chat com a aula (IA so com a transcricao), duvidas por aula com resposta do produtor, avisos, busca global, exportar Markdown/Anki, playlists.
+- [x] Relatorios do produtor, painel de saude do admin, PWA (manifest, icones, tela offline), atalhos de teclado.
+- [ ] **Aplicar `prisma migrate deploy` (migration `20261022120000_study_features`) ANTES do deploy**; o codigo novo le colunas/tabelas dela.
+- [ ] Definir `CRON_SECRET` na Vercel (lembretes diarios) e conferir `SETTINGS_ENCRYPTION_KEY`.
+- [ ] Smoke no navegador logado de todas as telas novas; testar IA com chave real (quiz, prova, chat); testar o cron.
+- [ ] Decidir confirmacao de e-mail no cadastro (precisa de SMTP no Supabase) e promover o CSP de Report-Only para ativo.
+- [ ] Pendentes: dividir `admin-actions.ts` e extrair hooks de `lesson-transcriber.tsx`; sem sincronizacao offline (PWA so mostra tela offline).
