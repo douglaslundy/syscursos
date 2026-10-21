@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { appSettings } from "@/server/services/app-settings";
 import { requireRole } from "@/server/auth/guards";
 import { decryptSecret, encryptSecret } from "@/server/security/secret-box";
 import { pingGemini } from "@/server/services/gemini-transcribe-service";
@@ -18,13 +19,13 @@ export type GoogleKeyTestResult =
 
 // Chave salva na UI tem prioridade; GOOGLE_API_KEY do ambiente e o fallback.
 export async function getGoogleApiKey() {
-  const row = await prisma.appSetting.findUnique({ where: { key: GOOGLE_KEY } });
+  const row = await appSettings.findUnique({ where: { key: GOOGLE_KEY } });
   return (row ? decryptSecret(row.value) : null) ?? process.env.GOOGLE_API_KEY ?? null;
 }
 
 export async function getGoogleKeyStatus() {
   await requireRole("ADMIN");
-  const row = await prisma.appSetting.findUnique({ where: { key: GOOGLE_KEY } });
+  const row = await appSettings.findUnique({ where: { key: GOOGLE_KEY } });
   const stored = row ? decryptSecret(row.value) : null;
   const key = stored ?? process.env.GOOGLE_API_KEY ?? null;
 
@@ -38,7 +39,7 @@ export async function getGoogleKeyStatus() {
 
 export async function saveGoogleApiKey(key: string) {
   await requireRole("ADMIN");
-  await prisma.appSetting.upsert({
+  await appSettings.upsert({
     where: { key: GOOGLE_KEY },
     create: { key: GOOGLE_KEY, value: encryptSecret(key) },
     update: { value: encryptSecret(key) },
@@ -47,7 +48,7 @@ export async function saveGoogleApiKey(key: string) {
 
 export async function removeGoogleApiKey() {
   await requireRole("ADMIN");
-  await prisma.appSetting.deleteMany({ where: { key: GOOGLE_KEY } });
+  await appSettings.deleteMany({ where: { key: GOOGLE_KEY } });
 }
 
 // Testa a chave informada (ou a salva) lendo os metadados de um arquivo real do Drive ja cadastrado.
@@ -121,13 +122,13 @@ export type TranscriptionMethod = "browser" | "gemini";
 export type GeminiKeyTestResult = "ok" | "empty" | "invalid" | "quota" | "network";
 
 export async function getGeminiApiKey() {
-  const row = await prisma.appSetting.findUnique({ where: { key: GEMINI_KEY } });
+  const row = await appSettings.findUnique({ where: { key: GEMINI_KEY } });
   return row ? decryptSecret(row.value) : null;
 }
 
 export async function getGeminiKeyStatus() {
   await requireRole("ADMIN");
-  const row = await prisma.appSetting.findUnique({ where: { key: GEMINI_KEY } });
+  const row = await appSettings.findUnique({ where: { key: GEMINI_KEY } });
   const key = row ? decryptSecret(row.value) : null;
   return { configured: key !== null, hint: key ? `...${key.slice(-4)}` : null, unreadable: row !== null && key === null };
 }
@@ -135,14 +136,14 @@ export async function getGeminiKeyStatus() {
 export async function saveGeminiApiKey(key: string) {
   await requireRole("ADMIN");
   const value = encryptSecret(key);
-  await prisma.appSetting.upsert({ where: { key: GEMINI_KEY }, create: { key: GEMINI_KEY, value }, update: { value } });
+  await appSettings.upsert({ where: { key: GEMINI_KEY }, create: { key: GEMINI_KEY, value }, update: { value } });
 }
 
 // Sem chave, o metodo Gemini nao funciona: volta para o navegador.
 export async function removeGeminiApiKey() {
   await requireRole("ADMIN");
-  await prisma.appSetting.deleteMany({ where: { key: GEMINI_KEY } });
-  await prisma.appSetting.deleteMany({ where: { key: METHOD_KEY, value: "gemini" } });
+  await appSettings.deleteMany({ where: { key: GEMINI_KEY } });
+  await appSettings.deleteMany({ where: { key: METHOD_KEY, value: "gemini" } });
 }
 
 export async function testGeminiApiKey(candidate: string | null): Promise<GeminiKeyTestResult> {
@@ -158,7 +159,7 @@ export async function testGeminiApiKey(candidate: string | null): Promise<Gemini
 
 // Metodo efetivo: "gemini" so vale com chave legivel; o padrao e "browser".
 export async function getTranscriptionMethod(): Promise<TranscriptionMethod> {
-  const row = await prisma.appSetting.findUnique({ where: { key: METHOD_KEY } });
+  const row = await appSettings.findUnique({ where: { key: METHOD_KEY } });
 
   if (row?.value === "gemini" && (await getGeminiApiKey())) {
     return "gemini";
@@ -174,7 +175,7 @@ export async function saveTranscriptionMethod(method: TranscriptionMethod): Prom
     return "need_key";
   }
 
-  await prisma.appSetting.upsert({
+  await appSettings.upsert({
     where: { key: METHOD_KEY },
     create: { key: METHOD_KEY, value: method },
     update: { value: method },

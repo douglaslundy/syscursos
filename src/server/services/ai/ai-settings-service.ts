@@ -1,5 +1,5 @@
 import { isTechniqueId, parseActiveTechniques, type SummaryTechniqueId } from "@/lib/ai/techniques";
-import { prisma } from "@/lib/db/prisma";
+import { appSettings } from "@/server/services/app-settings";
 import { requireRole } from "@/server/auth/guards";
 import { decryptSecret, encryptSecret } from "@/server/security/secret-box";
 import { callProvider, type AiProviderId } from "@/server/services/ai/providers";
@@ -14,7 +14,7 @@ export const AI_PROVIDERS: readonly AiProviderId[] = ["openai", "gemini"];
 export type AiKeyTestResult = "ok" | "empty" | "invalid" | "quota" | "network";
 
 async function readSecret(key: string) {
-  const row = await prisma.appSetting.findUnique({ where: { key } });
+  const row = await appSettings.findUnique({ where: { key } });
   return { value: row ? decryptSecret(row.value) : null, stored: row !== null };
 }
 
@@ -33,7 +33,7 @@ async function configuredProviders() {
 
 // Provedor ativo: o escolhido pelo admin se a chave ainda existe; sem escolha, o unico configurado.
 export async function getActiveAiProvider(): Promise<AiProviderId | null> {
-  const [row, configured] = await Promise.all([prisma.appSetting.findUnique({ where: { key: ACTIVE_KEY } }), configuredProviders()]);
+  const [row, configured] = await Promise.all([appSettings.findUnique({ where: { key: ACTIVE_KEY } }), configuredProviders()]);
   const chosen = AI_PROVIDERS.find((provider) => provider === row?.value);
 
   if (chosen && configured.includes(chosen)) return chosen;
@@ -42,7 +42,7 @@ export async function getActiveAiProvider(): Promise<AiProviderId | null> {
 }
 
 export async function getActiveTechniques(): Promise<SummaryTechniqueId[]> {
-  const row = await prisma.appSetting.findUnique({ where: { key: TECHNIQUES_KEY } });
+  const row = await appSettings.findUnique({ where: { key: TECHNIQUES_KEY } });
   return parseActiveTechniques(row?.value);
 }
 
@@ -74,19 +74,19 @@ export async function getAiSettingsStatus() {
 export async function saveOpenAiApiKey(key: string) {
   await requireRole("ADMIN");
   const value = encryptSecret(key);
-  await prisma.appSetting.upsert({ where: { key: OPENAI_KEY }, create: { key: OPENAI_KEY, value }, update: { value } });
+  await appSettings.upsert({ where: { key: OPENAI_KEY }, create: { key: OPENAI_KEY, value }, update: { value } });
 }
 
 export async function removeOpenAiApiKey() {
   await requireRole("ADMIN");
-  await prisma.appSetting.deleteMany({ where: { key: OPENAI_KEY } });
-  await prisma.appSetting.deleteMany({ where: { key: ACTIVE_KEY, value: "openai" } });
+  await appSettings.deleteMany({ where: { key: OPENAI_KEY } });
+  await appSettings.deleteMany({ where: { key: ACTIVE_KEY, value: "openai" } });
 }
 
 export async function saveGeminiAiKey(key: string) {
   await requireRole("ADMIN");
   const value = encryptSecret(key);
-  await prisma.appSetting.upsert({ where: { key: GEMINI_KEY }, create: { key: GEMINI_KEY, value }, update: { value } });
+  await appSettings.upsert({ where: { key: GEMINI_KEY }, create: { key: GEMINI_KEY, value }, update: { value } });
 }
 
 export async function testAiKey(provider: AiProviderId, candidate: string | null): Promise<AiKeyTestResult> {
@@ -107,7 +107,7 @@ export async function saveActiveAiProvider(provider: AiProviderId): Promise<"sav
 
   if (!(await providerKey(provider))) return "need_key";
 
-  await prisma.appSetting.upsert({
+  await appSettings.upsert({
     where: { key: ACTIVE_KEY },
     create: { key: ACTIVE_KEY, value: provider },
     update: { value: provider },
@@ -118,5 +118,5 @@ export async function saveActiveAiProvider(provider: AiProviderId): Promise<"sav
 export async function saveActiveTechniques(ids: string[]) {
   await requireRole("ADMIN");
   const value = JSON.stringify(Array.from(new Set(ids.filter(isTechniqueId))));
-  await prisma.appSetting.upsert({ where: { key: TECHNIQUES_KEY }, create: { key: TECHNIQUES_KEY, value }, update: { value } });
+  await appSettings.upsert({ where: { key: TECHNIQUES_KEY }, create: { key: TECHNIQUES_KEY, value }, update: { value } });
 }

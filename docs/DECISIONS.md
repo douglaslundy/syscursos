@@ -1704,3 +1704,10 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 - Aula nao avanca sozinha durante transcricao ou com texto nao salvo: estado em `lib/transcription/guard.ts` lido pelo painel da aula.
 - Fim automatico: YouTube pelo evento de fim do player; Drive so quando a duracao da aula e conhecida (tempo gravado >= duracao e 6 s de silencio, ou +90 s). Sem duracao nao encerra sozinho.
 - Rascunho no `localStorage` por aula, gravado a cada trecho e durante a conferencia; sai so depois de salvo no banco. O trecho de ate 1 min em gravacao no momento da troca de pagina se perde.
+
+## Analise geral: dependencias, cabecalhos e cache de configuracao (2026-10-21)
+
+- `jspdf` 2.5.2 -> 4.2.1 (avisos criticos) e `npm audit fix` sem mudanca de versao maior. Next 14.2.35 segue com avisos que so a linha 15.5.24+ corrige; migracao fica para branch propria.
+- Cabecalhos de seguranca basicos em `next.config.mjs`. CSP completa adiada: precisa de lista de origens testada no navegador.
+- `AppSetting` lido via `src/server/services/app-settings.ts` (cache em memoria de 30 s por instancia, limpo em toda escrita) para tirar 5 a 7 consultas de cada visita a aula.
+- Relatorio completo e lista de recursos em `docs/ANALISE-SISTEMA.md`.
