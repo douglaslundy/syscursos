@@ -3444,3 +3444,11 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Testes novos: rate limit, quiz (parser, correcao, compartilhamento sem gasto de IA), SRS, sequencias, busca/exportacao/playlists, tempo de estudo/marcadores/lembretes, duvidas e chat, prova final e certificado.
 - NAO verificado: migration aplicada no banco real, telas logadas no navegador, IA com chave real, cron na Vercel, service worker instalado, CSP no navegador. Fluxo de gravacao/Whisper continua sem teste manual.
 - Riscos: contadores de limite em memoria (por instancia); confirmacao de e-mail do cadastro continua pendente; `admin-actions.ts` e `lesson-transcriber.tsx` seguem grandes.
+
+## 2026-10-22 - Migracao aplicada e divisao de admin-actions
+- `prisma migrate deploy` aplicou `20261022120000_study_features` no banco real (so adiciona enum, colunas e tabelas).
+- `admin-actions.ts` dividido em `admin-content-actions.ts`, `admin-people-actions.ts`, `admin-helpers.ts` e `admin-cover-upload.ts` (arquivos "use server" so exportam acoes; helpers ficam em modulos sem a diretiva). Comportamento igual: 241 testes, tsc, eslint e build verdes.
+- `lesson-transcriber.tsx`: so os helpers puros foram para `src/lib/transcription/browser.ts` (com teste). Os hooks de gravacao e Whisper NAO foram extraidos: dependem de refs compartilhados e microfone, sem teste em navegador.
+- Fumaca com `next start` sem login: `/login/client`, `/offline.html`, `/verificar/<codigo>`, `/manifest.webmanifest`, `/sw.js`, icones respondem 200; cron sem `CRON_SECRET` responde 503; CSP Report-Only e demais cabecalhos presentes.
+- NAO verificado: telas logadas (sem credencial para o agente), IA com chave real, cron na Vercel, gravacao do Drive.
+- `npm audit` (com dev): 25 avisos, 2 criticos em `tinypool` (vitest) e altos em `tailwindcss`; so em ferramentas de teste/build, exigem vitest 5 e tailwind maior. Sem dev: 10 (braces, esbuild, postcss, postcss-selector-parser) presos a versoes maiores.
