@@ -2,11 +2,13 @@ import Link from "next/link";
 import { CalendarDays, CheckCircle2, Circle, PlayCircle } from "lucide-react";
 
 import { ContinueLessonBlock } from "@/components/student/continue-lesson-block";
+import { CourseCertificate } from "@/components/student/course-certificate";
 import { CourseBlocked } from "@/components/student/course-blocked";
 import { CourseScheduleMode } from "@/components/student/course-schedule-mode";
 import { FavoriteButton } from "@/components/student/favorite-button";
 import { EmptyState } from "@/components/student/empty-state";
 import { ProgressBar } from "@/components/student/progress-bar";
+import { getCertificateState } from "@/server/services/certificate-service";
 import { getCourseFavoriteState } from "@/server/services/favorite-service";
 import { getCourseScheduleMode } from "@/server/services/study-plan-service";
 import { getStudentCourse } from "@/server/services/student-service";
@@ -20,10 +22,15 @@ type StudentCoursePageProps = {
 export default async function StudentCoursePage(props: { params: Promise<StudentCoursePageProps["params"]> }) {
   const params = await props.params;
   const { courseId } = studentCourseParamsSchema.parse(params);
-  const [data, isFavorite, scheduleMode] = await Promise.all([
+  const [data, isFavorite, scheduleMode, certificate] = await Promise.all([
     getStudentCourse(courseId),
     getCourseFavoriteState(courseId),
     getCourseScheduleMode(courseId),
+    // Recurso extra: se a tabela ainda nao existir ou o banco falhar, a pagina do curso continua funcionando.
+    getCertificateState(courseId).catch((error: unknown) => {
+      console.error("Certificate state failed to load.", error);
+      return null;
+    }),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -75,6 +82,8 @@ export default async function StudentCoursePage(props: { params: Promise<Student
           />
         </div>
       </div>
+
+      {certificate ? <CourseCertificate courseId={courseId} state={certificate} /> : null}
 
       <div className="mt-8 space-y-5">
         {data.continueLesson ? (

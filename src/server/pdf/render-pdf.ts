@@ -151,3 +151,39 @@ export function renderMindMapPdf(input: { header: PdfHeader; map: MindMapNode })
   footer(doc, input.header);
   return toBuffer(doc);
 }
+
+// Certificado em A4 paisagem. A verificacao publica fica na URL impressa no rodape.
+export function renderCertificatePdf(input: { studentName: string; courseTitle: string; code: string; issuedAt: Date; verifyUrl: string }) {
+  const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "landscape" });
+  const width = doc.internal.pageSize.getWidth();
+  const height = doc.internal.pageSize.getHeight();
+  const center = width / 2;
+  const maxWidth = width - 160;
+  const date = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long" }).format(input.issuedAt);
+
+  doc.setDrawColor(255, 77, 0).setLineWidth(3).rect(24, 24, width - 48, height - 48);
+  doc.setDrawColor(200).setLineWidth(0.5).rect(34, 34, width - 68, height - 68);
+
+  doc.setFont("helvetica", "bold").setFontSize(30).setTextColor(20);
+  doc.text("CERTIFICADO DE CONCLUSAO", center, 120, { align: "center" });
+
+  doc.setFont("helvetica", "normal").setFontSize(13).setTextColor(80);
+  doc.text("Certificamos que", center, 175, { align: "center" });
+
+  doc.setFont("helvetica", "bold").setFontSize(26).setTextColor(255, 77, 0);
+  doc.text(doc.splitTextToSize(toPdfText(input.studentName), maxWidth) as string[], center, 215, { align: "center" });
+
+  doc.setFont("helvetica", "normal").setFontSize(13).setTextColor(80);
+  doc.text("concluiu com aproveitamento o curso", center, 258, { align: "center" });
+
+  doc.setFont("helvetica", "bold").setFontSize(20).setTextColor(20);
+  doc.text(doc.splitTextToSize(toPdfText(input.courseTitle), maxWidth) as string[], center, 295, { align: "center" });
+
+  doc.setFont("helvetica", "normal").setFontSize(11).setTextColor(90);
+  doc.text(toPdfText(`Emitido em ${date}`), center, 400, { align: "center" });
+  doc.text(`Codigo de verificacao: ${input.code}`, center, 420, { align: "center" });
+  doc.setFontSize(9).setTextColor(120);
+  doc.text(toPdfText(`Confira a autenticidade em ${input.verifyUrl}`), center, 438, { align: "center" });
+
+  return toBuffer(doc);
+}

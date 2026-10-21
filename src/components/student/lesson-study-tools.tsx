@@ -11,7 +11,7 @@ import { parseQuiz } from "@/lib/ai/quiz";
 import { SUMMARY_TECHNIQUES, type SummaryTechniqueId } from "@/lib/ai/techniques";
 import { cardKey } from "@/lib/study/srs";
 import { generateAiContentAction } from "@/server/actions/ai-actions";
-import { reviewCardAction } from "@/server/actions/study-actions";
+import { reviewCardAction, submitQuizAction } from "@/server/actions/study-actions";
 import type { AiGenerateError, AiItem } from "@/server/services/ai/ai-content-service";
 
 type LessonStudyToolsProps = {
@@ -320,7 +320,7 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
           {pending ? <p className="text-sm text-copy-secondary">Gerando o quiz... pode levar alguns segundos.</p> : null}
           {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
           {quiz ? (
-            <QuizPanel attempts={quizAttempts} courseId={courseId} lessonId={lessonId} quiz={quiz} />
+            <QuizPanel attempts={quizAttempts} quiz={quiz} submit={(answers) => submitQuizAction({ courseId, lessonId, answers })} />
           ) : !pending ? (
             <>
               <p className="mb-3 text-sm text-copy-secondary">

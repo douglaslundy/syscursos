@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import type { Quiz } from "@/lib/ai/quiz";
+import { issueCertificate } from "@/server/services/certificate-service";
+import { ensureCourseExam, submitExam, type ExamError } from "@/server/services/exam-service";
 import { addBookmark, removeBookmark, savePosition } from "@/server/services/bookmark-service";
 import { reviewCard } from "@/server/services/review-service";
 import { submitQuiz, type QuizSubmitResult } from "@/server/services/quiz-service";
@@ -84,4 +87,41 @@ export async function savePositionAction(input: z.infer<typeof positionSchema>) 
   const parsed = positionSchema.safeParse(input);
 
   return parsed.success ? savePosition(parsed.data) : false;
+}
+
+const examIdSchema = z.object({ courseId: z.string().uuid() });
+
+// Gera (uma unica vez) ou devolve a prova final do curso, compartilhada por todos os alunos.
+export async function loadExamAction(input: z.infer<typeof examIdSchema>): Promise<{ ok: true; quiz: Quiz } | { ok: false; error: ExamError }> {
+  const parsed = examIdSchema.safeParse(input);
+
+  if (!parsed.success) return { ok: false, error: "forbidden" };
+
+  const result = await ensureCourseExam(parsed.data.courseId);
+
+  return result.ok ? { ok: true, quiz: result.quiz } : result;
+}
+
+export async function submitExamAction(input: z.infer<typeof examIdSchema> & { answers: Array<number | null> }): Promise<QuizSubmitResult> {
+  const parsed = examIdSchema.extend({ answers: z.array(z.number().int().min(0).max(3).nullable()).min(1).max(60) }).safeParse(input);
+
+  if (!parsed.success) return { ok: false, error: "invalid" };
+
+  const result = await submitExam(parsed.data);
+
+  if (result.ok) revalidatePath(`/app/courses/${parsed.data.courseId}`);
+
+  return result;
+}
+
+export async function issueCertificateAction(input: z.infer<typeof examIdSchema>) {
+  const parsed = examIdSchema.safeParse(input);
+
+  if (!parsed.success) return { ok: false, error: "forbidden" } as const;
+
+  const result = await issueCertificate(parsed.data.courseId);
+
+  if (result.ok) revalidatePath(`/app/courses/${parsed.data.courseId}`);
+
+  return result;
 }

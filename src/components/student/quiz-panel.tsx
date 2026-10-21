@@ -4,13 +4,13 @@ import { useEffect, useState, useTransition } from "react";
 
 import type { Quiz } from "@/lib/ai/quiz";
 import { buttonClass, primaryClass } from "@/components/student/study-modal";
-import { submitQuizAction } from "@/server/actions/study-actions";
-import type { QuizResult } from "@/server/services/quiz-service";
+import type { QuizResult, QuizSubmitResult } from "@/server/services/quiz-service";
 
 type QuizPanelProps = {
-  courseId: string;
-  lessonId: string;
   quiz: Quiz;
+  // Corrige no servidor (quiz da aula ou prova final).
+  submit: (answers: Array<number | null>) => Promise<QuizSubmitResult>;
+  passScore?: number;
   attempts: Array<{ score: number; total: number; createdAt: string }>;
 };
 
@@ -22,7 +22,7 @@ const errorText = {
 
 const letter = (index: number) => String.fromCharCode(65 + index);
 
-export function QuizPanel({ courseId, lessonId, quiz, attempts: initialAttempts }: QuizPanelProps) {
+export function QuizPanel({ quiz, submit: submitAnswers, passScore, attempts: initialAttempts }: QuizPanelProps) {
   const [answers, setAnswers] = useState<Array<number | null>>(() => quiz.questions.map(() => null));
   const [result, setResult] = useState<QuizResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export function QuizPanel({ courseId, lessonId, quiz, attempts: initialAttempts 
   function submit() {
     setError(null);
     startTransition(async () => {
-      const response = await submitQuizAction({ courseId, lessonId, answers });
+      const response = await submitAnswers(answers);
 
       if (!response.ok) {
         setError(errorText[response.error]);
@@ -77,7 +77,13 @@ export function QuizPanel({ courseId, lessonId, quiz, attempts: initialAttempts 
       {result ? (
         <p className="rounded-md border border-stroke-subtle bg-background p-3 text-base font-semibold text-copy-primary" role="status">
           Voce acertou {result.score} de {result.total} ({Math.round((result.score / result.total) * 100)}%).
-          {result.score < result.total ? " As questoes erradas foram para a sua revisao do dia." : " Excelente!"}
+          {passScore !== undefined
+            ? result.score / result.total >= passScore
+              ? " Aprovado!"
+              : ` Nota minima para aprovacao: ${Math.round(passScore * 100)}%.`
+            : result.score < result.total
+              ? " As questoes erradas foram para a sua revisao do dia."
+              : " Excelente!"}
         </p>
       ) : (
         <p className="text-xs text-copy-muted">
