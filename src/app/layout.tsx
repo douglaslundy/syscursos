@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
+import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 import "./globals.css";
@@ -7,7 +8,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "SysCursos",
   description: "Plataforma de cursos online",
+  appleWebApp: { capable: true, title: "SysCursos", statusBarStyle: "black-translucent" },
 };
+
+export const viewport: Viewport = { themeColor: "#FF4D00" };
 
 type RootLayoutProps = Readonly<{
   children: React.ReactNode;
@@ -38,6 +42,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body>
         {children}
         <ThemeToggle />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );

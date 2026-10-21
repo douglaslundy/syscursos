@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { Modal, buttonClass, primaryClass } from "@/components/student/study-modal";
 import { QuizPanel } from "@/components/student/quiz-panel";
@@ -71,6 +71,23 @@ function Deck({ cards, courseId, lessonId }: { cards: Flashcard[]; courseId: str
     setRound((value) => value + 1);
   }
 
+  // Atalhos: espaco mostra a resposta; 1 = errei, 2 = acertei, 3 = facil.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.target as HTMLElement | null)?.closest("input, textarea, select, button") || !current) return;
+
+      if (event.key === " " && !revealed) {
+        event.preventDefault();
+        setRevealed(true);
+      } else if (revealed && event.key === "1") grade("again");
+      else if (revealed && event.key === "2") grade("good");
+      else if (revealed && event.key === "3") grade("easy");
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
   if (!current) {
     return (
       <div className="space-y-3 text-center">
@@ -107,18 +124,18 @@ function Deck({ cards, courseId, lessonId }: { cards: Flashcard[]; courseId: str
       {revealed ? (
         <div className="flex flex-wrap gap-2">
           <button className={buttonClass} onClick={() => grade("again")} type="button">
-            Errei (ver de novo)
+            Errei (1)
           </button>
           <button className={primaryClass} onClick={() => grade("good")} type="button">
-            Acertei
+            Acertei (2)
           </button>
           <button className={buttonClass} onClick={() => grade("easy")} type="button">
-            Facil
+            Facil (3)
           </button>
         </div>
       ) : (
         <button className={primaryClass} onClick={() => setRevealed(true)} type="button">
-          Mostrar resposta
+          Mostrar resposta (espaco)
         </button>
       )}
     </div>

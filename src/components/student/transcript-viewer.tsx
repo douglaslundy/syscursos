@@ -5,11 +5,16 @@ import { useEffect, useMemo, useState } from "react";
 import { PLAYER_READY_EVENT, getPlayer, seekTo } from "@/lib/study/player-bridge";
 import { filterLines, parseTranscriptLines } from "@/lib/study/transcript-lines";
 
+// Aulas longas tem milhares de linhas: mostra aos poucos para nao pesar a pagina.
+const PAGE_LINES = 150;
+
 export function TranscriptViewer({ text }: { text: string }) {
   const [query, setQuery] = useState("");
+  const [shown, setShown] = useState(PAGE_LINES);
   const [canSeek, setCanSeek] = useState(false);
   const lines = useMemo(() => parseTranscriptLines(text), [text]);
-  const visible = useMemo(() => filterLines(lines, query), [lines, query]);
+  const matches = useMemo(() => filterLines(lines, query), [lines, query]);
+  const visible = matches.slice(0, shown);
 
   // So o YouTube expoe controle de tempo; no Drive a marca fica como texto.
   useEffect(() => {
@@ -25,12 +30,15 @@ export function TranscriptViewer({ text }: { text: string }) {
       <input
         aria-label="Buscar na transcricao"
         className="min-h-10 w-full rounded-md border border-stroke-subtle bg-background px-3 text-sm outline-none"
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setShown(PAGE_LINES);
+        }}
         placeholder="Buscar na transcricao"
         type="search"
         value={query}
       />
-      {query ? <p className="mt-1 text-xs text-copy-muted">{visible.length} trechos encontrados</p> : null}
+      {query ? <p className="mt-1 text-xs text-copy-muted">{matches.length} trechos encontrados</p> : null}
       <div className="mt-2 max-h-96 space-y-1 overflow-y-auto text-sm leading-6 text-copy-secondary">
         {visible.map((line) => (
           <p key={line.index}>
@@ -51,6 +59,11 @@ export function TranscriptViewer({ text }: { text: string }) {
             {line.text}
           </p>
         ))}
+        {matches.length > visible.length ? (
+          <button className="rounded-md border border-stroke-subtle px-3 py-1.5 text-xs font-medium text-copy-secondary hover:bg-surface-hover" onClick={() => setShown((value) => value + PAGE_LINES)} type="button">
+            Mostrar mais ({matches.length - visible.length} restantes)
+          </button>
+        ) : null}
       </div>
     </div>
   );

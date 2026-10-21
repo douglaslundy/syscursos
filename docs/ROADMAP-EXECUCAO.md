@@ -26,8 +26,8 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 - [x] Auditoria: `src/server/services/audit-service.ts` gravando `AuditLog` nas acoes sensiveis do admin (apagar curso/modulo/aula/aluno, matriculas, usuarios, chaves, backup, aprovacao de pedidos).
 - [x] CSP em modo `Report-Only` (YouTube, Drive, Hugging Face, worker) em `next.config.mjs`.
 - [x] `getAdminConsumptionMetrics` com limite/paginacao (hoje sem `LIMIT`).
-- [ ] Dividir `admin-repository.ts` (1.742 linhas) e `admin-actions.ts` (740) por dominio, mantendo a API publica; extrair hooks de `lesson-transcriber.tsx`.
-- [ ] Transcricao longa carregada sob demanda na pagina da aula.
+- [x] `admin-repository.ts` dividido em `src/server/repositories/admin/*` (barrel mantem a API). NAO feito: `admin-actions.ts` (740 linhas; arquivos "use server" nao aceitam `export *`, exigiria reescrever imports das paginas) e extracao de hooks de `lesson-transcriber.tsx` (sem teste no navegador, risco de regressao).
+- [x] Transcricao exibida aos poucos (150 linhas por vez) no `TranscriptViewer`; o texto completo ainda vai no payload da pagina.
 - [ ] Reaproveitar `React.cache` na busca de matricula repetida entre `findTranscribableLesson` e `getStudentLesson`.
 - [ ] Limite por aluno nas chamadas de IA (feito no servico; falta teste) e aviso de custo no painel.
 
@@ -71,8 +71,8 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 - [x] Certificado (`Certificate`) quando o curso chega a 100% e a prova (se houver) tem nota >= 70%; PDF e pagina publica de verificacao `/verificar/[codigo]` (so nome, curso e data).
 
 ### 10. PWA e acessibilidade
-- [ ] `manifest.webmanifest`, icones, service worker simples (shell + pagina offline); anotar o limite (sem sincronizacao offline de anotacoes).
-- [ ] Atalhos de teclado nos flashcards/quiz, link "pular para o conteudo", foco visivel e rotulos ARIA.
+- [x] `manifest.webmanifest`, icones, service worker simples (shell + pagina offline); anotar o limite (sem sincronizacao offline de anotacoes).
+- [x] Atalhos de teclado nos flashcards/quiz, link "pular para o conteudo", foco visivel e rotulos ARIA.
 
 ### 11. Fechamento
 - [ ] Atualizar `docs/TODO.md`, `docs/DECISIONS.md`, `docs/REVIEW.md`, `docs/ANALISE-SISTEMA.md` (marcar o que foi feito), `PROJECT_STATUS.md`.
