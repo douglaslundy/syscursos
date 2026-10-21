@@ -3461,3 +3461,7 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 ## 2026-10-22 - Limite de IA por aluno global
 - `allowAiCall` passou a usar `hitGlobal` (banco, 5 chamadas por minuto por aluno), com reserva em memoria. Vale para resumos, quiz, prova final e chat. Nos testes o banco e simulado sem `rateLimitEvent`, entao aparece log de erro esperado do fallback em memoria.
 - Nao feito: `React.cache` na busca de matricula (cada acao e uma requisicao separada, ganho pequeno); trava entre instancias para geracao simultanea (hoje so ha dedupe por instancia e o conflito `P2002` descarta o segundo resultado, com possivel gasto duplicado raro).
+
+## 2026-10-22 - Toolchain de testes atualizado
+- `vitest` 5, `vite` 7 e `@vitejs/plugin-react` 5 (so devDependencies). `npm audit` caiu de 25 para 20 avisos e os 2 criticos (`tinypool`) sumiram; 246 testes, tsc, lint e build verdes.
+- Restam 10 avisos de producao (braces, esbuild, postcss, postcss-selector-parser) presos a versoes maiores de `next`/`tailwindcss`. Nao alterados.
