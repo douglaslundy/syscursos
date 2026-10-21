@@ -7,7 +7,8 @@ type UsersPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default function AdminUsersPage({ searchParams }: UsersPageProps) {
+export default async function AdminUsersPage(props: { searchParams: Promise<UsersPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
 
   return (

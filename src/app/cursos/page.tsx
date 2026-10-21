@@ -18,7 +18,8 @@ type PublicCoursesPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function PublicCoursesPage({ searchParams }: PublicCoursesPageProps) {
+export default async function PublicCoursesPage(props: { searchParams: Promise<PublicCoursesPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const auth = await getCurrentUser("client");
   const studentId = auth.ok && auth.user.role === "STUDENT" ? auth.user.studentProfileId : null;
   const courses = await listPublicCourses(studentId);

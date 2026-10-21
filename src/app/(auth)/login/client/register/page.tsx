@@ -6,7 +6,8 @@ type ClientRegisterPageProps = {
   };
 };
 
-export default function ClientRegisterPage({ searchParams }: ClientRegisterPageProps) {
+export default async function ClientRegisterPage(props: { searchParams: Promise<ClientRegisterPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   return (
     <RegisterForm
       audience="client"

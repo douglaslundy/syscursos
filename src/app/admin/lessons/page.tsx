@@ -13,7 +13,8 @@ type AdminLessonsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function AdminLessonsPage({ searchParams }: AdminLessonsPageProps) {
+export default async function AdminLessonsPage(props: { searchParams: Promise<AdminLessonsPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const pagination = getPagination(searchParams);
   const status = getStringParam(searchParams, "status");
   const formReset = getStringParam(searchParams, "formReset") ?? "idle";

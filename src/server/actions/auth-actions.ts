@@ -22,7 +22,7 @@ export async function loginAction(formData: FormData) {
     redirect(`${loginPath}?error=invalid_input`);
   }
 
-  const supabase = createSupabaseServerClient(audience);
+  const supabase = await createSupabaseServerClient(audience);
   let authResult;
 
   try {
@@ -108,7 +108,7 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction(formData?: FormData) {
   const audience = parseAudience(formData?.get("audience") ?? null);
   const loginPath = audience === "admin" ? "/login/admin" : "/login/client";
-  const supabase = createSupabaseServerClient(audience);
+  const supabase = await createSupabaseServerClient(audience);
   await supabase.auth.signOut();
   redirect(loginPath);
 }
@@ -183,7 +183,7 @@ export async function registerAction(formData: FormData) {
     redirect(`${registerPath}?error=server`);
   }
 
-  const supabase = createSupabaseServerClient("client");
+  const supabase = await createSupabaseServerClient("client");
   const signIn = await supabase.auth.signInWithPassword({
     email: parsed.data.email,
     password: parsed.data.password,

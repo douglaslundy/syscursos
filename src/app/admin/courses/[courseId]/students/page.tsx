@@ -9,10 +9,9 @@ type CourseStudentsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function CourseStudentsPage({
-  params,
-  searchParams,
-}: CourseStudentsPageProps) {
+export default async function CourseStudentsPage(props: { params: Promise<CourseStudentsPageProps["params"]>; searchParams: Promise<CourseStudentsPageProps["searchParams"]> }) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const pagination = getPagination(searchParams);
   const { course, enrollments } = await getStudentsByCourse(params.courseId, pagination);
 

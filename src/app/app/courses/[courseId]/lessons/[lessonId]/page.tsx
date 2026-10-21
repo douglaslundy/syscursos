@@ -21,7 +21,9 @@ type StudentLessonPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function StudentLessonPage({ params, searchParams }: StudentLessonPageProps) {
+export default async function StudentLessonPage(props: { params: Promise<StudentLessonPageProps["params"]>; searchParams: Promise<StudentLessonPageProps["searchParams"]> }) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
   const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey] = await Promise.all([
     getStudentLesson(courseId, lessonId),

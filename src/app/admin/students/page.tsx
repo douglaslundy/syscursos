@@ -18,7 +18,8 @@ type StudentsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function StudentsPage({ searchParams }: StudentsPageProps) {
+export default async function StudentsPage(props: { searchParams: Promise<StudentsPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const pagination = getPagination(searchParams);
   const students = await getStudents(pagination);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;

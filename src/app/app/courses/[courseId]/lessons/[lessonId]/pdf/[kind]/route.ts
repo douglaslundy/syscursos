@@ -5,9 +5,10 @@ import { studentLessonParamsSchema } from "@/server/validators/student";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type RouteContext = { params: { courseId: string; lessonId: string; kind: string } };
+type RouteContext = { params: Promise<{ courseId: string; lessonId: string; kind: string }> };
 
-export async function GET(request: Request, { params }: RouteContext) {
+export async function GET(request: Request, context: RouteContext) {
+  const params = await context.params;
   await requireRole("STUDENT");
 
   const ids = studentLessonParamsSchema.safeParse(params);

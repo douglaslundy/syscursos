@@ -10,7 +10,8 @@ type NotebooksPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function NotebooksPage({ searchParams }: NotebooksPageProps) {
+export default async function NotebooksPage(props: { searchParams: Promise<NotebooksPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const parsed = notebookQuerySchema.parse({
     courseId: first(searchParams?.courseId),
     query: first(searchParams?.query),

@@ -6,7 +6,8 @@ type LoginPageProps = {
   };
 };
 
-export default function LoginPage({ searchParams }: LoginPageProps) {
+export default async function LoginPage(props: { searchParams: Promise<LoginPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const query = searchParams?.error ? `?error=${searchParams.error}` : "";
   redirect(`/login/client${query}`);
 }

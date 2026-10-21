@@ -17,7 +17,8 @@ type StudentCoursePageProps = {
   params: { courseId: string };
 };
 
-export default async function StudentCoursePage({ params }: StudentCoursePageProps) {
+export default async function StudentCoursePage(props: { params: Promise<StudentCoursePageProps["params"]> }) {
+  const params = await props.params;
   const { courseId } = studentCourseParamsSchema.parse(params);
   const [data, isFavorite, scheduleMode] = await Promise.all([
     getStudentCourse(courseId),

@@ -13,7 +13,9 @@ type ModulesPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function ModulesPage({ params, searchParams }: ModulesPageProps) {
+export default async function ModulesPage(props: { params: Promise<ModulesPageProps["params"]>; searchParams: Promise<ModulesPageProps["searchParams"]> }) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const pagination = getPagination(searchParams);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const editId = getStringParam(searchParams, "editId");

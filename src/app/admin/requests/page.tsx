@@ -10,7 +10,8 @@ type RequestsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function EnrollmentRequestsPage({ searchParams }: RequestsPageProps) {
+export default async function EnrollmentRequestsPage(props: { searchParams: Promise<RequestsPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const requests = await getPendingEnrollmentRequests();
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const defaultExpiresAt = defaultExpiration();

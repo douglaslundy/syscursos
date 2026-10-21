@@ -77,6 +77,7 @@ model User {
   studentProfile StudentProfile?
   producedCourses Course[]       @relation("CourseProducer")
   producerStudents ProducerStudent[] @relation("ProducerStudentProducer")
+  notifications  Notification[]
 
   @@index([organizationId, role, status])
   @@map("users")
@@ -110,6 +111,14 @@ model StudentProfile {
   studyPlans  StudyPlan[]
   studySchedule StudySchedule?
   aiUsages    AiUsage[]
+  quizAttempts QuizAttempt[]
+  flashcardReviews FlashcardReview[]
+  bookmarks   LessonBookmark[]
+  studyDays   StudyDay[]
+  certificates Certificate[]
+  questions   LessonQuestion[]
+  playlists   Playlist[]
+  weeklyGoalMinutes Int        @default(0) @map("weekly_goal_minutes")
   studyWeekdays Int[]          @default([1, 2, 3, 4, 5]) @map("study_weekdays")
   studyStartMinute Int         @default(1140) @map("study_start_minute")
   studyEndMinute Int           @default(1260) @map("study_end_minute")
@@ -138,6 +147,10 @@ model Course {
   favorites FavoriteCourse[]
   studyPlans StudyPlan[]
   aiUsages AiUsage[]
+  quizAttempts QuizAttempt[]
+  exam CourseExam?
+  certificates Certificate[]
+  questions LessonQuestion[]
 
   @@index([organizationId, producerId, status])
   @@index([isPublic, status])
@@ -196,6 +209,11 @@ model Lesson {
   materials      LessonMaterial[]
   favorites      FavoriteLesson[]
   aiContents     LessonAiContent[]
+  quizAttempts   QuizAttempt[]
+  flashcardReviews FlashcardReview[]
+  bookmarks      LessonBookmark[]
+  questions      LessonQuestion[]
+  playlistItems  PlaylistItem[]
 
   @@unique([moduleId, position])
   @@index([moduleId, status])
@@ -354,6 +372,9 @@ enum AiContentKind {
   SUMMARY
   FLASHCARDS
   MINDMAP
+  QUIZ
+  EXAM
+  CHAT
 }
 
 // Resumo, flashcards ou mapa mental gerado por IA: um por (aula, tipo, tecnica) e reaproveitado por todos os alunos.
@@ -391,4 +412,177 @@ model AiUsage {
   @@index([courseId])
   @@index([studentId])
   @@map("ai_usage_logs")
+}
+
+// --- Recursos de estudo (quiz, revisao espacada, marcadores, metas, certificado, duvidas, trilhas, auditoria) ---
+
+// Tentativa de quiz: de uma aula (lessonId) ou da prova final do curso (courseId). O quiz em si fica em LessonAiContent/CourseExam.
+model QuizAttempt {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String          @map("student_id") @db.Uuid
+  lessonId  String?         @map("lesson_id") @db.Uuid
+  courseId  String?         @map("course_id") @db.Uuid
+  score     Int
+  total     Int
+  answers   Json            @default("[]")
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  student   StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson    Lesson?         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course    Course?         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, lessonId])
+  @@index([studentId, courseId])
+  @@index([lessonId])
+  @@map("quiz_attempts")
+}
+
+// Prova final do curso gerada por IA uma unica vez e usada por todos os alunos.
+model CourseExam {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId    String   @unique @map("course_id") @db.Uuid
+  content     String   @db.Text
+  provider    String   @db.VarChar(20)
+  model       String   @db.VarChar(60)
+  createdById String?  @map("created_by_id") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("course_exams")
+}
+
+// Agenda de revisao de um flashcard (algoritmo SM-2 simplificado). cardKey identifica o cartao dentro da aula.
+model FlashcardReview {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId      String         @map("student_id") @db.Uuid
+  lessonId       String         @map("lesson_id") @db.Uuid
+  cardKey        String         @map("card_key") @db.VarChar(64)
+  ease           Float          @default(2.5)
+  intervalDays   Int            @default(0) @map("interval_days")
+  reps           Int            @default(0)
+  lapses         Int            @default(0)
+  dueAt          DateTime       @default(now()) @map("due_at") @db.Timestamptz(6)
+  lastReviewedAt DateTime?      @map("last_reviewed_at") @db.Timestamptz(6)
+  student        StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson         Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, lessonId, cardKey])
+  @@index([studentId, dueAt])
+  @@map("flashcard_reviews")
+}
+
+// Marcador de um minuto do video com texto do aluno.
+model LessonBookmark {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String         @map("student_id") @db.Uuid
+  lessonId  String         @map("lesson_id") @db.Uuid
+  seconds   Int
+  label     String         @db.VarChar(200)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, lessonId])
+  @@map("lesson_bookmarks")
+}
+
+// Tempo estudado por dia (base de sequencia, meta semanal e metricas).
+model StudyDay {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String         @map("student_id") @db.Uuid
+  day       DateTime       @db.Date
+  seconds   Int            @default(0)
+  lessons   Int            @default(0)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, day])
+  @@map("study_days")
+}
+
+model Certificate {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String         @map("student_id") @db.Uuid
+  courseId  String         @map("course_id") @db.Uuid
+  code      String         @unique @db.VarChar(24)
+  issuedAt  DateTime       @default(now()) @map("issued_at") @db.Timestamptz(6)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId])
+  @@map("certificates")
+}
+
+// Duvida do aluno numa aula; o produtor do curso (ou admin) responde.
+model LessonQuestion {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId     String         @map("lesson_id") @db.Uuid
+  courseId     String         @map("course_id") @db.Uuid
+  studentId    String         @map("student_id") @db.Uuid
+  body         String         @db.VarChar(2000)
+  answer       String?        @db.VarChar(4000)
+  answeredById String?        @map("answered_by_id") @db.Uuid
+  answeredAt   DateTime?      @map("answered_at") @db.Timestamptz(6)
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson       Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId, createdAt])
+  @@index([courseId, answeredAt])
+  @@index([studentId])
+  @@map("lesson_questions")
+}
+
+model Notification {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  kind      String    @db.VarChar(30)
+  title     String    @db.VarChar(200)
+  href      String?   @db.VarChar(300)
+  readAt    DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@map("notifications")
+}
+
+model Playlist {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String         @map("student_id") @db.Uuid
+  name      String         @db.VarChar(120)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items     PlaylistItem[]
+
+  @@index([studentId])
+  @@map("playlists")
+}
+
+model PlaylistItem {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  playlistId String   @map("playlist_id") @db.Uuid
+  lessonId   String   @map("lesson_id") @db.Uuid
+  position   Int
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, lessonId])
+  @@index([playlistId, position])
+  @@map("playlist_items")
+}
+
+// Registro das acoes sensiveis do painel (quem fez o que, quando).
+model AuditLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId   String?  @map("actor_id") @db.Uuid
+  actorRole String?  @map("actor_role") @db.VarChar(20)
+  action    String   @db.VarChar(60)
+  entity    String   @db.VarChar(40)
+  entityId  String?  @map("entity_id") @db.VarChar(80)
+  meta      Json     @default("{}")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@map("audit_logs")
 }

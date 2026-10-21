@@ -14,7 +14,8 @@ type SettingsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function AdminSettingsPage({ searchParams }: SettingsPageProps) {
+export default async function AdminSettingsPage(props: { searchParams: Promise<SettingsPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   await requireRole("ADMIN");
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const key = await getGoogleKeyStatus();

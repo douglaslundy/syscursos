@@ -16,7 +16,8 @@ type EnrollmentsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function EnrollmentsPage({ searchParams }: EnrollmentsPageProps) {
+export default async function EnrollmentsPage(props: { searchParams: Promise<EnrollmentsPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const pagination = getPagination(searchParams);
   let enrollments;
   let students;

@@ -9,7 +9,8 @@ type StudentHomePageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function StudentHomePage({ searchParams }: StudentHomePageProps) {
+export default async function StudentHomePage(props: { searchParams: Promise<StudentHomePageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const search = typeof searchParams?.q === "string" ? searchParams.q.trim() : "";
   const { getStudentDashboard } = await import("@/server/services/student-service");
   const { getRecentCourseLessons } = await import("@/server/services/favorite-service");

@@ -13,7 +13,8 @@ function toClock(minute: number) {
   return `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
 }
 
-export default async function StudentMePage({ searchParams }: StudentMePageProps) {
+export default async function StudentMePage(props: { searchParams: Promise<StudentMePageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const profile = await getOwnStudentProfile();
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
 

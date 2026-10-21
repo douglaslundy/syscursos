@@ -18,7 +18,7 @@ import { generateAiContent, type AiGenerateResult } from "@/server/services/ai/a
 const generateSchema = z.object({
   courseId: z.string().uuid(),
   lessonId: z.string().uuid(),
-  kind: z.enum(["SUMMARY", "FLASHCARDS", "MINDMAP"]),
+  kind: z.enum(["SUMMARY", "FLASHCARDS", "MINDMAP", "QUIZ"]),
   technique: z.string().max(32).optional(),
 });
 

@@ -4,7 +4,8 @@ type AdminPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function AdminPage({ searchParams }: AdminPageProps) {
+export default async function AdminPage(props: { searchParams: Promise<AdminPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const { requireAnyRole } = await import("@/server/auth/guards");
   const {
     getAdminDashboardByFilters,

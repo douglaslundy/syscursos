@@ -34,7 +34,8 @@ const methods = [
   },
 ] as const;
 
-export default async function TranscriptionSettingsPage({ searchParams }: PageProps) {
+export default async function TranscriptionSettingsPage(props: { searchParams: Promise<PageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   await requireRole("ADMIN");
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const [method, key] = await Promise.all([getTranscriptionMethod(), getGeminiKeyStatus()]);

@@ -47,7 +47,8 @@ function UsageTable({ title, rows, empty }: { title: string; rows: UsageRow[]; e
   );
 }
 
-export default async function AiUsagePage({ searchParams }: PageProps) {
+export default async function AiUsagePage(props: { searchParams: Promise<PageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   await requireRole("ADMIN");
   const filters = {
     month: param(searchParams?.month),

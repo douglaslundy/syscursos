@@ -6,7 +6,8 @@ type ClientLoginPageProps = {
   };
 };
 
-export default function ClientLoginPage({ searchParams }: ClientLoginPageProps) {
+export default async function ClientLoginPage(props: { searchParams: Promise<ClientLoginPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   return (
     <LoginForm
       registerHref="/login/client/register"

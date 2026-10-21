@@ -6,7 +6,8 @@ type AdminLoginPageProps = {
   };
 };
 
-export default function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
+export default async function AdminLoginPage(props: { searchParams: Promise<AdminLoginPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   return (
     <LoginForm
       alternateHref="/login/client"

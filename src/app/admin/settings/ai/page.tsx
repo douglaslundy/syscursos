@@ -26,7 +26,8 @@ const providers = [
   },
 ] as const;
 
-export default async function AiSettingsPage({ searchParams }: PageProps) {
+export default async function AiSettingsPage(props: { searchParams: Promise<PageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   await requireRole("ADMIN");
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
   const settings = await getAiSettingsStatus();

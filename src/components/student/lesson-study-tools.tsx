@@ -27,6 +27,7 @@ const errorText: Record<AiGenerateError, string> = {
   no_provider: "A inteligencia artificial ainda nao foi configurada pelo administrador.",
   invalid_key: "A chave da inteligencia artificial esta invalida. Avise o administrador.",
   quota: "O limite de uso da inteligencia artificial foi atingido. Tente mais tarde.",
+  rate_limited: "Muitos pedidos seguidos. Aguarde um minuto e tente de novo.",
   failed: "Nao foi possivel gerar agora. Tente novamente.",
 };
 

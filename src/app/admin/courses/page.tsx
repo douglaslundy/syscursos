@@ -15,7 +15,8 @@ type CoursesPageProps = {
 
 export const maxDuration = 60;
 
-export default async function CoursesPage({ searchParams }: CoursesPageProps) {
+export default async function CoursesPage(props: { searchParams: Promise<CoursesPageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const pagination = getPagination(searchParams);
   const courses = await getCourses(pagination);
   const coverage = await getDurationCoverage(courses.items.map((course) => course.id));

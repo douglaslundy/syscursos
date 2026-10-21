@@ -5,8 +5,8 @@ import { getSupabasePublicKey, getSupabaseUrl } from "@/lib/supabase/env";
 import type { SupabaseAuthAudience } from "@/lib/supabase/session";
 import { getSupabaseCookieOptions } from "@/lib/supabase/session";
 
-export function createSupabaseServerClient(audience: SupabaseAuthAudience = "client") {
-  const cookieStore = cookies();
+export async function createSupabaseServerClient(audience: SupabaseAuthAudience = "client") {
+  const cookieStore = await cookies();
 
   return createServerClient(
     getSupabaseUrl(),

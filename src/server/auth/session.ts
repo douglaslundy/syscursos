@@ -49,7 +49,7 @@ export function revalidateAuthUser() {
 }
 
 export const getCurrentUser = cache(async (audience: SupabaseAuthAudience = "client"): Promise<AuthResult> => {
-  const supabase = createSupabaseServerClient(audience);
+  const supabase = await createSupabaseServerClient(audience);
   let supabaseUser;
 
   try {

@@ -20,7 +20,9 @@ type LessonsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function LessonsPage({ params, searchParams }: LessonsPageProps) {
+export default async function LessonsPage(props: { params: Promise<LessonsPageProps["params"]>; searchParams: Promise<LessonsPageProps["searchParams"]> }) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
   const pagination = getPagination(searchParams);
   const { module, lessons } = await getLessons(params.moduleId, pagination);
   const lessonMaterialsEntries = await Promise.all(

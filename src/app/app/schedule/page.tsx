@@ -29,7 +29,8 @@ const messages: Record<string, { text: string; ok: boolean }> = {
   too_long: { text: "Com esse tempo por dia o cronograma passa de 10 anos. Aumente os minutos por dia.", ok: false },
 };
 
-export default async function SchedulePage({ searchParams }: SchedulePageProps) {
+export default async function SchedulePage(props: { searchParams: Promise<SchedulePageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const view = await getStudyScheduleView();
   const status = typeof searchParams?.status === "string" ? messages[searchParams.status] : undefined;
   const { prefs, plan, options } = view;

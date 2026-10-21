@@ -6,7 +6,8 @@ type AdminMePageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function AdminMePage({ searchParams }: AdminMePageProps) {
+export default async function AdminMePage(props: { searchParams: Promise<AdminMePageProps["searchParams"]> }) {
+  const searchParams = await props.searchParams;
   const user = await requireAnyRole(["ADMIN", "PRODUCER"]);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
 
