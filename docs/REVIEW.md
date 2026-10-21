@@ -3452,3 +3452,8 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Fumaca com `next start` sem login: `/login/client`, `/offline.html`, `/verificar/<codigo>`, `/manifest.webmanifest`, `/sw.js`, icones respondem 200; cron sem `CRON_SECRET` responde 503; CSP Report-Only e demais cabecalhos presentes.
 - NAO verificado: telas logadas (sem credencial para o agente), IA com chave real, cron na Vercel, gravacao do Drive.
 - `npm audit` (com dev): 25 avisos, 2 criticos em `tinypool` (vitest) e altos em `tailwindcss`; so em ferramentas de teste/build, exigem vitest 5 e tailwind maior. Sem dev: 10 (braces, esbuild, postcss, postcss-selector-parser) presos a versoes maiores.
+
+## 2026-10-22 - Limite de login/cadastro global
+- Nova tabela `rate_limit_events` (migration `20261022180000_rate_limit_events`, aplicada no banco real): `hitGlobal` conta tentativas no banco, valendo para todas as instancias; se o banco falhar, cai no contador em memoria. Usado por `allowLogin` e `allowRegister`. Limites de IA seguem como estavam.
+- Limite: contar e inserir nao e atomico; rajadas simultaneas podem passar do limite por poucos pedidos.
+- Tentativa de subir o vitest para 5 (corrige o `tinypool` critico) falhou: exige vite 6+ e o projeto usa vite 5; fica para quando houver migracao do toolchain de testes. Nada foi alterado em `package.json`.

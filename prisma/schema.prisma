@@ -587,3 +587,13 @@ model AuditLog {
   @@index([actorId])
   @@map("audit_logs")
 }
+
+// Tentativas de login/cadastro, para o limite valer em todas as instancias (ver server/security/rate-limit.ts).
+model RateLimitEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String   @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([key, createdAt])
+  @@map("rate_limit_events")
+}
