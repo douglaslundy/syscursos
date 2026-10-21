@@ -1,5 +1,6 @@
 import { SubmitButton } from "@/components/admin/submit-button";
 import { LessonTranscriber } from "@/components/student/lesson-transcriber";
+import { TranscriptViewer } from "@/components/student/transcript-viewer";
 import { generateTranscriptAction, resetTranscriptAction } from "@/server/actions/transcript-actions";
 
 const messages: Record<string, { text: string; ok: boolean }> = {
@@ -63,9 +64,7 @@ export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, ca
       {transcript ? (
         <details className="mt-3" open>
           <summary className="cursor-pointer text-sm text-copy-secondary">Mostrar ou ocultar</summary>
-          <p className="mt-2 max-h-96 overflow-y-auto whitespace-pre-wrap text-sm leading-6 text-copy-secondary">
-            {transcript}
-          </p>
+          <TranscriptViewer text={transcript} />
         </details>
       ) : isYouTube && status !== "unavailable" && !youtubeGemini ? (
         <p className="mt-2 text-sm text-copy-secondary">

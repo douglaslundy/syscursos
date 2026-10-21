@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { LessonStudyBar } from "@/components/student/lesson-study-bar";
 import { LessonTrailSidebar } from "@/components/student/lesson-trail-sidebar";
 import { LessonVideoPlayer } from "@/components/student/lesson-video-player";
 import { announceVideoEnded, isTranscribing, onTranscribingChange } from "@/lib/transcription/guard";
@@ -37,6 +38,7 @@ type LessonCompletionPanelProps = {
   progress: LessonProgress;
   nextLessonId?: string | null;
   nextLessonTitle?: string | null;
+  startSeconds?: number;
   children?: ReactNode;
 };
 
@@ -65,6 +67,7 @@ export function LessonCompletionPanel({
   progress: initialProgress,
   nextLessonId,
   nextLessonTitle,
+  startSeconds = 0,
   children,
 }: LessonCompletionPanelProps) {
   const router = useRouter();
@@ -76,6 +79,7 @@ export function LessonCompletionPanel({
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(AUTO_ADVANCE_SECONDS);
   const [isPending, startTransition] = useTransition();
+  const [focus, setFocus] = useState(false);
 
   const nextLessonHref = nextLessonId
     ? `/app/courses/${courseId}/lessons/${nextLessonId}`
@@ -139,26 +143,31 @@ export function LessonCompletionPanel({
 
   return (
     <>
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+      <div className={focus ? "mt-6 grid gap-4" : "mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"}>
         <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
           <LessonVideoPlayer
             onEnded={() => {
               announceVideoEnded();
               setCompletion(true);
             }}
+            startSeconds={startSeconds}
             title={title}
             videoEmbed={videoEmbed}
           />
         </div>
-        <LessonTrailSidebar
-          completedLessonIds={effectiveCompletedLessonIds}
-          courseId={courseId}
-          currentLessonId={lessonId}
-          currentModuleId={currentModuleId}
-          modules={modules}
-          progress={progress}
-        />
+        {focus ? null : (
+          <LessonTrailSidebar
+            completedLessonIds={effectiveCompletedLessonIds}
+            courseId={courseId}
+            currentLessonId={lessonId}
+            currentModuleId={currentModuleId}
+            modules={modules}
+            progress={progress}
+          />
+        )}
       </div>
+
+      <LessonStudyBar courseId={courseId} focus={focus} lessonId={lessonId} onToggleFocus={() => setFocus((value) => !value)} />
 
       {isCountingDown && nextLessonHref ? (
         <div

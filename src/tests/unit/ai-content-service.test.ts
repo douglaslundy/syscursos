@@ -16,7 +16,7 @@ vi.mock("@/server/services/ai/ai-settings-service", () => ({
   getActiveTechniques: vi.fn().mockResolvedValue(["pareto", "cornell"]),
 }));
 
-import { generateAiContent } from "@/server/services/ai/ai-content-service";
+import { generateAiContent, resetAiRateLimit } from "@/server/services/ai/ai-content-service";
 
 const ids = { courseId: "c1", lessonId: "l1" };
 const row = (content: string, kind = "SUMMARY", technique = "pareto") => ({
@@ -29,6 +29,7 @@ const row = (content: string, kind = "SUMMARY", technique = "pareto") => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  resetAiRateLimit();
   findLesson.mockResolvedValue({ studentId: "s1", lesson: { title: "Aula", transcript: "texto da aula" } });
   db.lessonAiContent.findUnique.mockResolvedValue(null);
   db.lessonAiContent.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ ...row(String(data.content), String(data.kind), String(data.technique)) }));
@@ -70,6 +71,50 @@ describe("generateAiContent", () => {
 
     expect(bad).toEqual({ ok: false, error: "failed" });
     expect(db.aiUsage.create).toHaveBeenCalledTimes(2);
+  });
+
+  const quizJson = JSON.stringify({ questions: [{ q: "Qual?", options: ["A", "B", "C", "D"], correct: 1, explanation: "Porque B." }] });
+
+  it("generates the quiz once, saves it for everyone and reuses it for the next student without spending tokens", async () => {
+    callProvider.mockResolvedValue({ ok: true, text: quizJson, inputTokens: 500, outputTokens: 200, model: "m" });
+
+    const first = await generateAiContent({ ...ids, kind: "QUIZ" });
+
+    expect(first).toMatchObject({ ok: true, cached: false, item: { kind: "QUIZ", technique: "" } });
+    expect(db.lessonAiContent.create).toHaveBeenCalledWith({ data: expect.objectContaining({ kind: "QUIZ", technique: "" }) });
+    expect(db.aiUsage.create).toHaveBeenCalledWith({ data: expect.objectContaining({ kind: "QUIZ" }) });
+
+    // Outro aluno, depois: a linha salva no banco e devolvida e a IA nao e chamada de novo.
+    findLesson.mockResolvedValue({ studentId: "s2", lesson: { title: "Aula", transcript: "texto da aula" } });
+    db.lessonAiContent.findUnique.mockResolvedValueOnce(row(quizJson, "QUIZ", ""));
+    callProvider.mockClear();
+    db.aiUsage.create.mockClear();
+
+    const second = await generateAiContent({ ...ids, kind: "QUIZ" });
+
+    expect(second).toMatchObject({ ok: true, cached: true });
+    expect(callProvider).not.toHaveBeenCalled();
+    expect(db.aiUsage.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects a quiz the model returned in an invalid format", async () => {
+    callProvider.mockResolvedValueOnce({ ok: true, text: '{"questions":[{"q":"x","options":["A","B"],"correct":0}]}', inputTokens: 1, outputTokens: 1, model: "m" });
+
+    expect(await generateAiContent({ ...ids, kind: "QUIZ" })).toEqual({ ok: false, error: "failed" });
+    expect(db.lessonAiContent.create).not.toHaveBeenCalled();
+  });
+
+  it("limits how many generations one student can trigger per minute", async () => {
+    callProvider.mockResolvedValue({ ok: true, text: "## Resumo", inputTokens: 1, outputTokens: 1, model: "m" });
+    findLesson.mockResolvedValue({ studentId: "spammer", lesson: { title: "Aula", transcript: "texto" } });
+
+    const results = [];
+    for (let index = 0; index < 6; index += 1) {
+      results.push(await generateAiContent({ courseId: "c1", lessonId: `l${index}`, kind: "SUMMARY", technique: "pareto" }));
+    }
+
+    expect(results.slice(0, 5).every((item) => item.ok)).toBe(true);
+    expect(results[5]).toEqual({ ok: false, error: "rate_limited" });
   });
 
   it("needs the summary of the technique before building a mind map", async () => {

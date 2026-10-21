@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Home, Star, User } from "lucide-react";
+import { BarChart3, Bell, Brain, FileText, Home, ListVideo, MoreHorizontal, Search, Star, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,6 +12,24 @@ const navigationItems = [
     label: "Cursos",
     icon: Home,
     match: (pathname: string) => pathname === "/app" || pathname.startsWith("/app/courses"),
+  },
+  {
+    href: "/app/review",
+    label: "Revisao",
+    icon: Brain,
+    match: (pathname: string) => pathname.startsWith("/app/review"),
+  },
+  {
+    href: "/app/progress",
+    label: "Progresso",
+    icon: BarChart3,
+    match: (pathname: string) => pathname.startsWith("/app/progress"),
+  },
+  {
+    href: "/app/search",
+    label: "Buscar",
+    icon: Search,
+    match: (pathname: string) => pathname.startsWith("/app/search"),
   },
   {
     href: "/app/notebooks",
@@ -26,6 +44,18 @@ const navigationItems = [
     match: (pathname: string) => pathname.startsWith("/app/favorites"),
   },
   {
+    href: "/app/playlists",
+    label: "Playlists",
+    icon: ListVideo,
+    match: (pathname: string) => pathname.startsWith("/app/playlists"),
+  },
+  {
+    href: "/app/notifications",
+    label: "Avisos",
+    icon: Bell,
+    match: (pathname: string) => pathname.startsWith("/app/notifications"),
+  },
+  {
     href: "/app/me",
     label: "Meus dados",
     icon: User,
@@ -33,7 +63,11 @@ const navigationItems = [
   },
 ] as const;
 
-export function StudentDesktopNavigation() {
+// Celular: 4 atalhos + "Mais" (que lista o resto), para a barra inferior nao ficar apertada.
+const bottomHrefs = ["/app", "/app/review", "/app/progress", "/app/search"];
+const bottomItems = navigationItems.filter((item) => bottomHrefs.includes(item.href));
+
+export function StudentDesktopNavigation({ unread = 0 }: { unread?: number }) {
   const pathname = usePathname();
 
   return (
@@ -55,6 +89,9 @@ export function StudentDesktopNavigation() {
           >
             <Icon aria-hidden="true" className="h-4 w-4" />
             {item.label}
+            {item.href === "/app/notifications" && unread > 0 ? (
+              <span className="ml-auto rounded-full bg-brand-primary px-2 text-xs text-copy-primary">{unread}</span>
+            ) : null}
           </Link>
         );
       })}
@@ -62,7 +99,7 @@ export function StudentDesktopNavigation() {
   );
 }
 
-export function StudentBottomNavigation() {
+export function StudentBottomNavigation({ unread = 0 }: { unread?: number }) {
   const pathname = usePathname();
 
   return (
@@ -70,8 +107,8 @@ export function StudentBottomNavigation() {
       aria-label="Navegacao principal"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-stroke-subtle bg-surface-elevated/95 px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.24)] backdrop-blur md:hidden"
     >
-      <div className="mx-auto grid max-w-sm grid-cols-4 gap-2">
-        {navigationItems.map((item) => {
+      <div className="mx-auto grid max-w-sm grid-cols-5 gap-2">
+        {bottomItems.map((item) => {
           const Icon = item.icon;
           const isActive = item.match(pathname);
 
@@ -90,6 +127,18 @@ export function StudentBottomNavigation() {
             </Link>
           );
         })}
+        <Link
+          aria-current={pathname.startsWith("/app/more") ? "page" : undefined}
+          className={cn(
+            "relative flex min-h-12 flex-col items-center justify-center rounded-md text-xs font-medium text-copy-secondary transition duration-200 hover:bg-surface-hover hover:text-copy-primary",
+            pathname.startsWith("/app/more") && "bg-brand-primary text-copy-primary",
+          )}
+          href="/app/more"
+        >
+          <MoreHorizontal aria-hidden="true" className="mb-1 h-4 w-4" />
+          Mais
+          {unread > 0 ? <span className="absolute right-3 top-1 h-2 w-2 rounded-full bg-brand-primary" /> : null}
+        </Link>
       </div>
     </nav>
   );

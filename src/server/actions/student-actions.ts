@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { revalidateAuthUser } from "@/server/auth/session";
+import { recordLessonCompleted } from "@/server/services/study-stats-service";
 import { toggleLessonCompletion } from "@/server/services/student-service";
 import { saveLessonNote } from "@/server/services/student-service";
 import { updateOwnStudentProfile } from "@/server/services/student-service";
@@ -43,6 +44,11 @@ export async function completeLessonAction(input: unknown): Promise<CompleteLess
 
   const { courseId, lessonId, isCompleted } = parsed.data;
   await toggleLessonCompletion({ courseId, lessonId }, isCompleted);
+
+  if (isCompleted) {
+    // Metrica de estudo: falha aqui nao impede concluir a aula.
+    await recordLessonCompleted().catch((error: unknown) => console.error("Failed to record study day.", error));
+  }
   revalidatePath(`/app/courses/${courseId}`);
   revalidatePath(`/app/courses/${courseId}/lessons/${lessonId}`);
 

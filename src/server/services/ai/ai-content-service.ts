@@ -63,6 +63,10 @@ const RATE_WINDOW_MS = 60_000;
 const RATE_MAX = 5;
 const recentCalls = new Map<string, number[]>();
 
+export function resetAiRateLimit() {
+  recentCalls.clear();
+}
+
 export function allowAiCall(studentId: string, now = Date.now()) {
   const calls = (recentCalls.get(studentId) ?? []).filter((time) => now - time < RATE_WINDOW_MS);
 

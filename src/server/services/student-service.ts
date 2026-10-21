@@ -198,6 +198,7 @@ export async function getStudentLesson(courseId: string, lessonId: string) {
     },
     videoEmbed: getLessonVideoEmbed(lesson.youtubeUrl, lesson.youtubeVideoId),
     isCompleted: progress?.status === "COMPLETED",
+    positionSeconds: progress?.positionSeconds ?? 0,
     note,
     navigation: buildLessonNavigation(courseContent.modules, lessonId, completedLessonIds),
     progress: calculateCourseProgress(completedLessons, totalLessons),

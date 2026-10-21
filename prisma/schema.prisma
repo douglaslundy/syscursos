@@ -62,22 +62,22 @@ enum LessonProgressStatus {
 }
 
 model User {
-  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String          @map("organization_id") @db.Uuid
-  authUserId     String?         @unique @map("auth_user_id") @db.Uuid
-  email          String          @unique @db.VarChar(255)
-  name           String          @db.VarChar(160)
-  role           UserRole
-  status         UserStatus      @default(ACTIVE)
-  accessExpiresAt DateTime?      @map("access_expires_at") @db.Timestamptz(6)
-  lastLoginAt    DateTime?       @map("last_login_at") @db.Timestamptz(6)
-  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  studentProfile StudentProfile?
-  producedCourses Course[]       @relation("CourseProducer")
+  id               String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId   String            @map("organization_id") @db.Uuid
+  authUserId       String?           @unique @map("auth_user_id") @db.Uuid
+  email            String            @unique @db.VarChar(255)
+  name             String            @db.VarChar(160)
+  role             UserRole
+  status           UserStatus        @default(ACTIVE)
+  accessExpiresAt  DateTime?         @map("access_expires_at") @db.Timestamptz(6)
+  lastLoginAt      DateTime?         @map("last_login_at") @db.Timestamptz(6)
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  studentProfile   StudentProfile?
+  producedCourses  Course[]          @relation("CourseProducer")
   producerStudents ProducerStudent[] @relation("ProducerStudentProducer")
-  notifications  Notification[]
+  notifications    Notification[]
 
   @@index([organizationId, role, status])
   @@map("users")
@@ -95,62 +95,62 @@ model Organization {
 }
 
 model StudentProfile {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String           @unique @map("user_id") @db.Uuid
-  document    String?          @unique @db.VarChar(32)
-  phone       String?          @db.VarChar(32)
-  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollments Enrollment[]
-  notes       LessonNote[]
-  progress    LessonProgress[]
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String              @unique @map("user_id") @db.Uuid
+  document           String?             @unique @db.VarChar(32)
+  phone              String?             @db.VarChar(32)
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments        Enrollment[]
+  notes              LessonNote[]
+  progress           LessonProgress[]
   enrollmentRequests EnrollmentRequest[]
-  favoriteCourses FavoriteCourse[]
-  favoriteLessons FavoriteLesson[]
-  studyPlans  StudyPlan[]
-  studySchedule StudySchedule?
-  aiUsages    AiUsage[]
-  quizAttempts QuizAttempt[]
-  flashcardReviews FlashcardReview[]
-  bookmarks   LessonBookmark[]
-  studyDays   StudyDay[]
-  certificates Certificate[]
-  questions   LessonQuestion[]
-  playlists   Playlist[]
-  weeklyGoalMinutes Int        @default(0) @map("weekly_goal_minutes")
-  studyWeekdays Int[]          @default([1, 2, 3, 4, 5]) @map("study_weekdays")
-  studyStartMinute Int         @default(1140) @map("study_start_minute")
-  studyEndMinute Int           @default(1260) @map("study_end_minute")
-  producers   ProducerStudent[]  @relation("ProducerStudentStudent")
+  favoriteCourses    FavoriteCourse[]
+  favoriteLessons    FavoriteLesson[]
+  studyPlans         StudyPlan[]
+  studySchedule      StudySchedule?
+  aiUsages           AiUsage[]
+  quizAttempts       QuizAttempt[]
+  flashcardReviews   FlashcardReview[]
+  bookmarks          LessonBookmark[]
+  studyDays          StudyDay[]
+  certificates       Certificate[]
+  questions          LessonQuestion[]
+  playlists          Playlist[]
+  weeklyGoalMinutes  Int                 @default(0) @map("weekly_goal_minutes")
+  studyWeekdays      Int[]               @default([1, 2, 3, 4, 5]) @map("study_weekdays")
+  studyStartMinute   Int                 @default(1140) @map("study_start_minute")
+  studyEndMinute     Int                 @default(1260) @map("study_end_minute")
+  producers          ProducerStudent[]   @relation("ProducerStudentStudent")
 
   @@map("student_profiles")
 }
 
 model Course {
-  id          String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  organizationId String    @map("organization_id") @db.Uuid
-  producerId  String       @map("producer_id") @db.Uuid
-  title       String       @db.VarChar(180)
-  slug        String       @unique @db.VarChar(200)
-  description String?
-  coverImageUrl String?    @map("cover_image_url") @db.VarChar(500)
-  status      CourseStatus @default(ACTIVE)
-  isPublic    Boolean      @default(false) @map("is_public")
-  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  producer    User         @relation("CourseProducer", fields: [producerId], references: [id], onDelete: Restrict)
-  modules     Module[]
-  enrollments Enrollment[]
+  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId     String              @map("organization_id") @db.Uuid
+  producerId         String              @map("producer_id") @db.Uuid
+  title              String              @db.VarChar(180)
+  slug               String              @unique @db.VarChar(200)
+  description        String?
+  coverImageUrl      String?             @map("cover_image_url") @db.VarChar(500)
+  status             CourseStatus        @default(ACTIVE)
+  isPublic           Boolean             @default(false) @map("is_public")
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  producer           User                @relation("CourseProducer", fields: [producerId], references: [id], onDelete: Restrict)
+  modules            Module[]
+  enrollments        Enrollment[]
   enrollmentRequests EnrollmentRequest[]
-  favorites FavoriteCourse[]
-  studyPlans StudyPlan[]
-  aiUsages AiUsage[]
-  quizAttempts QuizAttempt[]
-  exam CourseExam?
-  certificates Certificate[]
-  questions LessonQuestion[]
+  favorites          FavoriteCourse[]
+  studyPlans         StudyPlan[]
+  aiUsages           AiUsage[]
+  quizAttempts       QuizAttempt[]
+  exam               CourseExam?
+  certificates       Certificate[]
+  questions          LessonQuestion[]
 
   @@index([organizationId, producerId, status])
   @@index([isPublic, status])
@@ -159,12 +159,12 @@ model Course {
 }
 
 model ProducerStudent {
-  id          String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  producerId  String         @map("producer_id") @db.Uuid
-  studentId   String         @map("student_id") @db.Uuid
-  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  producer    User           @relation("ProducerStudentProducer", fields: [producerId], references: [id], onDelete: Cascade)
-  student     StudentProfile @relation("ProducerStudentStudent", fields: [studentId], references: [id], onDelete: Cascade)
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  producerId String         @map("producer_id") @db.Uuid
+  studentId  String         @map("student_id") @db.Uuid
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  producer   User           @relation("ProducerStudentProducer", fields: [producerId], references: [id], onDelete: Cascade)
+  student    StudentProfile @relation("ProducerStudentStudent", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([producerId, studentId])
   @@index([studentId])
@@ -189,31 +189,31 @@ model Module {
 }
 
 model Lesson {
-  id             String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  moduleId       String           @map("module_id") @db.Uuid
-  title          String           @db.VarChar(180)
-  description    String?
-  youtubeUrl     String           @map("youtube_url") @db.VarChar(500)
-  youtubeVideoId String?          @map("youtube_video_id") @db.VarChar(32)
-  coverImageUrl  String?          @map("cover_image_url") @db.VarChar(500)
-  position       Int
-  durationSeconds Int?            @map("duration_seconds")
-  transcript     String?          @db.Text
-  transcriptAuthorId String?      @map("transcript_author_id") @db.Uuid
-  status         LessonStatus     @default(ACTIVE)
-  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  module         Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  notes          LessonNote[]
-  progress       LessonProgress[]
-  materials      LessonMaterial[]
-  favorites      FavoriteLesson[]
-  aiContents     LessonAiContent[]
-  quizAttempts   QuizAttempt[]
-  flashcardReviews FlashcardReview[]
-  bookmarks      LessonBookmark[]
-  questions      LessonQuestion[]
-  playlistItems  PlaylistItem[]
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId           String            @map("module_id") @db.Uuid
+  title              String            @db.VarChar(180)
+  description        String?
+  youtubeUrl         String            @map("youtube_url") @db.VarChar(500)
+  youtubeVideoId     String?           @map("youtube_video_id") @db.VarChar(32)
+  coverImageUrl      String?           @map("cover_image_url") @db.VarChar(500)
+  position           Int
+  durationSeconds    Int?              @map("duration_seconds")
+  transcript         String?           @db.Text
+  transcriptAuthorId String?           @map("transcript_author_id") @db.Uuid
+  status             LessonStatus      @default(ACTIVE)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  module             Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  notes              LessonNote[]
+  progress           LessonProgress[]
+  materials          LessonMaterial[]
+  favorites          FavoriteLesson[]
+  aiContents         LessonAiContent[]
+  quizAttempts       QuizAttempt[]
+  flashcardReviews   FlashcardReview[]
+  bookmarks          LessonBookmark[]
+  questions          LessonQuestion[]
+  playlistItems      PlaylistItem[]
 
   @@unique([moduleId, position])
   @@index([moduleId, status])
@@ -312,15 +312,16 @@ model LessonNote {
 }
 
 model LessonProgress {
-  id          String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId   String               @map("student_id") @db.Uuid
-  lessonId    String               @map("lesson_id") @db.Uuid
-  status      LessonProgressStatus @default(NOT_STARTED)
-  completedAt DateTime?            @map("completed_at") @db.Timestamptz(6)
-  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
-  student     StudentProfile       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  lesson      Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  id              String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId       String               @map("student_id") @db.Uuid
+  lessonId        String               @map("lesson_id") @db.Uuid
+  status          LessonProgressStatus @default(NOT_STARTED)
+  completedAt     DateTime?            @map("completed_at") @db.Timestamptz(6)
+  positionSeconds Int                  @default(0) @map("position_seconds")
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student         StudentProfile       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson          Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, lessonId])
   @@index([lessonId])
@@ -396,17 +397,17 @@ model LessonAiContent {
 
 // Uma linha por chamada a IA, para o painel de consumo de tokens.
 model AiUsage {
-  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  provider     String           @db.VarChar(20)
-  model        String           @db.VarChar(60)
+  id           String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider     String          @db.VarChar(20)
+  model        String          @db.VarChar(60)
   kind         AiContentKind
-  inputTokens  Int              @map("input_tokens")
-  outputTokens Int              @map("output_tokens")
-  studentId    String?          @map("student_id") @db.Uuid
-  courseId     String?          @map("course_id") @db.Uuid
-  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  student      StudentProfile?  @relation(fields: [studentId], references: [id], onDelete: SetNull)
-  course       Course?          @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  inputTokens  Int             @map("input_tokens")
+  outputTokens Int             @map("output_tokens")
+  studentId    String?         @map("student_id") @db.Uuid
+  courseId     String?         @map("course_id") @db.Uuid
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  student      StudentProfile? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  course       Course?         @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([courseId])
@@ -418,17 +419,17 @@ model AiUsage {
 
 // Tentativa de quiz: de uma aula (lessonId) ou da prova final do curso (courseId). O quiz em si fica em LessonAiContent/CourseExam.
 model QuizAttempt {
-  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId String          @map("student_id") @db.Uuid
-  lessonId  String?         @map("lesson_id") @db.Uuid
-  courseId  String?         @map("course_id") @db.Uuid
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String         @map("student_id") @db.Uuid
+  lessonId  String?        @map("lesson_id") @db.Uuid
+  courseId  String?        @map("course_id") @db.Uuid
   score     Int
   total     Int
-  answers   Json            @default("[]")
-  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  student   StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  lesson    Lesson?         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  course    Course?         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  answers   Json           @default("[]")
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson    Lesson?        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  course    Course?        @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([studentId, lessonId])
   @@index([studentId, courseId])

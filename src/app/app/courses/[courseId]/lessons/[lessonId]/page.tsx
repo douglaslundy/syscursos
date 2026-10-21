@@ -2,12 +2,15 @@ import Link from "next/link";
 
 import { CourseBlocked } from "@/components/student/course-blocked";
 import { FavoriteButton } from "@/components/student/favorite-button";
+import { LessonBookmarks } from "@/components/student/lesson-bookmarks";
 import { LessonCompletionPanel } from "@/components/student/lesson-completion-panel";
 import { LessonStudyTools } from "@/components/student/lesson-study-tools";
 import { LessonNoteEditor } from "@/components/student/lesson-note-editor";
 import { LessonTranscript } from "@/components/student/lesson-transcript";
+import { listBookmarks } from "@/server/services/bookmark-service";
 import { getAiAvailability, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { getLessonFavoriteState } from "@/server/services/favorite-service";
+import { listQuizAttempts } from "@/server/services/quiz-service";
 import { getGeminiApiKey, getTranscriptionMethod } from "@/server/services/settings-service";
 import { canResetTranscript } from "@/server/services/transcript-service";
 import { getStudentLesson, requireStudentProfileId } from "@/server/services/student-service";
@@ -25,7 +28,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
   const params = await props.params;
   const searchParams = await props.searchParams;
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
     getTranscriptionMethod(),
@@ -33,6 +36,8 @@ export default async function StudentLessonPage(props: { params: Promise<Student
     getAiAvailability(),
     listLessonAiItems(lessonId),
     getGeminiApiKey(),
+    requireStudentProfileId().then((id) => listQuizAttempts(id, lessonId)),
+    requireStudentProfileId().then((id) => listBookmarks(id, lessonId)),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -89,6 +94,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         nextLessonId={data.navigation?.nextLesson?.id ?? null}
         nextLessonTitle={data.navigation?.nextLesson?.title ?? null}
         progress={data.progress}
+        startSeconds={data.positionSeconds}
         title={data.lesson.title}
         videoEmbed={data.videoEmbed}
       >
@@ -146,6 +152,8 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         </div>
       </LessonCompletionPanel>
 
+      <LessonBookmarks courseId={courseId} initial={bookmarks} lessonId={lessonId} />
+
       <LessonNoteEditor
         courseId={courseId}
         initialContent={data.note?.content ?? ""}
@@ -170,6 +178,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
           courseId={courseId}
           initialItems={aiItems}
           lessonId={lessonId}
+          quizAttempts={quizAttempts}
           techniques={ai.techniques}
         />
       ) : null}

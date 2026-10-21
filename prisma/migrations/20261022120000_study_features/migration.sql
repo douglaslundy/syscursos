@@ -13,6 +13,9 @@ ALTER TYPE "AiContentKind" ADD VALUE 'CHAT';
 -- AlterTable
 ALTER TABLE "student_profiles" ADD COLUMN     "weekly_goal_minutes" INTEGER NOT NULL DEFAULT 0;
 
+-- AlterTable
+ALTER TABLE "lesson_progress" ADD COLUMN     "position_seconds" INTEGER NOT NULL DEFAULT 0;
+
 -- CreateTable
 CREATE TABLE "quiz_attempts" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),

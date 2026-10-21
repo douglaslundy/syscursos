@@ -2,9 +2,12 @@
 
 import { useEffect, useId, useMemo, useRef } from "react";
 
+import { registerPlayer } from "@/lib/study/player-bridge";
+
 type LessonVideoPlayerProps = {
   videoEmbed: { url: string; supportsCompletionTracking: boolean } | null;
   title: string;
+  startSeconds?: number;
   onEnded: () => void;
 };
 
@@ -14,6 +17,9 @@ type YouTubePlayerEvent = {
 
 type YouTubePlayer = {
   destroy: () => void;
+  getCurrentTime: () => number;
+  seekTo: (seconds: number, allowSeekAhead: boolean) => void;
+  setPlaybackRate: (rate: number) => void;
 };
 
 type YouTubeApi = {
@@ -22,6 +28,7 @@ type YouTubeApi = {
     options: {
       events?: {
         onStateChange?: (event: YouTubePlayerEvent) => void;
+        onReady?: () => void;
       };
     },
   ) => YouTubePlayer;
@@ -39,6 +46,7 @@ const ENDED_STATE = 0;
 export function LessonVideoPlayer({
   videoEmbed,
   title,
+  startSeconds = 0,
   onEnded,
 }: LessonVideoPlayerProps) {
   const iframeId = useId().replace(/:/g, "");
@@ -56,11 +64,13 @@ export function LessonVideoPlayer({
       const url = new URL(videoEmbed.url);
       url.searchParams.set("enablejsapi", "1");
       url.searchParams.set("origin", window.location.origin);
+      // Retoma no minuto em que o aluno parou (ignora os primeiros segundos).
+      if (startSeconds > 10) url.searchParams.set("start", String(Math.floor(startSeconds)));
       return url.toString();
     } catch {
       return videoEmbed.url;
     }
-  }, [videoEmbed]);
+  }, [videoEmbed, startSeconds]);
 
   const onEndedRef = useRef(onEnded);
   onEndedRef.current = onEnded;
@@ -90,6 +100,12 @@ export function LessonVideoPlayer({
       player = new window.YT.Player(iframeId, {
         events: {
           onStateChange: handleEnded,
+          onReady: () =>
+            registerPlayer({
+              getTime: () => player?.getCurrentTime() ?? 0,
+              seek: (seconds) => player?.seekTo(seconds, true),
+              setRate: (rate) => player?.setPlaybackRate(rate),
+            }),
         },
       });
     };
@@ -113,6 +129,7 @@ export function LessonVideoPlayer({
     }
 
     return () => {
+      registerPlayer(null);
       player?.destroy();
     };
   }, [videoEmbed?.supportsCompletionTracking, iframeId]);

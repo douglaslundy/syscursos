@@ -9,6 +9,8 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 ## Estado (atualize aqui)
 
 - Concluido e commitado: `d439dbd` (jspdf 4.2.1, cabecalhos de seguranca, cache de configuracoes, analise).
+- ATENCAO: o codigo novo le colunas/tabelas da migracao `20261022120000_study_features` (ex.: `lesson_progress.position_seconds`). Aplicar `prisma migrate deploy` ANTES de rodar/deployar, senao as paginas de aula quebram. Ainda nao aplicada (aguardando autorizacao do usuario).
+- Commitados: `d731e02` (Next 15), `6875137` (seguranca). Etapas 4, 5 e parte da 6 prontas (quiz, revisao, progresso, player, marcadores, Pomodoro); falta o lembrete por cron.
 - Commitado `d731e02`: migracao Next 14 -> 15.5.28 (build e 198 testes OK), schema + migracao `20261022120000_study_features` (nao aplicada), libs `src/lib/ai/quiz.ts`, `src/lib/study/srs.ts`, `src/lib/study/streak.ts`, prompts de quiz/prova/chat, quiz no `ai-content-service` (tipo `QUIZ`, limite por aluno, chamada unica para pedidos simultaneos).
 
 ## Etapas
@@ -31,25 +33,25 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 
 ### 3. Banco (uma migracao unica, ja escrita)
 - [x] Schema: `QuizAttempt`, `CourseExam`, `FlashcardReview`, `LessonBookmark`, `StudyDay`, `Certificate`, `LessonQuestion`, `Notification`, `Playlist`, `PlaylistItem`, `AuditLog`, `StudentProfile.weeklyGoalMinutes`, enum `AiContentKind` com `QUIZ`/`EXAM`/`CHAT`.
-- [ ] Acrescentar `LessonProgress.positionSeconds Int @default(0)` (retomar no minuto exato) e regerar a migracao `20261022120000_study_features` (usar `prisma migrate diff` contra `schema.old.prisma` ou editar o SQL a mao). Ainda nao aplicada.
+- [x] Acrescentar `LessonProgress.positionSeconds Int @default(0)` (retomar no minuto exato) e regerar a migracao `20261022120000_study_features` (usar `prisma migrate diff` contra `schema.old.prisma` ou editar o SQL a mao). Ainda nao aplicada.
 - [ ] Pedir autorizacao ao usuario para `prisma migrate deploy` (banco real) antes de testar com dados reais.
 
 ### 4. Quiz por aula (gerado por IA, salvo no banco, compartilhado)
 - [x] Servico: tipo `QUIZ` em `LessonAiContent` (um por aula, reaproveitado por todos os alunos; so a primeira geracao gasta tokens).
-- [ ] Acao `submitQuizAction`: corrige no servidor contra o quiz salvo, grava `QuizAttempt`, devolve nota, gabarito e explicacoes; erros viram cartoes de revisao.
-- [ ] UI no `lesson-study-tools.tsx`: botao "Quiz", perguntas com 4 alternativas, resultado e historico de notas; teclas 1-4.
-- [ ] Testes (servico, acao, componente).
+- [x] Acao `submitQuizAction`: corrige no servidor contra o quiz salvo, grava `QuizAttempt`, devolve nota, gabarito e explicacoes; erros viram cartoes de revisao.
+- [x] UI no `lesson-study-tools.tsx`: botao "Quiz", perguntas com 4 alternativas, resultado e historico de notas; teclas 1-4.
+- [x] Testes (servico, acao, componente).
 
 ### 5. Revisao espacada e "Revisao do dia"
-- [ ] Servico/acao de revisao: `FlashcardReview` com `nextReview` (`src/lib/study/srs.ts`), fila de cartoes vencidos + cartoes novos por dia, cartoes de quiz errados.
-- [ ] O baralho da aula (`Deck`) grava a nota (errei/dificil/bom/facil) por aluno.
-- [ ] Pagina `/app/review` com fila do dia, sequencia, meta e "continuar" (link no menu do aluno).
+- [x] Servico/acao de revisao: `FlashcardReview` com `nextReview` (`src/lib/study/srs.ts`), fila de cartoes vencidos + cartoes novos por dia, cartoes de quiz errados.
+- [x] O baralho da aula (`Deck`) grava a nota (errei/dificil/bom/facil) por aluno.
+- [x] Pagina `/app/review` com fila do dia, sequencia, meta e "continuar" (link no menu do aluno).
 
 ### 6. Video, anotacoes e constancia
-- [ ] Player: velocidade, retomar no minuto (grava `positionSeconds` a cada ~15 s), buscar tempo (`seekTo`), tempo atual para marcadores, modo foco (esconde a trilha).
-- [ ] Marcadores com minuto (`LessonBookmark`) e transcricao clicavel com busca dentro da aula.
-- [ ] Tempo de estudo: batimento do cliente a cada 30 s (`StudyDay`), sequencia (`streak.ts`), meta semanal (`weeklyGoalMinutes`), metricas (tempo, aulas por semana, media de quiz) em `/app/progress`.
-- [ ] Pomodoro na aula.
+- [x] Player: velocidade, retomar no minuto (grava `positionSeconds` a cada ~15 s), buscar tempo (`seekTo`), tempo atual para marcadores, modo foco (esconde a trilha).
+- [x] Marcadores com minuto (`LessonBookmark`) e transcricao clicavel com busca dentro da aula.
+- [x] Tempo de estudo: batimento do cliente a cada 30 s (`StudyDay`), sequencia (`streak.ts`), meta semanal (`weeklyGoalMinutes`), metricas (tempo, aulas por semana, media de quiz) em `/app/progress`.
+- [x] Pomodoro na aula.
 - [ ] Lembrete: rota de cron (`vercel.json` + `CRON_SECRET`) que cria `Notification` para quem nao estudou hoje (sem e-mail: nao ha provedor configurado).
 
 ### 7. Busca, exportacao, playlists

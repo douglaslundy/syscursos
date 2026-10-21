@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useState, useTransition, type ReactNode } from "react";
+import { useState, useTransition } from "react";
 
+import { Modal, buttonClass, primaryClass } from "@/components/student/study-modal";
+import { QuizPanel } from "@/components/student/quiz-panel";
 import { gradeCard } from "@/lib/ai/deck";
 import { parseFlashcards, parseMindMap, type Flashcard } from "@/lib/ai/parsers";
 import { layoutMindMap, markdownToBlocks, wrapLabel } from "@/lib/ai/pdf-content";
+import { parseQuiz } from "@/lib/ai/quiz";
 import { SUMMARY_TECHNIQUES, type SummaryTechniqueId } from "@/lib/ai/techniques";
+import { cardKey } from "@/lib/study/srs";
 import { generateAiContentAction } from "@/server/actions/ai-actions";
+import { reviewCardAction } from "@/server/actions/study-actions";
 import type { AiGenerateError, AiItem } from "@/server/services/ai/ai-content-service";
 
 type LessonStudyToolsProps = {
@@ -15,9 +20,10 @@ type LessonStudyToolsProps = {
   aiEnabled: boolean;
   techniques: SummaryTechniqueId[];
   initialItems: AiItem[];
+  quizAttempts: Array<{ score: number; total: number; createdAt: string }>;
 };
 
-type Panel = "summary" | "flashcards" | "mindmap" | null;
+type Panel = "summary" | "flashcards" | "mindmap" | "quiz" | null;
 
 const errorText: Record<AiGenerateError, string> = {
   forbidden: "Voce nao tem acesso a esta aula.",
@@ -30,41 +36,6 @@ const errorText: Record<AiGenerateError, string> = {
   rate_limited: "Muitos pedidos seguidos. Aguarde um minuto e tente de novo.",
   failed: "Nao foi possivel gerar agora. Tente novamente.",
 };
-
-const buttonClass =
-  "inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary disabled:cursor-not-allowed disabled:opacity-50";
-const primaryClass =
-  "inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover disabled:cursor-not-allowed disabled:opacity-60";
-
-function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
-
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 px-4 py-6 backdrop-blur-sm">
-      <div className="mx-auto flex min-h-full max-w-3xl items-center justify-center">
-        <section
-          aria-label={title}
-          aria-modal="true"
-          className="w-full rounded-md border border-stroke-subtle bg-surface p-4 shadow-xl md:p-6"
-          role="dialog"
-        >
-          <div className="mb-4 flex items-start justify-between gap-4">
-            <h3 className="text-lg font-semibold text-copy-primary">{title}</h3>
-            <button aria-label="Fechar" className={buttonClass} onClick={onClose} type="button">
-              Fechar
-            </button>
-          </div>
-          {children}
-        </section>
-      </div>
-    </div>
-  );
-}
 
 function Markdown({ text }: { text: string }) {
   return (
@@ -86,14 +57,16 @@ function Markdown({ text }: { text: string }) {
   );
 }
 
-function Deck({ cards }: { cards: Flashcard[] }) {
+function Deck({ cards, courseId, lessonId }: { cards: Flashcard[]; courseId: string; lessonId: string }) {
   const [queue, setQueue] = useState(cards);
   const [revealed, setRevealed] = useState(false);
   const [round, setRound] = useState(0);
   const current = queue[0];
 
-  function grade(result: "again" | "good") {
-    setQueue((value) => gradeCard(value, result));
+  function grade(result: "again" | "good" | "easy") {
+    // A nota alimenta a repeticao espacada; falha de rede nao atrapalha o estudo da sessao.
+    void reviewCardAction({ courseId, lessonId, cardKey: cardKey(current.q), grade: result }).catch(() => null);
+    setQueue((value) => gradeCard(value, result === "again" ? "again" : "good"));
     setRevealed(false);
     setRound((value) => value + 1);
   }
@@ -138,6 +111,9 @@ function Deck({ cards }: { cards: Flashcard[] }) {
           </button>
           <button className={primaryClass} onClick={() => grade("good")} type="button">
             Acertei
+          </button>
+          <button className={buttonClass} onClick={() => grade("easy")} type="button">
+            Facil
           </button>
         </div>
       ) : (
@@ -196,7 +172,7 @@ function MindMap({ content }: { content: string }) {
   );
 }
 
-export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, initialItems }: LessonStudyToolsProps) {
+export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, initialItems, quizAttempts }: LessonStudyToolsProps) {
   const [items, setItems] = useState(initialItems);
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -232,6 +208,8 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
 
   const summary = selected ? find("SUMMARY", selected) : undefined;
   const mindmap = selected ? find("MINDMAP", selected) : undefined;
+  const quizItem = find("QUIZ");
+  const quiz = quizItem ? parseQuiz(quizItem.content) : null;
   const flashcards = find("FLASHCARDS");
   const cards = flashcards ? parseFlashcards(flashcards.content) : null;
   const label = (id: string) => SUMMARY_TECHNIQUES.find((item) => item.id === id)?.label ?? id;
@@ -252,6 +230,9 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
         </button>
         <button className={buttonClass} disabled={!available("MINDMAP") || techniques.length === 0} onClick={() => open("mindmap")} type="button">
           Mapa mental
+        </button>
+        <button className={buttonClass} disabled={!available("QUIZ")} onClick={() => open("quiz")} type="button">
+          Quiz
         </button>
       </div>
 
@@ -319,7 +300,7 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
           {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
           {cards ? (
             <>
-              <Deck cards={cards} />
+              <Deck cards={cards} courseId={courseId} lessonId={lessonId} />
               <div className="mt-4">
                 <a className={buttonClass} href={`${pdfBase}/flashcards`}>
                   Baixar PDF
@@ -330,6 +311,25 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
             <button className={primaryClass} disabled={!aiEnabled} onClick={() => generate("FLASHCARDS")} type="button">
               Gerar flashcards
             </button>
+          ) : null}
+        </Modal>
+      ) : null}
+
+      {panel === "quiz" ? (
+        <Modal onClose={() => setPanel(null)} title="Quiz da aula">
+          {pending ? <p className="text-sm text-copy-secondary">Gerando o quiz... pode levar alguns segundos.</p> : null}
+          {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
+          {quiz ? (
+            <QuizPanel attempts={quizAttempts} courseId={courseId} lessonId={lessonId} quiz={quiz} />
+          ) : !pending ? (
+            <>
+              <p className="mb-3 text-sm text-copy-secondary">
+                O quiz e gerado uma unica vez e fica salvo para todos os alunos da aula.
+              </p>
+              <button className={primaryClass} disabled={!aiEnabled} onClick={() => generate("QUIZ")} type="button">
+                Gerar quiz
+              </button>
+            </>
           ) : null}
         </Modal>
       ) : null}
