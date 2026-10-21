@@ -50,6 +50,18 @@ export default async function StudentCoursePage(props: { params: Promise<Student
               <CalendarDays aria-hidden className="h-4 w-4" />
               Cronograma
             </Link>
+            <a
+              className="inline-flex min-h-10 items-center gap-2 rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+              href={`/app/export/${courseId}?format=md`}
+            >
+              Exportar anotacoes e resumos
+            </a>
+            <a
+              className="inline-flex min-h-10 items-center gap-2 rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+              href={`/app/export/${courseId}?format=anki`}
+            >
+              Flashcards para Anki
+            </a>
           </div>
           {scheduleMode && data.modules.length > 1 ? <CourseScheduleMode courseId={courseId} mode={scheduleMode} /> : null}
           <p className="mt-3 max-w-3xl text-sm leading-6 text-copy-secondary">

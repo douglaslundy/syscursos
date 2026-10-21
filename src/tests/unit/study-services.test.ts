@@ -72,3 +72,21 @@ describe("bookmarks and position", () => {
     expect(db.lessonProgress.upsert).toHaveBeenCalledWith(expect.objectContaining({ update: { positionSeconds: 124 } }));
   });
 });
+
+describe("sendStudyReminders", () => {
+  it("notifies only students who studied recently but not today, once per day", async () => {
+    const now = new Date("2026-10-21T21:00:00Z");
+    const row = (studentId: string, key: string) => ({ studentId, day: new Date(`${key}T00:00:00Z`) });
+    const notification = { findMany: vi.fn().mockResolvedValue([{ userId: "u3" }]), createMany: vi.fn() };
+    const profile = { findMany: vi.fn().mockResolvedValue([{ id: "a", userId: "u1" }, { id: "c", userId: "u3" }]) };
+
+    db.studyDay.findMany.mockResolvedValue([row("a", "2026-10-20"), row("a", "2026-10-19"), row("b", "2026-10-21"), row("c", "2026-10-20")]);
+    Object.assign(db, { notification, studentProfile: { ...db.studentProfile, ...profile } });
+
+    const { sendStudyReminders } = await import("@/server/services/reminder-service");
+
+    expect(await sendStudyReminders(now)).toBe(1);
+    expect(profile.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { id: { in: ["a", "c"] } } }));
+    expect(notification.createMany).toHaveBeenCalledWith({ data: [expect.objectContaining({ userId: "u1", kind: "study_reminder", title: expect.stringContaining("2 dias") })] });
+  });
+});

@@ -10,7 +10,7 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 
 - Concluido e commitado: `d439dbd` (jspdf 4.2.1, cabecalhos de seguranca, cache de configuracoes, analise).
 - ATENCAO: o codigo novo le colunas/tabelas da migracao `20261022120000_study_features` (ex.: `lesson_progress.position_seconds`). Aplicar `prisma migrate deploy` ANTES de rodar/deployar, senao as paginas de aula quebram. Ainda nao aplicada (aguardando autorizacao do usuario).
-- Commitados: `d731e02` (Next 15), `6875137` (seguranca). Etapas 4, 5 e parte da 6 prontas (quiz, revisao, progresso, player, marcadores, Pomodoro); falta o lembrete por cron.
+- Commitados: `d731e02` (Next 15), `6875137` (seguranca). Etapas 4, 5 e parte da 6 prontas (quiz, revisao, progresso, player, marcadores, Pomodoro); lembrete por cron, busca, exportacao e playlists tambem prontos (etapa 7 concluida). Proximo: etapa 8.
 - Commitado `d731e02`: migracao Next 14 -> 15.5.28 (build e 198 testes OK), schema + migracao `20261022120000_study_features` (nao aplicada), libs `src/lib/ai/quiz.ts`, `src/lib/study/srs.ts`, `src/lib/study/streak.ts`, prompts de quiz/prova/chat, quiz no `ai-content-service` (tipo `QUIZ`, limite por aluno, chamada unica para pedidos simultaneos).
 
 ## Etapas
@@ -52,12 +52,12 @@ Armadilhas deste ambiente (Windows): heredoc do bash com aspas/`\n` quebra, use 
 - [x] Marcadores com minuto (`LessonBookmark`) e transcricao clicavel com busca dentro da aula.
 - [x] Tempo de estudo: batimento do cliente a cada 30 s (`StudyDay`), sequencia (`streak.ts`), meta semanal (`weeklyGoalMinutes`), metricas (tempo, aulas por semana, media de quiz) em `/app/progress`.
 - [x] Pomodoro na aula.
-- [ ] Lembrete: rota de cron (`vercel.json` + `CRON_SECRET`) que cria `Notification` para quem nao estudou hoje (sem e-mail: nao ha provedor configurado).
+- [x] Lembrete: rota de cron (`vercel.json` + `CRON_SECRET`) que cria `Notification` para quem nao estudou hoje (sem e-mail: nao ha provedor configurado).
 
 ### 7. Busca, exportacao, playlists
-- [ ] Busca global `/app/search` (aulas, transcricoes, anotacoes, resumos) so nos cursos disponiveis do aluno.
-- [ ] Exportar anotacoes e resumos (Markdown) e flashcards (TSV para Anki) por curso: `/app/export/[courseId]`.
-- [ ] Playlists/trilhas do aluno (`/app/playlists`, botao "Adicionar a playlist" na aula).
+- [x] Busca global `/app/search` (aulas, transcricoes, anotacoes, resumos) so nos cursos disponiveis do aluno.
+- [x] Exportar anotacoes e resumos (Markdown) e flashcards (TSV para Anki) por curso: `/app/export/[courseId]`.
+- [x] Playlists/trilhas do aluno (`/app/playlists`, botao "Adicionar a playlist" na aula).
 
 ### 8. Duvidas, notificacoes, relatorios, saude
 - [ ] Duvidas por aula (`LessonQuestion`): aluno pergunta, produtor/admin responde em `/admin/questions`; respostas visiveis na aula.

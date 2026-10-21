@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CourseBlocked } from "@/components/student/course-blocked";
 import { FavoriteButton } from "@/components/student/favorite-button";
+import { AddToPlaylist } from "@/components/student/add-to-playlist";
 import { LessonBookmarks } from "@/components/student/lesson-bookmarks";
 import { LessonCompletionPanel } from "@/components/student/lesson-completion-panel";
 import { LessonStudyTools } from "@/components/student/lesson-study-tools";
@@ -10,6 +11,7 @@ import { LessonTranscript } from "@/components/student/lesson-transcript";
 import { listBookmarks } from "@/server/services/bookmark-service";
 import { getAiAvailability, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { getLessonFavoriteState } from "@/server/services/favorite-service";
+import { listPlaylists } from "@/server/services/playlist-service";
 import { listQuizAttempts } from "@/server/services/quiz-service";
 import { getGeminiApiKey, getTranscriptionMethod } from "@/server/services/settings-service";
 import { canResetTranscript } from "@/server/services/transcript-service";
@@ -18,6 +20,14 @@ import { extractYouTubeVideoId } from "@/server/services/video-platform-service"
 import { studentLessonParamsSchema } from "@/server/validators/student";
 
 export const maxDuration = 60;
+
+// Recursos extras (quiz, marcadores, playlists) nao podem derrubar a aula se a tabela ainda nao existir ou o banco falhar.
+function optional<T>(fallback: T) {
+  return (error: unknown) => {
+    console.error("Optional lesson data failed to load.", error);
+    return fallback;
+  };
+}
 
 type StudentLessonPageProps = {
   params: { courseId: string; lessonId: string };
@@ -28,7 +38,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
   const params = await props.params;
   const searchParams = await props.searchParams;
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks, playlists] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
     getTranscriptionMethod(),
@@ -36,8 +46,9 @@ export default async function StudentLessonPage(props: { params: Promise<Student
     getAiAvailability(),
     listLessonAiItems(lessonId),
     getGeminiApiKey(),
-    requireStudentProfileId().then((id) => listQuizAttempts(id, lessonId)),
-    requireStudentProfileId().then((id) => listBookmarks(id, lessonId)),
+    requireStudentProfileId().then((id) => listQuizAttempts(id, lessonId)).catch(optional([])),
+    requireStudentProfileId().then((id) => listBookmarks(id, lessonId)).catch(optional([])),
+    listPlaylists().catch(optional([])),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -72,8 +83,9 @@ export default async function StudentLessonPage(props: { params: Promise<Student
           <h1 className="mt-2 text-3xl font-semibold tracking-normal text-copy-primary md:text-4xl">
             {data.lesson.title}
           </h1>
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <FavoriteButton courseId={courseId} isFavorite={isFavorite} lessonId={lessonId} />
+            <AddToPlaylist courseId={courseId} lessonId={lessonId} playlists={playlists} />
           </div>
         </div>
       </div>
