@@ -3470,3 +3470,8 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - `useBusyGuard`, `useDraftAutosave` e `useVideoEnded` extraidos para `use-transcriber-effects.ts`, com 4 testes (jsdom, timers falsos). Comportamento igual ao anterior.
 - NAO extraidos: gravacao (MediaRecorder), worker do Whisper e fila de trechos, que dividem refs e estado; sem teste em navegador com microfone o risco de quebrar a gravacao e alto.
 - Nao feitos por dependerem de decisao ou de verificacao visual: confirmacao de e-mail (SMTP), CSP ativo, tailwind 4.
+
+## 2026-10-22 - Teste logado no navegador (aluno, build local de producao contra o banco real)
+- Verificado logado: lista de cursos, curso "Assunto Infinito" (9 modulos, 42 aulas), Revisao, Progresso (sequencia, meta, grafico), Busca global, Avisos, Playlists, Cadernos, aula do Drive (marcadores, notas, modo foco, Pomodoro, duvidas) e aula com transcricao (busca, marcas de tempo, PDF, chat). Sem erros no console. Marcador criado e apagado com sucesso (tabela `lesson_bookmarks`).
+- Aviso benigno no console: `postMessage` do player do YouTube (origem `youtube-nocookie`) na carga; o player funciona.
+- Botoes de IA (resumo, flashcards, quiz, chat) ficam desativados com "A IA ainda nao foi configurada": esperado sem chave valida. NAO verificado: geracao por IA, prova final, certificado, cron, gravacao do Drive, painel admin/produtor.
