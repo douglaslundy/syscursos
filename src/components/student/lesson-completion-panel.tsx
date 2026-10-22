@@ -31,7 +31,7 @@ type LessonCompletionPanelProps = {
   courseId: string;
   lessonId: string;
   title: string;
-  videoEmbed: { url: string; supportsCompletionTracking: boolean } | null;
+  videoEmbed: { url: string; supportsCompletionTracking: boolean; ownSrc?: string } | null;
   initialIsCompleted: boolean;
   completedLessonIds: string[];
   currentModuleId: string;

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { PLAYER_READY_EVENT, getPlayer } from "@/lib/study/player-bridge";
 import { registerRecorder } from "@/lib/study/recorder-bridge";
 import { SAMPLE_RATE, decodeToPcm, supported, youtubeErrorMessage } from "@/lib/transcription/browser";
 import { SILENCE_LEVEL, rms, shouldAutoFinish } from "@/lib/transcription/auto-finish";
@@ -105,6 +106,15 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
       setTranscribing(false);
     };
   }, [cleanup, lessonId]);
+
+  // Player proprio: o audio vem do proprio video, entao grava ate onde nao ha compartilhamento de tela (celular).
+  useEffect(() => {
+    const update = () => setCanRecord(supported() || (typeof MediaRecorder !== "undefined" && !!getPlayer()?.captureAudio));
+
+    update();
+    window.addEventListener(PLAYER_READY_EVENT, update);
+    return () => window.removeEventListener(PLAYER_READY_EVENT, update);
+  }, []);
 
   const busy = BUSY_PHASES.includes(phase);
 
@@ -455,9 +465,10 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
     setElapsed(0);
 
     try {
-      // Pede a captura antes de baixar o modelo: o navegador so abre o seletor logo apos o clique, e nao vale baixar o modelo se o aluno cancelar.
+      // Player proprio: pega o audio do video sem pedir nada ao aluno. Senao, pede a captura da guia antes de baixar o
+      // modelo: o navegador so abre o seletor logo apos o clique, e nao vale baixar o modelo se o aluno cancelar.
       const options: DisplayOptions = { video: true, audio: true, preferCurrentTab: true };
-      const stream = await navigator.mediaDevices.getDisplayMedia(options);
+      const stream = getPlayer()?.captureAudio?.() ?? (await navigator.mediaDevices.getDisplayMedia(options));
 
       if (stream.getAudioTracks().length === 0) {
         stream.getTracks().forEach((track) => track.stop());

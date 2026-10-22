@@ -200,3 +200,30 @@ export async function saveTranscriptionMethod(method: TranscriptionMethod): Prom
   });
   return "saved";
 }
+
+// --- Player das aulas do Drive: janela do Google (embed) ou player proprio da plataforma ---
+const PLAYER_MODE_KEY = "player_mode";
+
+export type PlayerMode = "embed" | "own";
+
+// O player proprio le o arquivo pela Drive API, entao sem a chave do Google ele nao funciona: cai no embed.
+export async function getPlayerMode(): Promise<PlayerMode> {
+  const row = await appSettings.findUnique({ where: { key: PLAYER_MODE_KEY } });
+
+  return row?.value === "own" && (await getGoogleApiKey()) ? "own" : "embed";
+}
+
+export async function savePlayerMode(mode: PlayerMode): Promise<"saved" | "need_key"> {
+  await requireRole("ADMIN");
+
+  if (mode === "own" && !(await getGoogleApiKey())) {
+    return "need_key";
+  }
+
+  await appSettings.upsert({
+    where: { key: PLAYER_MODE_KEY },
+    create: { key: PLAYER_MODE_KEY, value: mode },
+    update: { value: mode },
+  });
+  return "saved";
+}

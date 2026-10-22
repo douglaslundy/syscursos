@@ -20,6 +20,8 @@ const messages: Record<string, string> = {
   gkey_test_no_sample: "Nao ha aula do Google Drive cadastrada para usar no teste.",
   gkey_test_youtube_disabled: "Drive OK, mas a YouTube Data API v3 nao esta ativada no projeto. Ative-a para ler a duracao das aulas do YouTube.",
   gkey_test_network: "Nao foi possivel falar com o Google. Tente novamente.",
+  player_saved: "Player das aulas atualizado. Vale para todos os alunos na proxima vez que abrirem uma aula.",
+  player_need_key: "O player proprio le o video pelo Drive: salve antes a Google API Key.",
   transcription_saved: "Metodo de transcricao salvo.",
   transcription_need_key: "Para usar o Gemini, salve antes a chave do Gemini.",
   gemini_saved: "Chave do Gemini salva. Use Testar para confirmar que funciona.",
@@ -100,7 +102,7 @@ export function Feedback({ status }: FeedbackProps) {
 }
 
 function feedbackClassName(status: string) {
-  const isError = !["saved", "deleted", "renewed", "canceled", "linked_existing", "durations_scanned", "durations_partial", "study_prefs_saved", "gkey_saved", "gkey_removed", "gkey_test_ok", "transcription_saved", "gemini_saved", "gemini_removed", "gemini_test_ok"].includes(status);
+  const isError = !["saved", "deleted", "renewed", "canceled", "linked_existing", "durations_scanned", "durations_partial", "study_prefs_saved", "gkey_saved", "gkey_removed", "gkey_test_ok", "transcription_saved", "player_saved", "gemini_saved", "gemini_removed", "gemini_test_ok"].includes(status);
 
   return isError
     ? "mb-4 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-100"

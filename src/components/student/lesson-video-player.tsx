@@ -2,10 +2,12 @@
 
 import { useEffect, useId, useMemo, useRef } from "react";
 
+import { OwnVideoPlayer } from "@/components/student/own-video-player";
 import { registerPlayer } from "@/lib/study/player-bridge";
 
 type LessonVideoPlayerProps = {
-  videoEmbed: { url: string; supportsCompletionTracking: boolean } | null;
+  // ownSrc: aula do Drive servida pelo player proprio (ver /app/video); sem ele, usa a janela do provedor.
+  videoEmbed: { url: string; supportsCompletionTracking: boolean; ownSrc?: string } | null;
   title: string;
   startSeconds?: number;
   onEnded: () => void;
@@ -43,7 +45,17 @@ declare global {
 
 const ENDED_STATE = 0;
 
-export function LessonVideoPlayer({
+export function LessonVideoPlayer(props: LessonVideoPlayerProps) {
+  const { videoEmbed, title, startSeconds = 0, onEnded } = props;
+
+  return videoEmbed?.ownSrc ? (
+    <OwnVideoPlayer fallbackUrl={videoEmbed.url} onEnded={onEnded} src={videoEmbed.ownSrc} startSeconds={startSeconds} title={title} />
+  ) : (
+    <EmbeddedPlayer {...props} />
+  );
+}
+
+function EmbeddedPlayer({
   videoEmbed,
   title,
   startSeconds = 0,

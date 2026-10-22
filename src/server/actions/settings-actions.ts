@@ -7,6 +7,7 @@ import {
   removeGoogleApiKey,
   saveGeminiApiKey,
   saveGoogleApiKey,
+  savePlayerMode,
   saveRegistrationOpen,
   saveTranscriptionMethod,
   testGeminiApiKey,
@@ -19,6 +20,19 @@ const PATH = "/admin/settings";
 export async function saveRegistrationOpenAction(formData: FormData) {
   await saveRegistrationOpen(formData.get("open") === "true");
   redirect(`${PATH}?status=saved`);
+}
+
+export async function savePlayerModeAction(formData: FormData) {
+  const mode = formData.get("mode");
+
+  if (mode !== "embed" && mode !== "own") {
+    redirect(`${PATH}?status=invalid`);
+  }
+
+  const result = await savePlayerMode(mode);
+
+  if (result === "saved") await recordAudit("settings.player_mode_save", "setting");
+  redirect(`${PATH}?status=${result === "saved" ? "player_saved" : "player_need_key"}`);
 }
 
 function readKey(formData: FormData) {

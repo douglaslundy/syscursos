@@ -1,9 +1,11 @@
 // Ponte entre o player do YouTube e os demais componentes da aula (transcricao clicavel, marcadores, velocidade, retomar).
-// So o YouTube expoe controle; no Drive (iframe) `getPlayer()` e null e os recursos de tempo ficam desligados.
+// YouTube e o player proprio expoem controle; no Drive em iframe `getPlayer()` e null e os recursos de tempo ficam desligados.
 export type PlayerControls = {
   getTime: () => number;
   seek: (seconds: number) => void;
   setRate: (rate: number) => void;
+  // So o player proprio: faixa de audio do video para transcrever sem pedir o compartilhamento de tela.
+  captureAudio?: () => MediaStream | null;
 };
 
 let controls: PlayerControls | null = null;

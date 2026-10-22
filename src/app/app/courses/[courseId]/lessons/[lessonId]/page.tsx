@@ -17,7 +17,7 @@ import { listPlaylists } from "@/server/services/playlist-service";
 import { listLessonQuestions } from "@/server/services/question-service";
 import { listQuizAttempts } from "@/server/services/quiz-service";
 import { getPlaybackRate } from "@/server/services/study-stats-service";
-import { getGeminiApiKey, getTranscriptionMethod } from "@/server/services/settings-service";
+import { getGeminiApiKey, getPlayerMode, getTranscriptionMethod } from "@/server/services/settings-service";
 import { canResetTranscript } from "@/server/services/transcript-service";
 import { getStudentLesson, requireStudentProfileId } from "@/server/services/student-service";
 import { extractYouTubeVideoId } from "@/server/services/video-platform-service";
@@ -42,7 +42,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
   const params = await props.params;
   const searchParams = await props.searchParams;
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks, playlists, questions, playbackRate] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks, playlists, questions, playbackRate, playerMode] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
     getTranscriptionMethod(),
@@ -55,6 +55,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
     listPlaylists().catch(optional([])),
     listLessonQuestions(lessonId).catch(optional([])),
     getPlaybackRate().catch(optional(1)),
+    getPlayerMode().catch(optional("embed" as const)),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -64,6 +65,12 @@ export default async function StudentLessonPage(props: { params: Promise<Student
   if (!data.lesson) {
     return null;
   }
+
+  // Aula do Drive com o player proprio ligado no admin: o video vem de /app/video, com controle de tempo e velocidade.
+  const videoEmbed =
+    playerMode === "own" && data.videoEmbed?.provider === "GOOGLE_DRIVE"
+      ? { ...data.videoEmbed, supportsCompletionTracking: true, ownSrc: `/app/video/${lessonId}?courseId=${courseId}` }
+      : data.videoEmbed;
 
   return (
     <section>
@@ -116,7 +123,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         progress={data.progress}
         startSeconds={data.positionSeconds}
         title={data.lesson.title}
-        videoEmbed={data.videoEmbed}
+        videoEmbed={videoEmbed}
       >
         {data.lesson.materials.length > 0 ? (
           <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4">

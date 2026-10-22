@@ -5,11 +5,12 @@ import { SubmitButton } from "@/components/admin/submit-button";
 import {
   removeGoogleKeyAction,
   saveGoogleKeyAction,
+  savePlayerModeAction,
   saveRegistrationOpenAction,
   testGoogleKeyAction,
 } from "@/server/actions/settings-actions";
 import { requireRole } from "@/server/auth/guards";
-import { getGoogleKeyStatus, isRegistrationOpen } from "@/server/services/settings-service";
+import { getGoogleKeyStatus, getPlayerMode, isRegistrationOpen } from "@/server/services/settings-service";
 
 type SettingsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -19,7 +20,7 @@ export default async function AdminSettingsPage(props: { searchParams: Promise<S
   const searchParams = await props.searchParams;
   await requireRole("ADMIN");
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
-  const [key, registrationOpen] = await Promise.all([getGoogleKeyStatus(), isRegistrationOpen()]);
+  const [key, registrationOpen, playerMode] = await Promise.all([getGoogleKeyStatus(), isRegistrationOpen(), getPlayerMode()]);
 
   return (
     <section className="space-y-8">
@@ -73,6 +74,24 @@ export default async function AdminSettingsPage(props: { searchParams: Promise<S
             </SubmitButton>
           </form>
         ) : null}
+      </div>
+
+      <div className="max-w-2xl space-y-3 rounded-md border bg-background p-4">
+        <h3 className="text-base font-semibold">Player das aulas (Google Drive)</h3>
+        <p className="text-sm text-muted-foreground">
+          <strong>Janela do Google:</strong> o video aparece no player do proprio Drive, sem controle de velocidade nem
+          de tempo. <strong>Player proprio:</strong> o video continua no Drive, mas e exibido pelo player da plataforma,
+          com velocidade padrao do aluno, retomar de onde parou, transcricao clicavel, marcadores e transcricao sem
+          pedir permissao ao navegador. Exige a Google API Key acima e videos compartilhados por link. Se o Google
+          recusar o video (limite de downloads), a aula volta sozinha para a janela do Google.
+        </p>
+        <p className="text-sm">
+          Em uso agora: <strong>{playerMode === "own" ? "player proprio" : "janela do Google"}</strong>.
+        </p>
+        <form action={savePlayerModeAction}>
+          <input name="mode" type="hidden" value={playerMode === "own" ? "embed" : "own"} />
+          <SubmitButton>{playerMode === "own" ? "Voltar para a janela do Google" : "Usar o player proprio"}</SubmitButton>
+        </form>
       </div>
 
       <div className="max-w-2xl space-y-3 rounded-md border bg-background p-4">
