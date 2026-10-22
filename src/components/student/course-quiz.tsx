@@ -4,20 +4,30 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { QuizPanel } from "@/components/student/quiz-panel";
+import { ReviewSession } from "@/components/student/review-session";
 import { Modal, buttonClass, primaryClass } from "@/components/student/study-modal";
 import type { Quiz } from "@/lib/ai/quiz";
 import { DEFAULT_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
-import { refreshCourseQuizAction, startCourseQuizAction, submitCourseQuizAction } from "@/server/actions/quiz-actions";
+import { refreshCourseQuizAction, startCourseDeckAction, startCourseQuizAction, submitCourseQuizAction } from "@/server/actions/quiz-actions";
 import type { QuizRef } from "@/server/services/course-quiz-service";
+import type { ReviewCard } from "@/server/services/review-service";
 
-type CourseQuizProps = { courseId: string; courseTitle: string; questions: number };
+// courseId null = todos os cursos do aluno, misturados.
+type CourseQuizProps = { courseId: string | null; courseTitle: string; questions: number };
 
-type Session = { quiz: Quiz; refs: QuizRef[]; id: number };
+type Format = "quiz" | "deck";
+type Session = { format: "quiz"; quiz: Quiz; refs: QuizRef[]; id: number } | { format: "deck"; cards: ReviewCard[]; id: number };
+
+const formats: Array<{ value: Format; label: string; hint: string }> = [
+  { value: "quiz", label: "Quiz", hint: "alternativas, com resultado no fim" },
+  { value: "deck", label: "Baralho", hint: "frente e verso, voce da a nota de dificuldade" },
+];
 
 export function CourseQuiz({ courseId, courseTitle, questions }: CourseQuizProps) {
   const router = useRouter();
   const [asking, setAsking] = useState(false);
   const [count, setCount] = useState(Math.min(DEFAULT_QUIZ_QUESTIONS, questions));
+  const [format, setFormat] = useState<Format>("quiz");
   const [session, setSession] = useState<Session | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -25,22 +35,23 @@ export function CourseQuiz({ courseId, courseTitle, questions }: CourseQuizProps
   function start(total: number) {
     setMessage(null);
     startTransition(async () => {
-      const result = await startCourseQuizAction({ courseId, count: total });
+      const input = { courseId: courseId ?? undefined, count: total };
+      const result = format === "deck" ? await startCourseDeckAction(input) : await startCourseQuizAction(input);
 
       if (!result.ok) {
-        setMessage(result.error === "forbidden" ? "Voce nao tem acesso a este curso." : "Este curso ainda nao tem quiz gerado.");
+        setMessage(result.error === "forbidden" ? "Voce nao tem acesso a este curso." : "Ainda nao ha quiz gerado para estudar.");
         return;
       }
 
       setAsking(false);
-      setSession({ quiz: result.quiz, refs: result.refs, id: Date.now() });
+      setSession("cards" in result ? { format: "deck", cards: result.cards, id: Date.now() } : { format: "quiz", quiz: result.quiz, refs: result.refs, id: Date.now() });
     });
   }
 
   function refresh() {
     setMessage(null);
     startTransition(async () => {
-      await refreshCourseQuizAction(courseId);
+      await refreshCourseQuizAction(courseId ?? undefined);
       router.refresh();
       setMessage("Lista atualizada com os quizzes gerados por todos os alunos.");
     });
@@ -63,10 +74,25 @@ export function CourseQuiz({ courseId, courseTitle, questions }: CourseQuizProps
         <button className={buttonClass} disabled={pending} onClick={refresh} type="button">
           {pending ? "Atualizando..." : "Atualizar"}
         </button>
-        <a className={buttonClass} href={`/app/export/${courseId}?format=anki`}>
-          Exportar para Anki
-        </a>
+        {courseId ? (
+          <a className={buttonClass} href={`/app/export/${courseId}?format=anki`}>
+            Exportar para Anki
+          </a>
+        ) : null}
       </div>
+
+      <fieldset className="flex flex-wrap items-center gap-2">
+        <legend className="mb-1 text-sm text-copy-secondary">Responder em formato:</legend>
+        {formats.map((item) => (
+          <label
+            className={`cursor-pointer rounded-md border px-3 py-2 text-sm ${format === item.value ? "border-brand-primary text-copy-primary" : "border-stroke-subtle text-copy-secondary"}`}
+            key={item.value}
+          >
+            <input checked={format === item.value} className="mr-2" name="quiz-format" onChange={() => setFormat(item.value)} type="radio" value={item.value} />
+            <strong>{item.label}</strong> <span className="text-xs text-copy-muted">- {item.hint}</span>
+          </label>
+        ))}
+      </fieldset>
 
       {asking ? (
         <form
@@ -100,13 +126,17 @@ export function CourseQuiz({ courseId, courseTitle, questions }: CourseQuizProps
       ) : null}
 
       {session ? (
-        <Modal onClose={closeSession} title={`Quiz - ${courseTitle}`}>
-          <QuizPanel
-            attempts={[]}
-            key={session.id}
-            quiz={session.quiz}
-            submit={(answers) => submitCourseQuizAction({ courseId, refs: session.refs, answers })}
-          />
+        <Modal onClose={closeSession} title={`${session.format === "deck" ? "Baralho" : "Quiz"} - ${courseTitle}`}>
+          {session.format === "deck" ? (
+            <ReviewSession cards={session.cards} key={session.id} />
+          ) : (
+            <QuizPanel
+              attempts={[]}
+              key={session.id}
+              quiz={session.quiz}
+              submit={(answers) => submitCourseQuizAction({ refs: session.refs, answers })}
+            />
+          )}
         </Modal>
       ) : null}
     </div>

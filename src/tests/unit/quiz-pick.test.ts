@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { clampCount, pickQuestions, shuffle } from "@/lib/study/quiz-pick";
+import { clampCount, pickDueFirst, pickQuestions, shuffle } from "@/lib/study/quiz-pick";
 import { groupByCourse, parseReviewView } from "@/lib/study/review-view";
 
 describe("quiz pick", () => {
@@ -20,6 +20,17 @@ describe("quiz pick", () => {
     expect([...shuffle(items, () => 0.3)].sort()).toEqual(items);
     expect(items).toEqual([1, 2, 3, 4, 5, 6]);
     expect(new Set(pickQuestions(items, 4)).size).toBe(4);
+  });
+});
+
+describe("pickDueFirst", () => {
+  it("takes the due items first and fills with the ones still waiting", () => {
+    const items = [1, 2, 3, 4, 5, 6];
+    const isDue = (item: number) => item % 2 === 0;
+
+    expect(pickDueFirst(items, isDue, 2).every(isDue)).toBe(true);
+    expect(pickDueFirst(items, isDue, 4).filter(isDue)).toHaveLength(3);
+    expect(new Set(pickDueFirst(items, isDue, 5)).size).toBe(5);
   });
 });
 
