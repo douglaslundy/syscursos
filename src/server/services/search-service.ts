@@ -8,6 +8,7 @@ export type SearchHit = {
   lessonId: string;
   courseId: string;
   title: string;
+  moduleTitle: string;
   courseTitle: string;
   snippet: string;
 };
@@ -32,17 +33,17 @@ export async function searchStudy(rawQuery: string | undefined): Promise<{ query
     prisma.lesson.findMany({
       where: { ...inCourses, OR: [{ title: match }, { transcript: match }] },
       take: LIMIT,
-      select: { id: true, title: true, transcript: true, module: { select: { courseId: true } } },
+      select: { id: true, title: true, transcript: true, module: { select: { courseId: true, title: true } } },
     }),
     prisma.lessonNote.findMany({
       where: { studentId, content: match, lesson: inCourses },
       take: LIMIT,
-      select: { content: true, lesson: { select: { id: true, title: true, module: { select: { courseId: true } } } } },
+      select: { content: true, lesson: { select: { id: true, title: true, module: { select: { courseId: true, title: true } } } } },
     }),
     prisma.lessonAiContent.findMany({
       where: { kind: "SUMMARY", content: match, lesson: inCourses },
       take: LIMIT,
-      select: { content: true, lesson: { select: { id: true, title: true, module: { select: { courseId: true } } } } },
+      select: { content: true, lesson: { select: { id: true, title: true, module: { select: { courseId: true, title: true } } } } },
     }),
   ]);
   const hits: SearchHit[] = [
@@ -54,6 +55,7 @@ export async function searchStudy(rawQuery: string | undefined): Promise<{ query
         lessonId: lesson.id,
         courseId: lesson.module.courseId,
         title: lesson.title,
+        moduleTitle: lesson.module.title,
         courseTitle: courseTitle.get(lesson.module.courseId) ?? "",
         snippet: makeSnippet(inTitle || !lesson.transcript ? lesson.title : lesson.transcript, query),
       };
@@ -63,6 +65,7 @@ export async function searchStudy(rawQuery: string | undefined): Promise<{ query
       lessonId: note.lesson.id,
       courseId: note.lesson.module.courseId,
       title: note.lesson.title,
+      moduleTitle: note.lesson.module.title,
       courseTitle: courseTitle.get(note.lesson.module.courseId) ?? "",
       snippet: makeSnippet(note.content, query),
     })),
@@ -71,6 +74,7 @@ export async function searchStudy(rawQuery: string | undefined): Promise<{ query
       lessonId: summary.lesson.id,
       courseId: summary.lesson.module.courseId,
       title: summary.lesson.title,
+      moduleTitle: summary.lesson.module.title,
       courseTitle: courseTitle.get(summary.lesson.module.courseId) ?? "",
       snippet: makeSnippet(summary.content, query),
     })),

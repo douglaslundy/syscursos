@@ -3486,3 +3486,8 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - `/app/notebooks` abria so o primeiro curso (sem opcao "Todos os cursos") e a busca valia so nele, via SQL `contains`. Agora o padrao e "Todos os cursos": anotacoes agrupadas por curso, depois modulo e aula; o filtro de curso continua.
 - Busca feita no servico: ignora acentos e maiusculas e tambem acha pelo titulo da aula. `courseId` vazio no formulario vale como todos.
 - Teste novo no `student-service.test.ts`. Nao verificado no navegador (banco inacessivel no momento do teste).
+
+## Menu e resultado da busca (2026-10-21)
+
+- Menu do aluno: "Buscar" agora e o 2o item (apos Cursos, antes de Revisao); a barra inferior do celular segue a mesma ordem.
+- Resultado da busca mostra aula, modulo e curso (`moduleTitle` novo em `SearchHit`). Nao verificado no navegador.

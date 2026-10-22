@@ -54,10 +54,11 @@ export default async function SearchPage(props: { searchParams: Promise<SearchPa
                 className="block rounded-md border border-stroke-subtle bg-surface p-4 transition hover:bg-surface-hover"
                 href={`/app/courses/${hit.courseId}/lessons/${hit.lessonId}`}
               >
-                <p className="text-xs uppercase tracking-[0.12em] text-copy-muted">
-                  {typeLabel[hit.type]} - {hit.courseTitle}
+                <p className="text-xs uppercase tracking-[0.12em] text-copy-muted">{typeLabel[hit.type]}</p>
+                <p className="mt-1 text-sm font-semibold text-copy-primary">Aula: {hit.title}</p>
+                <p className="mt-1 text-xs text-copy-muted">
+                  Modulo: {hit.moduleTitle} | Curso: {hit.courseTitle}
                 </p>
-                <p className="mt-1 text-sm font-semibold text-copy-primary">{hit.title}</p>
                 <p className="mt-1 text-sm text-copy-secondary">{hit.snippet}</p>
               </Link>
             </li>

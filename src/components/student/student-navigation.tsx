@@ -14,6 +14,12 @@ const navigationItems = [
     match: (pathname: string) => pathname === "/app" || pathname.startsWith("/app/courses"),
   },
   {
+    href: "/app/search",
+    label: "Buscar",
+    icon: Search,
+    match: (pathname: string) => pathname.startsWith("/app/search"),
+  },
+  {
     href: "/app/review",
     label: "Revisao",
     icon: Brain,
@@ -24,12 +30,6 @@ const navigationItems = [
     label: "Progresso",
     icon: BarChart3,
     match: (pathname: string) => pathname.startsWith("/app/progress"),
-  },
-  {
-    href: "/app/search",
-    label: "Buscar",
-    icon: Search,
-    match: (pathname: string) => pathname.startsWith("/app/search"),
   },
   {
     href: "/app/notebooks",
@@ -64,7 +64,7 @@ const navigationItems = [
 ] as const;
 
 // Celular: 4 atalhos + "Mais" (que lista o resto), para a barra inferior nao ficar apertada.
-const bottomHrefs = ["/app", "/app/review", "/app/progress", "/app/search"];
+const bottomHrefs = ["/app", "/app/search", "/app/review", "/app/progress"];
 const bottomItems = navigationItems.filter((item) => bottomHrefs.includes(item.href));
 
 export function StudentDesktopNavigation({ unread = 0 }: { unread?: number }) {
