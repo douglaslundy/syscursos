@@ -149,16 +149,38 @@ export function LessonCompletionPanel({
   return (
     <>
       <div className={focus ? "mt-6 grid gap-4" : "mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"}>
-        <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
-          <LessonVideoPlayer
-            onEnded={() => {
-              announceVideoEnded();
-              setCompletion(true);
-            }}
-            startSeconds={startSeconds}
-            title={title}
-            videoEmbed={videoEmbed}
-          />
+        <div>
+          <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
+            <LessonVideoPlayer
+              onEnded={() => {
+                announceVideoEnded();
+                setCompletion(true);
+              }}
+              startSeconds={startSeconds}
+              title={title}
+              videoEmbed={videoEmbed}
+            />
+          </div>
+          <div className="mt-2 flex flex-wrap justify-end gap-2">
+            {previousLessonId ? (
+              <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary" href={`/app/courses/${courseId}/lessons/${previousLessonId}`}>
+                Aula anterior
+              </Link>
+            ) : (
+              <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
+                Aula anterior
+              </span>
+            )}
+            {nextLessonHref ? (
+              <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary" href={nextLessonHref}>
+                Proxima aula
+              </Link>
+            ) : (
+              <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
+                Proxima aula
+              </span>
+            )}
+          </div>
         </div>
         {focus ? null : (
           <LessonTrailSidebar
@@ -169,27 +191,6 @@ export function LessonCompletionPanel({
             modules={modules}
             progress={progress}
           />
-        )}
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        {previousLessonId ? (
-          <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary" href={`/app/courses/${courseId}/lessons/${previousLessonId}`}>
-            Aula anterior
-          </Link>
-        ) : (
-          <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
-            Aula anterior
-          </span>
-        )}
-        {nextLessonHref ? (
-          <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary" href={nextLessonHref}>
-            Proxima aula
-          </Link>
-        ) : (
-          <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
-            Proxima aula
-          </span>
         )}
       </div>
 

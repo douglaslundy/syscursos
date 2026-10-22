@@ -3500,3 +3500,5 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Aula: linha 1 = Aula anterior / Proxima aula; linha 2 = Velocidade, Modo foco, Pomodoro, Marcar como concluida e Transcrever gravando o audio. O botao de gravar vive na barra e chama o gravador por `src/lib/study/recorder-bridge.ts` (o `LessonTranscriber` se registra quando pode comecar).
 - Velocidade padrao por aluno: coluna `student_profiles.playback_rate` (migration `20261023120000_playback_rate`, aplicada). Editavel em `/app/me`; mudar a velocidade dentro de uma aula grava como novo padrao e vale para todas. So o player do YouTube aceita controle de velocidade (Drive nao). A pagina da aula tem fallback para 1x se a leitura falhar.
 - Nao verificado no navegador.
+
+- Aula anterior / Proxima aula agora ficam logo abaixo do video, alinhados a direita (antes ficavam abaixo da trilha lateral, que e mais alta que o video, e deixavam um vao grande). Nao verificado no navegador.
