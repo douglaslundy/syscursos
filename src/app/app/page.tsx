@@ -60,9 +60,9 @@ export default async function StudentHomePage(props: { searchParams: Promise<Stu
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-copy-muted">
             Continue de onde parou
           </p>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="flex flex-wrap gap-3">
             {recentLessons.map((card) => (
-              <LessonThumbLink card={card} key={card.courseId} />
+              <LessonThumbLink card={card} compact key={card.courseId} />
             ))}
           </div>
         </div>
