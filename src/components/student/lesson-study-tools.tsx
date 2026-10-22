@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useTransition } from "react";
 
-import { Modal, buttonClass, primaryClass } from "@/components/student/study-modal";
+import { Modal, buttonClass, readyClass, primaryClass } from "@/components/student/study-modal";
 import { QuizPanel } from "@/components/student/quiz-panel";
 import { gradeCard } from "@/lib/ai/deck";
 import { parseFlashcards, parseMindMap, type Flashcard } from "@/lib/ai/parsers";
-import { layoutMindMap, markdownToBlocks, wrapLabel } from "@/lib/ai/pdf-content";
+import { layoutMindMap, markdownToBlocks } from "@/lib/ai/pdf-content";
 import { parseQuiz } from "@/lib/ai/quiz";
-import { SUMMARY_TECHNIQUES, type SummaryTechniqueId } from "@/lib/ai/techniques";
+import { SUMMARY_TECHNIQUES, getTechnique, type SummaryTechniqueId } from "@/lib/ai/techniques";
 import { cardKey } from "@/lib/study/srs";
 import { generateAiContentAction } from "@/server/actions/ai-actions";
 import { reviewCardAction, submitQuizAction } from "@/server/actions/study-actions";
@@ -162,7 +162,7 @@ function MindMap({ content }: { content: string }) {
           return <path d={`M${x1} ${y1} C${mid} ${y1} ${mid} ${y2} ${x2} ${y2}`} fill="none" key={index} stroke="#6F7680" strokeWidth={1.5} />;
         })}
         {layout.nodes.map((node, index) => {
-          const lines = wrapLabel(node.text);
+          const lines = node.lines;
           const root = node.depth === 0;
 
           return (
@@ -202,7 +202,11 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
   function open(next: Panel) {
     setError(null);
     setPanel(next);
-    setSelected(next === "summary" || next === "mindmap" ? (techniques.length === 1 ? techniques[0] : null) : null);
+    // Com varias tecnicas, ja abre a que foi gerada (se houver); senao o aluno escolhe.
+    const kind = next === "summary" ? "SUMMARY" : next === "mindmap" ? "MINDMAP" : null;
+    const generated = kind ? items.find((item) => item.kind === kind && techniques.some((id) => id === item.technique)) : undefined;
+
+    setSelected(kind ? (techniques.length === 1 ? techniques[0] : (generated?.technique ?? null)) : null);
   }
 
   function generate(kind: AiItem["kind"], technique = "") {
@@ -230,7 +234,11 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
   const flashcards = find("FLASHCARDS");
   const cards = flashcards ? parseFlashcards(flashcards.content) : null;
   const label = (id: string) => SUMMARY_TECHNIQUES.find((item) => item.id === id)?.label ?? id;
-  const available = (kind: AiItem["kind"]) => aiEnabled || items.some((item) => item.kind === kind);
+  const hasContent = (kind: AiItem["kind"]) => items.some((item) => item.kind === kind);
+  const available = (kind: AiItem["kind"]) => aiEnabled || hasContent(kind);
+  // Botao de um conteudo ja gerado: cor diferente e marca, para o aluno saber que ha algo para abrir.
+  const toolClass = (kind: AiItem["kind"]) => (hasContent(kind) ? readyClass : buttonClass);
+  const toolTitle = (kind: AiItem["kind"]) => (hasContent(kind) ? "Conteudo ja gerado: clique para abrir" : undefined);
 
   return (
     <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4" id="estudo-ia">
@@ -239,17 +247,17 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
         <p className="mt-2 text-sm text-copy-secondary">A IA ainda nao foi configurada pelo administrador.</p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
-        <button className={buttonClass} disabled={!available("SUMMARY") || techniques.length === 0} onClick={() => open("summary")} type="button">
-          Resumo da aula
+        <button className={toolClass("SUMMARY")} disabled={!available("SUMMARY") || techniques.length === 0} onClick={() => open("summary")} title={toolTitle("SUMMARY")} type="button">
+          {hasContent("SUMMARY") ? "✓ " : ""}Resumo da aula
         </button>
-        <button className={buttonClass} disabled={!available("FLASHCARDS")} onClick={() => open("flashcards")} type="button">
-          Flashcards
+        <button className={toolClass("FLASHCARDS")} disabled={!available("FLASHCARDS")} onClick={() => open("flashcards")} title={toolTitle("FLASHCARDS")} type="button">
+          {hasContent("FLASHCARDS") ? "✓ " : ""}Flashcards
         </button>
-        <button className={buttonClass} disabled={!available("MINDMAP") || techniques.length === 0} onClick={() => open("mindmap")} type="button">
-          Mapa mental
+        <button className={toolClass("MINDMAP")} disabled={!available("MINDMAP") || techniques.length === 0} onClick={() => open("mindmap")} title={toolTitle("MINDMAP")} type="button">
+          {hasContent("MINDMAP") ? "✓ " : ""}Mapa mental
         </button>
-        <button className={buttonClass} disabled={!available("QUIZ")} onClick={() => open("quiz")} type="button">
-          Quiz
+        <button className={toolClass("QUIZ")} disabled={!available("QUIZ")} onClick={() => open("quiz")} title={toolTitle("QUIZ")} type="button">
+          {hasContent("QUIZ") ? "✓ " : ""}Quiz
         </button>
       </div>
 
@@ -262,18 +270,31 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
                 {techniques.map((id) => {
                   const done = Boolean(find("SUMMARY", id));
 
+                  const technique = getTechnique(id);
+
                   return (
-                    <button
-                      aria-pressed={selected === id}
-                      className={selected === id ? primaryClass : buttonClass}
-                      disabled={pending || (!done && !aiEnabled)}
-                      key={id}
-                      onClick={() => (done ? (setError(null), setSelected(id)) : generate("SUMMARY", id))}
-                      type="button"
-                    >
-                      {label(id)}
-                      {done ? " (pronto)" : ""}
-                    </button>
+                    <span className="group relative" key={id}>
+                      <button
+                        aria-describedby={`tip-${id}`}
+                        aria-pressed={selected === id}
+                        className={selected === id ? primaryClass : buttonClass}
+                        disabled={pending || (!done && !aiEnabled)}
+                        onClick={() => (done ? (setError(null), setSelected(id)) : generate("SUMMARY", id))}
+                        type="button"
+                      >
+                        {label(id)}
+                        {done ? " (pronto)" : ""}
+                      </button>
+                      <span
+                        className="pointer-events-none invisible absolute left-0 top-full z-10 mt-1 w-64 rounded-md border border-stroke-subtle bg-surface-elevated p-3 text-xs leading-5 text-copy-secondary opacity-0 shadow-lg transition group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"
+                        id={`tip-${id}`}
+                        role="tooltip"
+                      >
+                        <strong className="block text-copy-primary">{technique.label}</strong>
+                        {technique.description}
+                        <span className="mt-1 block">{technique.how}</span>
+                      </span>
+                    </span>
                   );
                 })}
               </div>

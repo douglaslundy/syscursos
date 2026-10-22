@@ -2,11 +2,9 @@ import { jsPDF } from "jspdf";
 
 import type { MindMapNode } from "@/lib/ai/parsers";
 import {
-  MAP_NODE_HEIGHT,
   layoutMindMap,
   markdownToBlocks,
   toPdfText,
-  wrapLabel,
   type PdfBlock,
 } from "@/lib/ai/pdf-content";
 
@@ -143,8 +141,8 @@ export function renderMindMapPdf(input: { header: PdfHeader; map: MindMapNode })
     doc.roundedRect(x, y, node.width, node.height, 6, 6, "FD");
     doc.setFont("helvetica", root ? "bold" : "normal").setFontSize(9).setTextColor(root ? 255 : 30);
 
-    const lines = wrapLabel(toPdfText(node.text)).map((line) => toPdfText(line));
-    const offset = (MAP_NODE_HEIGHT - lines.length * 11) / 2 + 8;
+    const lines = node.lines.map((line) => toPdfText(line));
+    const offset = (node.height - lines.length * 11) / 2 + 8;
     lines.forEach((line, index) => doc.text(line, x + node.width / 2, y + offset + index * 11, { align: "center" }));
   }
 

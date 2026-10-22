@@ -4,6 +4,8 @@ export type SummaryTechnique = {
   id: SummaryTechniqueId;
   label: string;
   description: string;
+  // Como a tecnica funciona, em linguagem para o aluno (dica ao passar o mouse).
+  how: string;
   // Base cientifica resumida, exibida ao administrador.
   evidence: string;
   // Instrucao enviada a IA.
@@ -15,6 +17,7 @@ export const SUMMARY_TECHNIQUES: readonly SummaryTechnique[] = [
     id: "pareto",
     label: "80/20 (Pareto)",
     description: "Os 20% do conteudo que entregam 80% do valor: so o essencial, em poucos pontos.",
+    how: "A IA separa as 3 a 7 ideias mais importantes da aula, ordena por relevancia e fecha com a unica coisa que voce nao pode esquecer. Bom para revisar rapido.",
     evidence:
       "Principio de Pareto aplicado ao estudo. E uma heuristica de priorizacao, nao um resultado experimental; funciona bem para reduzir carga e focar no essencial.",
     instruction:
@@ -24,6 +27,7 @@ export const SUMMARY_TECHNIQUES: readonly SummaryTechnique[] = [
     id: "cornell",
     label: "Metodo Cornell",
     description: "Palavras-chave e perguntas a esquerda, anotacoes a direita e um resumo final.",
+    how: "A IA divide o resumo em tres partes: perguntas e palavras-chave, anotacoes em topicos e um paragrafo de sintese. Bom para estudar e se autotestar depois.",
     evidence:
       "Metodo de Walter Pauk (Cornell University). Combina anotacao, perguntas-gatilho e revisao; apoiado por estudos de anotacao estruturada e de pratica de recuperacao.",
     instruction:
@@ -33,6 +37,7 @@ export const SUMMARY_TECHNIQUES: readonly SummaryTechnique[] = [
     id: "feynman",
     label: "Tecnica Feynman",
     description: "Explica a aula em linguagem simples, como para um iniciante, apontando lacunas.",
+    how: "A IA explica a aula com palavras simples e analogias, como para um iniciante, e lista os conceitos mais dificeis ou faceis de confundir.",
     evidence:
       "Baseada em autoexplicacao e elaboracao (Dunlosky et al., 2013, utilidade moderada): explicar com as proprias palavras revela o que nao foi entendido.",
     instruction:
@@ -42,6 +47,7 @@ export const SUMMARY_TECHNIQUES: readonly SummaryTechnique[] = [
     id: "outline",
     label: "Topicos hierarquicos",
     description: "Estrutura em niveis: tema, subtemas e detalhes, para enxergar a organizacao da aula.",
+    how: "A IA organiza a aula em temas, subtemas e detalhes, na ordem em que aparecem. Bom para ver a estrutura do conteudo de uma vez.",
     evidence:
       "Organizacao hierarquica do conteudo (outlining) reduz carga cognitiva e favorece a memorizacao de relacoes entre ideias.",
     instruction:
@@ -51,6 +57,7 @@ export const SUMMARY_TECHNIQUES: readonly SummaryTechnique[] = [
     id: "recall",
     label: "Recuperacao ativa",
     description: "Perguntas-chave com respostas curtas, para o aluno se testar antes de ler a resposta.",
+    how: "A IA cria de 6 a 12 perguntas sobre as ideias principais, cada uma com resposta curta. Tente responder de cabeca antes de ler a resposta.",
     evidence:
       "Pratica de recuperacao (efeito do teste; Roediger e Karpicke, 2006; Dunlosky et al., 2013, utilidade alta): se testar fixa mais do que reler.",
     instruction:

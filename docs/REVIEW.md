@@ -3504,3 +3504,12 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Aula anterior / Proxima aula agora ficam logo abaixo do video, alinhados a direita (antes ficavam abaixo da trilha lateral, que e mais alta que o video, e deixavam um vao grande). Nao verificado no navegador.
 
 - Aula: o bloco de transcricao subiu para logo abaixo dos materiais (acima dos marcadores); o bloco de materiais some quando a aula nao tem material. Anotacoes da aula (`collapsible`) e texto da transcricao agora comecam fechados e abrem ao clicar. Nao verificado no navegador.
+
+## Quiz em slides e dicas das tecnicas (2026-10-22)
+
+- `QuizPanel` (quiz da aula e prova final): uma pergunta por vez com setas anterior/proxima e barra de progresso; na ultima, "Enviar respostas" abre o resultado em modal (acertos, erros, "Ver respostas erradas" com sua resposta, a certa e a explicacao, e "Refazer"). Fechar o modal deixa um resumo com "Ver resultado". Teste `quiz-panel.test.tsx`.
+- Modal do resumo: ao passar o mouse (ou focar com o teclado) em uma tecnica aparece uma dica com o que e e como funciona (`how` novo em `techniques.ts`). Nao verificado no navegador; em tela de toque a dica depende do foco.
+
+- Botoes de Resumo, Flashcards, Mapa mental e Quiz ficam verdes com "check" quando o conteudo ja foi gerado; ao abrir o resumo/mapa com varias tecnicas, ja abre a tecnica gerada.
+- Anotacoes da aula: voltou a seta e o texto "Mostrar ou ocultar" (igual a transcricao).
+- PDF cortado: o resumo "recuperacao ativa" real do banco saiu completo (conferido com pdftotext). A causa provavel era o MAPA MENTAL: titulos de no eram truncados em 2 linhas de 24 caracteres com reticencias, no PDF e na tela. Agora o no quebra o titulo inteiro em quantas linhas precisar e cresce (`layoutMindMap` devolve `lines` e `height`). Teste novo em `ai-content.test.ts`. Se o PDF cortado era de outro tipo, falta reproduzir.

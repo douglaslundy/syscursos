@@ -148,10 +148,13 @@ export function NoteAutosaveEditor({
   return (
     <section className={className}>
       {collapsible ? (
-        <details>
-          <summary className="cursor-pointer list-none">{header}</summary>
-          <div className="mt-3">{fields}</div>
-        </details>
+        <>
+          {header}
+          <details className="mt-3">
+            <summary className="cursor-pointer text-sm text-copy-secondary">Mostrar ou ocultar</summary>
+            <div className="mt-3">{fields}</div>
+          </details>
+        </>
       ) : (
         <>
           <div className="mb-3">{header}</div>

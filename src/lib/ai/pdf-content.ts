@@ -47,12 +47,15 @@ export function toPdfText(value: string) {
     .join("");
 }
 
-export type MapNodeLayout = { text: string; x: number; y: number; width: number; height: number; depth: number };
+export type MapNodeLayout = { text: string; lines: string[]; x: number; y: number; width: number; height: number; depth: number };
 export type MapEdge = { from: MapNodeLayout; to: MapNodeLayout };
 export type MindMapLayout = { nodes: MapNodeLayout[]; edges: MapEdge[]; width: number; height: number };
 
 export const MAP_NODE_WIDTH = 190;
 export const MAP_NODE_HEIGHT = 46;
+// Titulo inteiro no no: quebra em quantas linhas precisar e o no cresce para caber.
+export const MAP_LABEL_CHARS = 28;
+export const MAP_LINE_HEIGHT = 15;
 const GAP_X = 50;
 const GAP_Y = 14;
 
@@ -60,17 +63,37 @@ const GAP_Y = 14;
 export function layoutMindMap(root: MindMapNode): MindMapLayout {
   const nodes: MapNodeLayout[] = [];
   const edges: MapEdge[] = [];
-  let nextLeaf = 0;
+  let nextLeafY = 0;
+  // Fundo do ultimo no de cada coluna: evita que um pai alto sobreponha o vizinho.
+  const columnBottom: number[] = [];
 
   const place = (node: MindMapNode, depth: number): MapNodeLayout => {
     const children = (node.children ?? []).map((child) => place(child, depth + 1));
-    const row = children.length > 0 ? (children[0].y + children[children.length - 1].y) / 2 : nextLeaf++ * (MAP_NODE_HEIGHT + GAP_Y);
+    const lines = wrapLabel(node.title, MAP_LABEL_CHARS, Infinity);
+    const height = Math.max(MAP_NODE_HEIGHT, lines.length * MAP_LINE_HEIGHT + 16);
+    let row: number;
+
+    if (children.length > 0) {
+      const last = children[children.length - 1];
+
+      row = (children[0].y + last.y + last.height) / 2 - height / 2;
+    } else {
+      row = nextLeafY;
+      nextLeafY += height + GAP_Y;
+    }
+
+    row = Math.max(row, (columnBottom[depth] ?? -GAP_Y) + GAP_Y);
+    columnBottom[depth] = row + height;
+    // Uma folha mais baixa que o previsto empurra as proximas.
+    nextLeafY = Math.max(nextLeafY, children.length === 0 ? row + height + GAP_Y : nextLeafY);
+
     const placed: MapNodeLayout = {
       text: node.title,
+      lines,
       x: depth * (MAP_NODE_WIDTH + GAP_X),
       y: row,
       width: MAP_NODE_WIDTH,
-      height: MAP_NODE_HEIGHT,
+      height,
       depth,
     };
 
@@ -98,6 +121,12 @@ export function wrapLabel(text: string, max = 24, lines = 2) {
       out.push(current);
       current = word;
     } else current = current ? `${current} ${word}` : word;
+
+    // Palavra maior que a linha (URL, termo tecnico): quebra em pedacos para nao perder texto.
+    while (lines === Infinity && current.length > max) {
+      out.push(current.slice(0, max));
+      current = current.slice(max);
+    }
   }
 
   if (current) out.push(current);

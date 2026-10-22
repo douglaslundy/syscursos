@@ -4,6 +4,9 @@ import { useEffect, type ReactNode } from "react";
 
 export const buttonClass =
   "inline-flex min-h-10 items-center justify-center rounded-md border border-stroke-subtle px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary disabled:cursor-not-allowed disabled:opacity-50";
+// Botao de conteudo que ja foi gerado.
+export const readyClass =
+  "inline-flex min-h-10 items-center justify-center rounded-md border border-green-500/60 bg-green-500/15 px-4 text-sm font-medium text-green-400 transition hover:bg-green-500/25 disabled:cursor-not-allowed disabled:opacity-50";
 export const primaryClass =
   "inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover disabled:cursor-not-allowed disabled:opacity-60";
 

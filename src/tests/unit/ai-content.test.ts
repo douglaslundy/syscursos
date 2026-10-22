@@ -101,6 +101,20 @@ describe("pdf content", () => {
   });
 });
 
+describe("mind map labels", () => {
+  it("keeps the whole title and never overlaps nodes of the same column", () => {
+    const long = "Importancia de ouvir com atencao e respeito durante toda a conversa com outra pessoa";
+    const layout = layoutMindMap({ title: "Raiz", children: [{ title: long }, { title: "Curto" }] });
+    const node = layout.nodes.find((item) => item.text === long);
+    const short = layout.nodes.find((item) => item.text === "Curto");
+
+    expect(node?.lines.join(" ")).toBe(long);
+    expect(node?.lines.length).toBeGreaterThan(2);
+    expect(node?.height).toBeGreaterThan(46);
+    expect((short?.y ?? 0) >= (node?.y ?? 0) + (node?.height ?? 0)).toBe(true);
+  });
+});
+
 describe("usage range", () => {
   it("returns the Sao Paulo month boundaries for a valid month", () => {
     const range = monthRange("2026-10");
