@@ -3493,3 +3493,10 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Resultado da busca mostra aula, modulo e curso (`moduleTitle` novo em `SearchHit`). Nao verificado no navegador.
 
 - "Continue de onde parou" (home): cards compactos em linha (thumbnail 96px + curso + aula), largura 18rem; a pagina de favoritos mantem o card grande. Nao verificado no navegador.
+
+## Barra da aula e velocidade padrao (2026-10-22)
+
+- Removida a legenda "Como fazer" do botao de transcricao.
+- Aula: linha 1 = Aula anterior / Proxima aula; linha 2 = Velocidade, Modo foco, Pomodoro, Marcar como concluida e Transcrever gravando o audio. O botao de gravar vive na barra e chama o gravador por `src/lib/study/recorder-bridge.ts` (o `LessonTranscriber` se registra quando pode comecar).
+- Velocidade padrao por aluno: coluna `student_profiles.playback_rate` (migration `20261023120000_playback_rate`, aplicada). Editavel em `/app/me`; mudar a velocidade dentro de uma aula grava como novo padrao e vale para todas. So o player do YouTube aceita controle de velocidade (Drive nao). A pagina da aula tem fallback para 1x se a leitura falhar.
+- Nao verificado no navegador.

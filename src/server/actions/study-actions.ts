@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import type { Quiz } from "@/lib/ai/quiz";
@@ -9,7 +10,7 @@ import { ensureCourseExam, submitExam, type ExamError } from "@/server/services/
 import { addBookmark, removeBookmark, savePosition } from "@/server/services/bookmark-service";
 import { reviewCard } from "@/server/services/review-service";
 import { submitQuiz, type QuizSubmitResult } from "@/server/services/quiz-service";
-import { recordStudyTime, saveWeeklyGoal } from "@/server/services/study-stats-service";
+import { savePlaybackRate, recordStudyTime, saveWeeklyGoal } from "@/server/services/study-stats-service";
 
 const quizSchema = z.object({
   courseId: z.string().uuid(),
@@ -51,6 +52,18 @@ export async function recordStudyTimeAction(input: z.infer<typeof timeSchema>) {
   const parsed = timeSchema.safeParse(input);
 
   return parsed.success ? recordStudyTime(parsed.data) : false;
+}
+
+// Velocidade escolhida na aula: vira o padrao para todas as aulas.
+export async function savePlaybackRateAction(rate: number) {
+  await savePlaybackRate(rate);
+  revalidatePath("/app/me");
+}
+
+export async function savePlaybackRateFormAction(formData: FormData) {
+  await savePlaybackRate(Number(formData.get("rate")));
+  revalidatePath("/app/me");
+  redirect("/app/me?status=study_prefs_saved");
 }
 
 export async function saveWeeklyGoalAction(formData: FormData) {

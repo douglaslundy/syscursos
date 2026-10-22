@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { normalizeRate } from "@/lib/study/playback";
 import { currentStreak, dayKey, longestStreak, weekStart } from "@/lib/study/streak";
 import { requireStudentProfileId } from "@/server/services/student-service";
 import { findTranscribableLesson } from "@/server/services/transcript-service";
@@ -42,6 +43,19 @@ export async function saveWeeklyGoal(minutes: number) {
   const studentId = await requireStudentProfileId();
 
   await prisma.studentProfile.update({ where: { id: studentId }, data: { weeklyGoalMinutes: Math.max(0, Math.min(7 * 24 * 60, Math.round(minutes))) } });
+}
+
+export async function getPlaybackRate() {
+  const studentId = await requireStudentProfileId();
+  const profile = await prisma.studentProfile.findUnique({ where: { id: studentId }, select: { playbackRate: true } });
+
+  return normalizeRate(profile?.playbackRate);
+}
+
+export async function savePlaybackRate(rate: number) {
+  const studentId = await requireStudentProfileId();
+
+  await prisma.studentProfile.update({ where: { id: studentId }, data: { playbackRate: normalizeRate(rate) } });
 }
 
 export async function getProgressSummary(now = new Date()) {

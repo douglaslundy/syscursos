@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { registerRecorder } from "@/lib/study/recorder-bridge";
 import { SAMPLE_RATE, decodeToPcm, supported, youtubeErrorMessage } from "@/lib/transcription/browser";
 import { SILENCE_LEVEL, rms, shouldAutoFinish } from "@/lib/transcription/auto-finish";
 import { nextChunk } from "@/lib/transcription/chunks";
@@ -496,6 +497,18 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
   const active = phase === "recording" || phase === "paused";
   const idle = phase === "idle" || phase === "error" || phase === "done";
 
+  // O botao de iniciar fica na barra de estudo; aqui so se registra a funcao de iniciar.
+  const startRef = useRef(start);
+  startRef.current = start;
+  const canStart = idle && canRecord;
+
+  useEffect(() => {
+    if (!canStart) return;
+
+    registerRecorder(() => void startRef.current());
+    return () => registerRecorder(null);
+  }, [canStart]);
+
   if (!canRecord && !youtubeGemini) {
     return (
       <p className="mt-2 text-sm text-copy-secondary">
@@ -527,27 +540,10 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
         </div>
       ) : null}
 
-      {idle && canRecord ? (
-        <p>
-          Como fazer: clique em Transcrever, escolha a guia desta aula e marque &quot;Compartilhar audio da guia&quot;.
-          Depois volte o video ao inicio e de play. A transcricao acompanha a aula em tempo real: deixe a guia aberta,
-          com som, ate o fim. A gravacao termina sozinha quando a aula acaba (se nao terminar, clique em Finalizar). Se
-          precisar parar, use Pausar e depois Retomar.{" "}
-          {method === "browser"
-            ? "O texto e feito no seu computador; na primeira vez e baixado um modelo de 80 a 150 MB, que fica salvo no navegador."
-            : "O audio e enviado em pedacos de 1 minuto ao Gemini e nao fica guardado."}
-        </p>
-      ) : null}
-
       <div className="flex flex-wrap items-center gap-3">
         {idle && youtubeGemini ? (
           <button className={primaryButton} onClick={() => void importFromYoutube()} type="button">
             Transcrever pelo Gemini (sem gravar)
-          </button>
-        ) : null}
-        {idle && canRecord ? (
-          <button className={youtubeGemini ? secondaryButton : primaryButton} onClick={() => void start()} type="button">
-            Transcrever gravando o audio
           </button>
         ) : null}
         {phase === "importing" ? (

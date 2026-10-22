@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type ReactNode, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -38,6 +39,8 @@ type LessonCompletionPanelProps = {
   progress: LessonProgress;
   nextLessonId?: string | null;
   nextLessonTitle?: string | null;
+  previousLessonId?: string | null;
+  initialRate?: number;
   startSeconds?: number;
   children?: ReactNode;
 };
@@ -67,6 +70,8 @@ export function LessonCompletionPanel({
   progress: initialProgress,
   nextLessonId,
   nextLessonTitle,
+  previousLessonId,
+  initialRate = 1,
   startSeconds = 0,
   children,
 }: LessonCompletionPanelProps) {
@@ -167,7 +172,46 @@ export function LessonCompletionPanel({
         )}
       </div>
 
-      <LessonStudyBar courseId={courseId} focus={focus} lessonId={lessonId} onToggleFocus={() => setFocus((value) => !value)} />
+      <div className="mt-3 flex flex-wrap gap-2">
+        {previousLessonId ? (
+          <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary" href={`/app/courses/${courseId}/lessons/${previousLessonId}`}>
+            Aula anterior
+          </Link>
+        ) : (
+          <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
+            Aula anterior
+          </span>
+        )}
+        {nextLessonHref ? (
+          <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary" href={nextLessonHref}>
+            Proxima aula
+          </Link>
+        ) : (
+          <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
+            Proxima aula
+          </span>
+        )}
+      </div>
+
+      <LessonStudyBar
+        courseId={courseId}
+        focus={focus}
+        initialRate={initialRate}
+        lessonId={lessonId}
+        onToggleFocus={() => setFocus((value) => !value)}
+      >
+        <button
+          className="inline-flex min-h-10 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isPending}
+          onClick={() => setCompletion(!isCompleted)}
+          type="button"
+        >
+          {isCompleted ? "Desmarcar aula concluida" : "Marcar como concluida"}
+        </button>
+      </LessonStudyBar>
+      <p aria-live="polite" className="mt-2 min-h-5 text-sm text-copy-secondary">
+        {isPending ? "Salvando..." : feedback}
+      </p>
 
       {isCountingDown && nextLessonHref ? (
         <div
@@ -195,20 +239,6 @@ export function LessonCompletionPanel({
       ) : null}
 
       {children}
-
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <button
-          className="inline-flex min-h-11 items-center justify-center rounded-md bg-brand-primary px-4 text-sm font-medium text-copy-primary transition hover:bg-brand-primaryHover disabled:cursor-not-allowed disabled:opacity-60"
-          disabled={isPending}
-          onClick={() => setCompletion(!isCompleted)}
-          type="button"
-        >
-          {isCompleted ? "Desmarcar aula concluida" : "Marcar como concluida"}
-        </button>
-        <span aria-live="polite" className="text-sm text-copy-secondary">
-          {isPending ? "Salvando..." : feedback}
-        </span>
-      </div>
     </>
   );
 }

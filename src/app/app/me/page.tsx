@@ -1,7 +1,10 @@
 import { Feedback } from "@/components/admin/feedback";
 import { saveOwnStudentProfileAction } from "@/server/actions/student-actions";
+import { savePlaybackRateFormAction } from "@/server/actions/study-actions";
 import { saveStudyPreferencesAction } from "@/server/actions/study-plan-actions";
+import { PLAYBACK_RATES } from "@/lib/study/playback";
 import { getOwnStudentProfile } from "@/server/services/student-service";
+import { getPlaybackRate } from "@/server/services/study-stats-service";
 
 type StudentMePageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -15,7 +18,7 @@ function toClock(minute: number) {
 
 export default async function StudentMePage(props: { searchParams: Promise<StudentMePageProps["searchParams"]> }) {
   const searchParams = await props.searchParams;
-  const profile = await getOwnStudentProfile();
+  const [profile, playbackRate] = await Promise.all([getOwnStudentProfile(), getPlaybackRate().catch(() => 1)]);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
 
   return (
@@ -76,6 +79,23 @@ export default async function StudentMePage(props: { searchParams: Promise<Stude
         </div>
         <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" type="submit">
           Salvar preferencias
+        </button>
+      </form>
+
+      <form action={savePlaybackRateFormAction} className="mt-6 grid max-w-2xl gap-3 rounded-md border bg-background p-4">
+        <h2 className="text-base font-semibold">Velocidade das aulas</h2>
+        <p className="text-sm text-muted-foreground">
+          Vale para todas as aulas. Se voce mudar a velocidade dentro de uma aula, ela vira o novo padrao.
+        </p>
+        <select className="min-h-11 max-w-40 rounded-md border px-3 text-sm outline-none" defaultValue={playbackRate} name="rate">
+          {PLAYBACK_RATES.map((rate) => (
+            <option key={rate} value={rate}>
+              {rate}x
+            </option>
+          ))}
+        </select>
+        <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" type="submit">
+          Salvar velocidade
         </button>
       </form>
     </section>

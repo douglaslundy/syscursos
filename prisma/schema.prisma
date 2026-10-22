@@ -119,6 +119,7 @@ model StudentProfile {
   questions          LessonQuestion[]
   playlists          Playlist[]
   weeklyGoalMinutes  Int                 @default(0) @map("weekly_goal_minutes")
+  playbackRate       Float               @default(1) @map("playback_rate")
   studyWeekdays      Int[]               @default([1, 2, 3, 4, 5]) @map("study_weekdays")
   studyStartMinute   Int                 @default(1140) @map("study_start_minute")
   studyEndMinute     Int                 @default(1260) @map("study_end_minute")

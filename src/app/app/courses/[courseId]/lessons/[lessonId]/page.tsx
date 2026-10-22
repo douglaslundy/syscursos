@@ -16,6 +16,7 @@ import { getLessonFavoriteState } from "@/server/services/favorite-service";
 import { listPlaylists } from "@/server/services/playlist-service";
 import { listLessonQuestions } from "@/server/services/question-service";
 import { listQuizAttempts } from "@/server/services/quiz-service";
+import { getPlaybackRate } from "@/server/services/study-stats-service";
 import { getGeminiApiKey, getTranscriptionMethod } from "@/server/services/settings-service";
 import { canResetTranscript } from "@/server/services/transcript-service";
 import { getStudentLesson, requireStudentProfileId } from "@/server/services/student-service";
@@ -41,7 +42,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
   const params = await props.params;
   const searchParams = await props.searchParams;
   const { courseId, lessonId } = studentLessonParamsSchema.parse(params);
-  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks, playlists, questions] = await Promise.all([
+  const [data, isFavorite, transcriptionMethod, studentId, ai, aiItems, geminiKey, quizAttempts, bookmarks, playlists, questions, playbackRate] = await Promise.all([
     getStudentLesson(courseId, lessonId),
     getLessonFavoriteState(lessonId),
     getTranscriptionMethod(),
@@ -53,6 +54,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
     requireStudentProfileId().then((id) => listBookmarks(id, lessonId)).catch(optional([])),
     listPlaylists().catch(optional([])),
     listLessonQuestions(lessonId).catch(optional([])),
+    getPlaybackRate().catch(optional(1)),
   ]);
 
   if (data.status !== "AVAILABLE") {
@@ -109,6 +111,8 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         modules={data.navigation?.modules ?? []}
         nextLessonId={data.navigation?.nextLesson?.id ?? null}
         nextLessonTitle={data.navigation?.nextLesson?.title ?? null}
+        previousLessonId={data.navigation?.previousLesson?.id ?? null}
+        initialRate={playbackRate}
         progress={data.progress}
         startSeconds={data.positionSeconds}
         title={data.lesson.title}
@@ -139,33 +143,6 @@ export default async function StudentLessonPage(props: { params: Promise<Student
             </div>
           )}
         </section>
-
-        <div className="mt-6 flex flex-wrap gap-2">
-          {data.navigation?.previousLesson ? (
-            <Link
-              className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
-              href={`/app/courses/${courseId}/lessons/${data.navigation.previousLesson.id}`}
-            >
-              Aula anterior
-            </Link>
-          ) : (
-            <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
-              Aula anterior
-            </span>
-          )}
-          {data.navigation?.nextLesson ? (
-            <Link
-              className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
-              href={`/app/courses/${courseId}/lessons/${data.navigation.nextLesson.id}`}
-            >
-              Proxima aula
-            </Link>
-          ) : (
-            <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
-              Proxima aula
-            </span>
-          )}
-        </div>
       </LessonCompletionPanel>
 
       <LessonBookmarks courseId={courseId} initial={bookmarks} lessonId={lessonId} />

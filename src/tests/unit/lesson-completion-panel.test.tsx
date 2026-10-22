@@ -178,7 +178,7 @@ describe("LessonCompletionPanel", () => {
       fireEvent.click(screen.getByRole("button", { name: /Cancelar/ }));
     });
 
-    expect(screen.queryByText(/Proxima aula/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Proxima aula: Aula 2/)).not.toBeInTheDocument();
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(5000);
