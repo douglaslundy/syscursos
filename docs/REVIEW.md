@@ -3492,7 +3492,7 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Menu do aluno: "Buscar" agora e o 2o item (apos Cursos, antes de Revisao); a barra inferior do celular segue a mesma ordem.
 - Resultado da busca mostra aula, modulo e curso (`moduleTitle` novo em `SearchHit`). Nao verificado no navegador.
 
-- "Continue de onde parou" (home): cards compactos em linha (thumbnail 96px + curso + aula), largura 18rem; a pagina de favoritos mantem o card grande. Nao verificado no navegador.
+- "Continue de onde parou" (home): cards compactos em linha (thumbnail 96px + curso + aula), largura 23,4rem (+30%%), altura ~108px (+50%%), thumbnail 144px; a pagina de favoritos mantem o card grande. Nao verificado no navegador.
 
 ## Barra da aula e velocidade padrao (2026-10-22)
 

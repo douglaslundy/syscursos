@@ -7,16 +7,16 @@ export function LessonThumbLink({ card, compact = false }: { card: LessonThumbCa
   if (compact) {
     return (
       <Link
-        className="group flex w-full items-center gap-3 overflow-hidden rounded-md border border-stroke-subtle bg-surface p-2 transition hover:border-brand-primary/60 hover:bg-surface-hover sm:w-72"
+        className="group flex w-full items-center gap-3 overflow-hidden rounded-md border border-stroke-subtle bg-surface p-3 transition hover:border-brand-primary/60 hover:bg-surface-hover sm:w-[23.4rem]"
         href={card.href}
       >
         <div
-          className="aspect-video w-24 shrink-0 rounded border border-stroke-subtle bg-surface-hover bg-cover bg-center"
+          className="aspect-video w-36 shrink-0 rounded border border-stroke-subtle bg-surface-hover bg-cover bg-center"
           style={card.thumbnailUrl ? { backgroundImage: `url("${card.thumbnailUrl}")` } : undefined}
         />
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold text-copy-primary">{card.courseTitle}</h3>
-          <p className="mt-0.5 line-clamp-2 text-xs text-copy-secondary">{card.lessonTitle}</p>
+          <h3 className="truncate text-base font-semibold text-copy-primary">{card.courseTitle}</h3>
+          <p className="mt-0.5 line-clamp-2 text-sm text-copy-secondary">{card.lessonTitle}</p>
         </div>
       </Link>
     );
