@@ -42,3 +42,19 @@ export function cardKey(question: string) {
 
   return `${hash.toString(16).padStart(8, "0")}${normalized.length.toString(16)}`;
 }
+
+export type StoredReview = ReviewState & { dueAt: Date };
+
+// Quiz alimenta a mesma agenda do baralho. Erro: o cartao volta hoje. Acerto: avanca o intervalo como "bom", mas so se
+// o cartao e novo ou ja venceu (acertar antes da hora nao pode inflar o intervalo). null = nada a gravar.
+export function quizReview(current: StoredReview | null, correct: boolean, now: Date) {
+  if (!correct) {
+    const state = current ?? INITIAL_REVIEW;
+
+    return { ease: state.ease, intervalDays: 0, reps: 0, lapses: state.lapses + 1, dueAt: now };
+  }
+
+  if (current && current.dueAt.getTime() > now.getTime()) return null;
+
+  return nextReview(current ?? INITIAL_REVIEW, "good", now);
+}

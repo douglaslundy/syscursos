@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const db = vi.hoisted(() => ({
   lessonAiContent: { findUnique: vi.fn() },
   quizAttempt: { create: vi.fn((args: unknown) => args), findMany: vi.fn() },
-  flashcardReview: { upsert: vi.fn((args: unknown) => args) },
+  flashcardReview: { upsert: vi.fn((args: unknown) => args), findMany: vi.fn() },
   $transaction: vi.fn(async (ops: unknown[]) => ops),
 }));
 const findLesson = vi.hoisted(() => vi.fn());
@@ -26,25 +26,34 @@ beforeEach(() => {
   vi.clearAllMocks();
   findLesson.mockResolvedValue({ studentId: "s1", lesson: {} });
   db.lessonAiContent.findUnique.mockResolvedValue({ content: JSON.stringify(quiz) });
+  db.flashcardReview.findMany.mockResolvedValue([]);
 });
 
 describe("submitQuiz", () => {
-  it("grades on the server, stores the attempt and queues only the missed questions for review", async () => {
+  it("grades on the server, stores the attempt and schedules every question (miss = today, hit = tomorrow)", async () => {
     const result = await submitQuiz({ ...input, answers: [0, 1] });
 
     expect(result).toMatchObject({ ok: true, score: 1, total: 2 });
     expect(result.ok && result.results.map((item) => item.correct)).toEqual([true, false]);
     expect(db.quizAttempt.create).toHaveBeenCalledWith({ data: expect.objectContaining({ studentId: "s1", lessonId: "l1", score: 1, total: 2 }) });
-    expect(db.flashcardReview.upsert).toHaveBeenCalledTimes(1);
+    expect(db.flashcardReview.upsert).toHaveBeenCalledTimes(2);
     expect(db.flashcardReview.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ create: expect.objectContaining({ cardKey: QUIZ_CARD_PREFIX + cardKey("Segunda?") }) }),
+      expect.objectContaining({ create: expect.objectContaining({ cardKey: QUIZ_CARD_PREFIX + cardKey("Primeira?"), intervalDays: 1, reps: 1 }) }),
+    );
+    expect(db.flashcardReview.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ create: expect.objectContaining({ cardKey: QUIZ_CARD_PREFIX + cardKey("Segunda?"), intervalDays: 0, lapses: 1 }) }),
     );
   });
 
-  it("does not queue anything when every answer is right", async () => {
+  it("does not push a hit forward when the card is not due yet", async () => {
+    db.flashcardReview.findMany.mockResolvedValue([
+      { lessonId: "l1", cardKey: QUIZ_CARD_PREFIX + cardKey("Primeira?"), ease: 2.5, intervalDays: 6, reps: 3, lapses: 0, dueAt: new Date(Date.now() + 3 * 86_400_000) },
+    ]);
+
     await submitQuiz({ ...input, answers: [0, 3] });
 
-    expect(db.flashcardReview.upsert).not.toHaveBeenCalled();
+    expect(db.flashcardReview.upsert).toHaveBeenCalledTimes(1);
+    expect(db.flashcardReview.upsert).toHaveBeenCalledWith(expect.objectContaining({ create: expect.objectContaining({ cardKey: QUIZ_CARD_PREFIX + cardKey("Segunda?") }) }));
   });
 
   it("rejects wrong answer counts, missing quiz and no access", async () => {

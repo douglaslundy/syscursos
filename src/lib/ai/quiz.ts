@@ -43,3 +43,6 @@ export function parseQuiz(raw: string): Quiz | null {
 export function gradeQuiz(quiz: Quiz, answers: Array<number | null>) {
   return quiz.questions.reduce((score, question, index) => score + (answers[index] === question.correct ? 1 : 0), 0);
 }
+
+// Verso do cartao de uma questao: alternativa correta e, se houver, a explicacao.
+export const quizAnswerText = (question: QuizQuestion) => `${question.options[question.correct]}${question.explanation ? ` - ${question.explanation}` : ""}`;

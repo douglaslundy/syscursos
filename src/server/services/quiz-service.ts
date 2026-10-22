@@ -1,6 +1,7 @@
 import { parseQuiz, gradeQuiz, type Quiz } from "@/lib/ai/quiz";
 import { cardKey } from "@/lib/study/srs";
 import { prisma } from "@/lib/db/prisma";
+import { scheduleQuizCards } from "@/server/services/quiz-srs";
 import { findTranscribableLesson } from "@/server/services/transcript-service";
 
 export type QuizResult = {
@@ -23,7 +24,7 @@ export async function getLessonQuiz(lessonId: string): Promise<Quiz | null> {
   return row ? parseQuiz(row.content) : null;
 }
 
-// Corrige no servidor contra o quiz salvo, grava a tentativa e manda as questoes erradas para a fila de revisao.
+// Corrige no servidor contra o quiz salvo, grava a tentativa e agenda todas as questoes na repeticao espacada (erros voltam hoje).
 export async function submitQuiz(input: { courseId: string; lessonId: string; answers: Array<number | null> }): Promise<QuizSubmitResult> {
   const found = await findTranscribableLesson(input.courseId, input.lessonId);
 
@@ -42,21 +43,17 @@ export async function submitQuiz(input: { courseId: string; lessonId: string; an
     explanation: question.explanation,
   }));
   const now = new Date();
-  const missed = quiz.questions.filter((_, index) => !results[index].correct);
+  const schedule = await scheduleQuizCards(
+    found.studentId,
+    quiz.questions.map((question, index) => ({ lessonId: input.lessonId, cardKey: QUIZ_CARD_PREFIX + cardKey(question.q), correct: results[index].correct })),
+    now,
+  );
 
   await prisma.$transaction([
     prisma.quizAttempt.create({
       data: { studentId: found.studentId, lessonId: input.lessonId, courseId: input.courseId, score, total: quiz.questions.length, answers: input.answers },
     }),
-    ...missed.map((question) => {
-      const key = QUIZ_CARD_PREFIX + cardKey(question.q);
-
-      return prisma.flashcardReview.upsert({
-        where: { studentId_lessonId_cardKey: { studentId: found.studentId, lessonId: input.lessonId, cardKey: key } },
-        create: { studentId: found.studentId, lessonId: input.lessonId, cardKey: key, dueAt: now },
-        update: { dueAt: now, lapses: { increment: 1 }, intervalDays: 0, reps: 0 },
-      });
-    }),
+    ...schedule,
   ]);
 
   return { ok: true, score, total: quiz.questions.length, results };

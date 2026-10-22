@@ -23,3 +23,10 @@ export function shuffle<T>(items: readonly T[], random: () => number = Math.rand
 }
 
 export const pickQuestions = <T>(bank: readonly T[], count: number, random?: () => number) => shuffle(bank, random).slice(0, clampCount(count, bank.length));
+
+// Repeticao espacada no sorteio: o que e novo ou ja venceu vem antes do que ainda esta dentro do intervalo.
+export function pickDueFirst<T>(bank: readonly T[], isDue: (item: T) => boolean, count: number, random?: () => number) {
+  const ordered = [...shuffle(bank.filter(isDue), random), ...shuffle(bank.filter((item) => !isDue(item)), random)];
+
+  return ordered.slice(0, clampCount(count, bank.length));
+}
