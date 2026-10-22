@@ -586,16 +586,15 @@ export async function listNotebookCourseOptions(studentId: string) {
   });
 }
 
-export async function listNotebookNotes(studentId: string, courseId: string, query: string) {
+export async function listNotebookNotes(studentId: string, courseIds: string[]) {
   return prisma.lessonNote.findMany({
     where: {
       studentId,
-      ...(query ? { content: { contains: query, mode: "insensitive" } } : {}),
       lesson: {
         status: LessonStatus.ACTIVE,
         module: {
           status: ModuleStatus.ACTIVE,
-          courseId,
+          courseId: { in: courseIds },
           course: {
             status: CourseStatus.ACTIVE,
           },
@@ -614,6 +613,7 @@ export async function listNotebookNotes(studentId: string, courseId: string, que
               id: true,
               title: true,
               position: true,
+              course: { select: { id: true, title: true } },
             },
           },
         },

@@ -17,7 +17,6 @@ export default async function NotebooksPage(props: { searchParams: Promise<Noteb
     query: first(searchParams?.query),
   });
   const notebook = await getStudentNotebook(parsed);
-  const selectedCourseId = notebook.selectedCourseId;
 
   return (
     <section>
@@ -37,7 +36,7 @@ export default async function NotebooksPage(props: { searchParams: Promise<Noteb
             defaultValue={notebook.selectedCourseId ?? ""}
             name="courseId"
           >
-            {notebook.courseOptions.length === 0 ? <option value="">Nenhum curso</option> : null}
+            <option value="">Todos os cursos</option>
             {notebook.courseOptions.map((course) => (
               <option key={course.id} value={course.id}>
                 {course.title}
@@ -68,26 +67,34 @@ export default async function NotebooksPage(props: { searchParams: Promise<Noteb
         </button>
       </form>
 
-      {notebook.groups.length === 0 || !selectedCourseId ? (
+      {notebook.courses.length === 0 ? (
         <EmptyState
-          description="Crie anotacoes nas aulas deste curso para montar seu caderno automaticamente."
+          description={
+            notebook.query
+              ? "Nenhuma anotacao contem esse termo. Tente outra palavra ou escolha Todos os cursos."
+              : "Crie anotacoes nas aulas para montar seu caderno automaticamente."
+          }
           title="Nenhuma anotacao encontrada"
         />
       ) : (
-        <section className="rounded-md border bg-card p-5 shadow-sm">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold tracking-normal">Caderno do curso</h2>
-            <Link
-              className="text-sm text-muted-foreground transition hover:text-foreground"
-              href={`/app/courses/${selectedCourseId}`}
-            >
-              Ver aulas
-            </Link>
-          </div>
-          <div className="rounded-md border bg-background p-5">
-            <MarkdownContent content={buildNotebookMarkdown(notebook.groups)} />
-          </div>
-        </section>
+        <div className="grid gap-5">
+          {notebook.courses.map((course) => (
+            <section className="rounded-md border bg-card p-5 shadow-sm" key={course.courseId}>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold tracking-normal">{course.courseTitle}</h2>
+                <Link
+                  className="text-sm text-muted-foreground transition hover:text-foreground"
+                  href={`/app/courses/${course.courseId}`}
+                >
+                  Ver aulas
+                </Link>
+              </div>
+              <div className="rounded-md border bg-background p-5">
+                <MarkdownContent content={buildNotebookMarkdown(course.groups)} />
+              </div>
+            </section>
+          ))}
+        </div>
       )}
     </section>
   );
@@ -97,7 +104,7 @@ function first(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-type NotebookGroup = Awaited<ReturnType<typeof getStudentNotebook>>["groups"][number];
+type NotebookGroup = Awaited<ReturnType<typeof getStudentNotebook>>["courses"][number]["groups"][number];
 
 function buildNotebookMarkdown(groups: NotebookGroup[]) {
   return groups

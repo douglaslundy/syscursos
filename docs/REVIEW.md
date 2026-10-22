@@ -3480,3 +3480,9 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - `src/tests/e2e/study-public.spec.ts`: 5 testes sem login (redirecionamento da area do aluno, PWA, verificacao de certificado inexistente, cron sem segredo, cabecalhos de seguranca). Passam com `npx playwright test study-public`. Os testes que abrem navegador (`public.spec.ts`) exigem `npx playwright install` (binario nao instalado nesta maquina) e nao foram rodados.
 - `tailwind.config.ts` usava `require("tailwindcss-animate")`, que quebra o `next dev` no Node 24 (`ReferenceError: require is not defined`); trocado por `import`. `playwright.config.ts` com `workers: 1`.
 - Fluxos logados seguem sem E2E automatizado (nao ha conta de teste dedicada).
+
+## Cadernos: todos os cursos e busca (2026-10-21)
+
+- `/app/notebooks` abria so o primeiro curso (sem opcao "Todos os cursos") e a busca valia so nele, via SQL `contains`. Agora o padrao e "Todos os cursos": anotacoes agrupadas por curso, depois modulo e aula; o filtro de curso continua.
+- Busca feita no servico: ignora acentos e maiusculas e tambem acha pelo titulo da aula. `courseId` vazio no formulario vale como todos.
+- Teste novo no `student-service.test.ts`. Nao verificado no navegador (banco inacessivel no momento do teste).

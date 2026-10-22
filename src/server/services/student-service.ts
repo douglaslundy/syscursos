@@ -253,29 +253,25 @@ export async function saveLessonNote(input: LessonNoteInput) {
 export async function getStudentNotebook(input: NotebookQueryInput) {
   const studentId = await requireStudentProfileId();
   const courseOptions = await repository.listNotebookCourseOptions(studentId);
-  const selectedCourseId = input.courseId ?? courseOptions[0]?.course.id ?? null;
+  // Sem curso escolhido, mostra as anotacoes de todos os cursos liberados.
+  const selectedCourseId = input.courseId ?? null;
 
-  if (!selectedCourseId) {
-    return {
-      courseOptions: [],
-      selectedCourseId: null,
-      groups: [],
-      query: input.query,
-    };
+  if (selectedCourseId) {
+    const enrollment = await repository.findEnrollmentForCourse(studentId, selectedCourseId);
+
+    if (!enrollment || getCourseAccessStatus(enrollment) !== "AVAILABLE") {
+      redirect("/app/forbidden");
+    }
   }
 
-  const enrollment = await repository.findEnrollmentForCourse(studentId, selectedCourseId);
-
-  if (!enrollment || getCourseAccessStatus(enrollment) !== "AVAILABLE") {
-    redirect("/app/forbidden");
-  }
-
-  const notes = await repository.listNotebookNotes(studentId, selectedCourseId, input.query);
+  const courseIds = selectedCourseId ? [selectedCourseId] : courseOptions.map((option) => option.course.id);
+  const rows = courseIds.length > 0 ? await repository.listNotebookNotes(studentId, courseIds) : [];
+  const notes = rows.filter((note) => matchesNotebookQuery(note, input.query));
 
   return {
     courseOptions: courseOptions.map((option) => option.course),
     selectedCourseId,
-    groups: groupNotesByModule(notes),
+    courses: groupNotesByCourse(notes),
     query: input.query,
   };
 }
@@ -522,6 +518,37 @@ function buildContinueLessonCardFromCourseModules(
 }
 
 type NotebookNoteRow = Awaited<ReturnType<typeof repository.listNotebookNotes>>[number];
+
+// Busca no servico (nao no SQL) para ignorar acentos e maiusculas, e achar tambem pelo titulo da aula.
+function normalizeSearch(value: string) {
+  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+function matchesNotebookQuery(note: NotebookNoteRow, query: string) {
+  const needle = normalizeSearch(query);
+
+  return !needle || normalizeSearch(`${note.content} ${note.lesson.title}`).includes(needle);
+}
+
+function groupNotesByCourse(notes: NotebookNoteRow[]) {
+  const byCourse = new Map<string, { courseId: string; courseTitle: string; notes: NotebookNoteRow[] }>();
+
+  for (const note of notes) {
+    const course = note.lesson.module.course;
+    const entry = byCourse.get(course.id) ?? { courseId: course.id, courseTitle: course.title, notes: [] };
+
+    entry.notes.push(note);
+    byCourse.set(course.id, entry);
+  }
+
+  return Array.from(byCourse.values())
+    .sort((a, b) => a.courseTitle.localeCompare(b.courseTitle, "pt-BR"))
+    .map((entry) => ({
+      courseId: entry.courseId,
+      courseTitle: entry.courseTitle,
+      groups: groupNotesByModule(entry.notes),
+    }));
+}
 
 function groupNotesByModule(notes: NotebookNoteRow[]) {
   const groups = new Map<

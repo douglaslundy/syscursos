@@ -25,7 +25,8 @@ export const lessonNoteSchema = z.object({
 });
 
 export const notebookQuerySchema = z.object({
-  courseId: z.string().uuid().optional(),
+  // Vazio = todos os cursos.
+  courseId: z.preprocess((value) => (value === "" ? undefined : value), z.string().uuid().optional()),
   query: z.string().trim().max(120).optional().default(""),
 });
 

@@ -485,15 +485,36 @@ describe("student service", () => {
       notebookNote("note-1", "module-1", "Modulo 1", 1, "lesson-1", "Aula 1", 1),
     ]);
 
-    const notebook = await getStudentNotebook({ courseId: "course-id", query: "aula" });
+    const notebook = await getStudentNotebook({ courseId: "course-id", query: "AULA" });
 
-    expect(repositoryMock.listNotebookNotes).toHaveBeenCalledWith(
-      "student-profile-id",
-      "course-id",
-      "aula",
-    );
-    expect(notebook.groups.map((group) => group.moduleTitle)).toEqual(["Modulo 1", "Modulo 2"]);
-    expect(notebook.groups[0]?.notes[0]?.lessonTitle).toBe("Aula 1");
+    expect(repositoryMock.listNotebookNotes).toHaveBeenCalledWith("student-profile-id", ["course-id"]);
+    expect(notebook.courses).toHaveLength(1);
+    expect(notebook.courses[0]?.groups.map((group) => group.moduleTitle)).toEqual(["Modulo 1", "Modulo 2"]);
+    expect(notebook.courses[0]?.groups[0]?.notes[0]?.lessonTitle).toBe("Aula 1");
+  });
+
+  it("shows notes of every course when no course is chosen and ignores accents in the search", async () => {
+    const { getStudentNotebook } = await import("@/server/services/student-service");
+    repositoryMock.listNotebookCourseOptions.mockResolvedValue([
+      { course: { id: "course-id", title: "Curso" } },
+      { course: { id: "course-2", title: "Antes" } },
+    ]);
+    repositoryMock.listNotebookNotes.mockResolvedValue([
+      notebookNote("note-1", "module-1", "Modulo 1", 1, "lesson-1", "Aula 1", 1),
+      { ...notebookNote("note-3", "module-3", "Modulo 3", 1, "lesson-3", "Licao", 1), content: "Atenção ao prazo" },
+    ].map((note, index) => ({
+      ...note,
+      lesson: { ...note.lesson, module: { ...note.lesson.module, course: index === 0 ? { id: "course-id", title: "Curso" } : { id: "course-2", title: "Antes" } } },
+    })));
+
+    const all = await getStudentNotebook({ query: "" });
+
+    expect(repositoryMock.listNotebookNotes).toHaveBeenCalledWith("student-profile-id", ["course-id", "course-2"]);
+    expect(all.courses.map((course) => course.courseTitle)).toEqual(["Antes", "Curso"]);
+
+    const found = await getStudentNotebook({ query: "atencao" });
+
+    expect(found.courses.map((course) => course.courseTitle)).toEqual(["Antes"]);
   });
 });
 
@@ -577,6 +598,7 @@ function notebookNote(
         id: moduleId,
         title: moduleTitle,
         position: modulePosition,
+        course: { id: "course-id", title: "Curso" },
       },
     },
   };
