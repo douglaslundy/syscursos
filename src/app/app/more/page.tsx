@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 const links = [
+  { href: "/app/quiz", label: "Quiz", hint: "Responda os quizzes de um curso" },
   { href: "/app/notebooks", label: "Cadernos", hint: "Suas anotacoes por curso e aula" },
   { href: "/app/favorites/courses", label: "Favoritos", hint: "Cursos e aulas marcados" },
   { href: "/app/playlists", label: "Playlists", hint: "Trilhas de aulas montadas por voce" },

@@ -3513,3 +3513,10 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Botoes de Resumo, Flashcards, Mapa mental e Quiz ficam verdes com "check" quando o conteudo ja foi gerado; ao abrir o resumo/mapa com varias tecnicas, ja abre a tecnica gerada.
 - Anotacoes da aula: voltou a seta e o texto "Mostrar ou ocultar" (igual a transcricao).
 - PDF cortado: o resumo "recuperacao ativa" real do banco saiu completo (conferido com pdftotext). A causa provavel era o MAPA MENTAL: titulos de no eram truncados em 2 linhas de 24 caracteres com reticencias, no PDF e na tela. Agora o no quebra o titulo inteiro em quantas linhas precisar e cresce (`layoutMindMap` devolve `lines` e `height`). Teste novo em `ai-content.test.ts`. Se o PDF cortado era de outro tipo, falta reproduzir.
+
+## Revisao por curso, menu Quiz e exportacao (2026-10-22)
+
+- Revisao: cada cartao mostra Curso, Modulo e Aula. Filtro "Listar: Por cursos (padrao) / Aleatoriamente" via `?view=random`. Por cursos, um curso aberto por vez (as teclas de atalho da sessao so podem valer para uma sessao na tela). Helpers puros em `lib/study/review-view.ts` e `quiz-pick.ts`.
+- Menu Quiz (`/app/quiz`, `/app/quiz/[courseId]`): lista os cursos liberados que tem quiz gerado (inclui os gerados por qualquer aluno, porque `LessonAiContent` e por aula, nao por aluno), com tentativas e melhor nota. No curso: Responder quiz (pergunta quantas, padrao 10), Refazer todas, Atualizar (descarta o cache das paginas e le o banco de novo) e Exportar para Anki (rota `/app/export/[courseId]?format=anki`, que ja trazia flashcards e quizzes do curso). O quiz abre no `QuizPanel` (slides + resultado em modal). Correcao no servidor (`course-quiz-service.ts`): grava `QuizAttempt` do curso e manda as erradas para a revisao.
+- Compartilhamento: transcricao, resumos, flashcards, mapas e quizzes ja eram compartilhados entre alunos; so as anotacoes (`LessonNote`) sao pessoais. Nenhuma mudanca de banco.
+- Nao verificado no navegador logado. A exportacao Anki e texto separado por tab (.txt) com tags na 3a coluna; nao testei a importacao no Anki.

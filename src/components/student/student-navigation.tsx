@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bell, Brain, FileText, Home, ListVideo, MoreHorizontal, Search, Star, User } from "lucide-react";
+import { BarChart3, Bell, Brain, FileText, HelpCircle, Home, ListVideo, MoreHorizontal, Search, Star, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -24,6 +24,12 @@ const navigationItems = [
     label: "Revisao",
     icon: Brain,
     match: (pathname: string) => pathname.startsWith("/app/review"),
+  },
+  {
+    href: "/app/quiz",
+    label: "Quiz",
+    icon: HelpCircle,
+    match: (pathname: string) => pathname.startsWith("/app/quiz"),
   },
   {
     href: "/app/progress",

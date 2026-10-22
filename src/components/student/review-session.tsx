@@ -65,7 +65,10 @@ export function ReviewSession({ cards }: { cards: ReviewCard[] }) {
   return (
     <div className="space-y-4">
       <p className="text-xs text-copy-muted">
-        Cartao {index + 1} de {cards.length} {current.isNew ? "(novo)" : "(revisao)"} - {current.lessonTitle}
+        Cartao {index + 1} de {cards.length} {current.isNew ? "(novo)" : "(revisao)"}
+      </p>
+      <p className="-mt-3 text-xs text-copy-secondary">
+        Curso: {current.courseTitle} | Modulo: {current.moduleTitle} | Aula: {current.lessonTitle}
       </p>
       <div className="min-h-44 rounded-md border border-stroke-subtle bg-surface p-5" key={index}>
         <p className="text-xs uppercase tracking-[0.12em] text-copy-muted">Pergunta</p>

@@ -7,12 +7,12 @@ import { requireStudentProfileId } from "@/server/services/student-service";
 import { listAvailableCourses } from "@/server/services/study-access";
 import { findTranscribableLesson } from "@/server/services/transcript-service";
 
-export type ReviewCard = { courseId: string; lessonId: string; lessonTitle: string; cardKey: string; q: string; a: string; isNew: boolean };
+export type ReviewCard = { courseId: string; courseTitle: string; moduleTitle: string; lessonId: string; lessonTitle: string; cardKey: string; q: string; a: string; isNew: boolean };
 
 const NEW_PER_DAY = 10;
 const MAX_QUEUE = 40;
 
-type LessonCards = { lessonId: string; courseId: string; lessonTitle: string; cards: Map<string, { q: string; a: string }> };
+type LessonCards = { lessonId: string; courseId: string; courseTitle: string; moduleTitle: string; lessonTitle: string; cards: Map<string, { q: string; a: string }> };
 
 // Cartoes de uma aula indexados pela chave de revisao: flashcards da IA e questoes de quiz (resposta correta + explicacao).
 function cardsOf(rows: Array<{ kind: string; content: string }>) {
@@ -39,10 +39,10 @@ async function lessonsCards(lessonIds: string[], courseIds: string[]): Promise<M
 
   const lessons = await prisma.lesson.findMany({
     where: { id: { in: lessonIds }, status: "ACTIVE", module: { courseId: { in: courseIds } } },
-    select: { id: true, title: true, module: { select: { courseId: true } }, aiContents: { where: { kind: { in: ["FLASHCARDS", "QUIZ"] } }, select: { kind: true, content: true } } },
+    select: { id: true, title: true, module: { select: { title: true, courseId: true, course: { select: { title: true } } } }, aiContents: { where: { kind: { in: ["FLASHCARDS", "QUIZ"] } }, select: { kind: true, content: true } } },
   });
 
-  return new Map(lessons.map((lesson) => [lesson.id, { lessonId: lesson.id, courseId: lesson.module.courseId, lessonTitle: lesson.title, cards: cardsOf(lesson.aiContents) }]));
+  return new Map(lessons.map((lesson) => [lesson.id, { lessonId: lesson.id, courseId: lesson.module.courseId, courseTitle: lesson.module.course.title, moduleTitle: lesson.module.title, lessonTitle: lesson.title, cards: cardsOf(lesson.aiContents) }]));
 }
 
 // Fila do dia: cartoes vencidos primeiro e, se sobrar espaco, cartoes novos de aulas ja concluidas pelo aluno.
@@ -72,7 +72,7 @@ export async function getReviewQueue(now = new Date()): Promise<{ due: ReviewCar
     const lesson = byLesson.get(lessonId);
     const card = lesson?.cards.get(key);
 
-    return lesson && card ? [{ courseId: lesson.courseId, lessonId, lessonTitle: lesson.lessonTitle, cardKey: key, q: card.q, a: card.a, isNew }] : [];
+    return lesson && card ? [{ courseId: lesson.courseId, courseTitle: lesson.courseTitle, moduleTitle: lesson.moduleTitle, lessonId, lessonTitle: lesson.lessonTitle, cardKey: key, q: card.q, a: card.a, isNew }] : [];
   };
   const due = dueRows.flatMap((row) => toCard(row.lessonId, row.cardKey, false));
   const fresh: ReviewCard[] = [];
