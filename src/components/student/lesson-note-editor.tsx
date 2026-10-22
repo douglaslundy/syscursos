@@ -10,6 +10,7 @@ export function LessonNoteEditor({ courseId, lessonId, initialContent }: LessonN
   return (
     <NoteAutosaveEditor
       courseId={courseId}
+      collapsible
       description="Autosave ativo enquanto voce escreve."
       initialContent={initialContent}
       lessonId={lessonId}

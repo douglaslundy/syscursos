@@ -62,7 +62,7 @@ export function LessonTranscript({ courseId, lessonId, transcript, isYouTube, ca
         <p className={`mt-2 text-sm ${message.ok ? "text-green-500" : "text-destructive"}`}>{message.text}</p>
       ) : null}
       {transcript ? (
-        <details className="mt-3" open>
+        <details className="mt-3">
           <summary className="cursor-pointer text-sm text-copy-secondary">Mostrar ou ocultar</summary>
           <TranscriptViewer text={transcript} />
         </details>

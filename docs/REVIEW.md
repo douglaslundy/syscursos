@@ -3502,3 +3502,5 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Nao verificado no navegador.
 
 - Aula anterior / Proxima aula agora ficam logo abaixo do video, alinhados a direita (antes ficavam abaixo da trilha lateral, que e mais alta que o video, e deixavam um vao grande). Nao verificado no navegador.
+
+- Aula: o bloco de transcricao subiu para logo abaixo dos materiais (acima dos marcadores); o bloco de materiais some quando a aula nao tem material. Anotacoes da aula (`collapsible`) e texto da transcricao agora comecam fechados e abrem ao clicar. Nao verificado no navegador.

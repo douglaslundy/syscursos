@@ -118,13 +118,11 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         title={data.lesson.title}
         videoEmbed={data.videoEmbed}
       >
-        <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">
-            Materiais da aula
-          </h2>
-          {data.lesson.materials.length === 0 ? (
-            <p className="mt-2 text-sm text-copy-secondary">Nenhum material complementar nesta aula.</p>
-          ) : (
+        {data.lesson.materials.length > 0 ? (
+          <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">
+              Materiais da aula
+            </h2>
             <div className="mt-3 space-y-2">
               {data.lesson.materials.map((material) => (
                 <a
@@ -141,8 +139,20 @@ export default async function StudentLessonPage(props: { params: Promise<Student
                 </a>
               ))}
             </div>
-          )}
-        </section>
+          </section>
+        ) : null}
+
+        <LessonTranscript
+          courseId={courseId}
+          canReset={canResetTranscript(data.lesson, studentId)}
+          durationSeconds={data.lesson.durationSeconds}
+          isYouTube={extractYouTubeVideoId(data.lesson.youtubeUrl) !== null}
+          method={transcriptionMethod}
+          youtubeGemini={Boolean(geminiKey) && extractYouTubeVideoId(data.lesson.youtubeUrl) !== null}
+          lessonId={lessonId}
+          status={typeof searchParams?.transcript === "string" ? searchParams.transcript : undefined}
+          transcript={data.lesson.transcript}
+        />
       </LessonCompletionPanel>
 
       <LessonBookmarks courseId={courseId} initial={bookmarks} lessonId={lessonId} />
@@ -151,18 +161,6 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         courseId={courseId}
         initialContent={data.note?.content ?? ""}
         lessonId={lessonId}
-      />
-
-      <LessonTranscript
-        courseId={courseId}
-        canReset={canResetTranscript(data.lesson, studentId)}
-        durationSeconds={data.lesson.durationSeconds}
-        isYouTube={extractYouTubeVideoId(data.lesson.youtubeUrl) !== null}
-        method={transcriptionMethod}
-        youtubeGemini={Boolean(geminiKey) && extractYouTubeVideoId(data.lesson.youtubeUrl) !== null}
-        lessonId={lessonId}
-        status={typeof searchParams?.transcript === "string" ? searchParams.transcript : undefined}
-        transcript={data.lesson.transcript}
       />
 
       {data.lesson.transcript ? <LessonChat courseId={courseId} enabled={ai.enabled} lessonId={lessonId} /> : null}

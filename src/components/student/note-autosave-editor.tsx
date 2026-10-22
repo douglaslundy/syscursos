@@ -15,6 +15,8 @@ type NoteAutosaveEditorProps = {
   className?: string;
   // Link do PDF das anotacoes; fica desabilitado enquanto nao ha nada salvo.
   pdfHref?: string;
+  // Comeca fechado; o aluno abre ao clicar no titulo.
+  collapsible?: boolean;
 };
 
 export function NoteAutosaveEditor({
@@ -27,6 +29,7 @@ export function NoteAutosaveEditor({
   placeholder,
   className = "mt-6 rounded-md border bg-card p-5 shadow-sm",
   pdfHref,
+  collapsible = false,
 }: NoteAutosaveEditorProps) {
   const [content, setContent] = useState(initialContent);
   const [lastSavedContent, setLastSavedContent] = useState(initialContent);
@@ -86,17 +89,19 @@ export function NoteAutosaveEditor({
     };
   }, [content, lastSavedContent, save]);
 
-  return (
-    <section className={className}>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold tracking-normal">{title}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        </div>
-        <span aria-live="polite" className="text-xs text-muted-foreground">
-          {isPending ? "Salvando..." : message}
-        </span>
+  const header = (
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <h2 className="text-lg font-semibold tracking-normal">{title}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
+      <span aria-live="polite" className="text-xs text-muted-foreground">
+        {isPending ? "Salvando..." : message}
+      </span>
+    </div>
+  );
+  const fields = (
+    <>
       <label className="sr-only" htmlFor={textareaId}>
         {title}
       </label>
@@ -137,6 +142,22 @@ export function NoteAutosaveEditor({
           Salvar agora
         </button>
       </div>
+    </>
+  );
+
+  return (
+    <section className={className}>
+      {collapsible ? (
+        <details>
+          <summary className="cursor-pointer list-none">{header}</summary>
+          <div className="mt-3">{fields}</div>
+        </details>
+      ) : (
+        <>
+          <div className="mb-3">{header}</div>
+          {fields}
+        </>
+      )}
     </section>
   );
 }
