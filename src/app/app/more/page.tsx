@@ -1,13 +1,13 @@
 import Link from "next/link";
 
 const links = [
+  { href: "/app/notifications", label: "Avisos", hint: "Respostas as suas duvidas e lembretes" },
+  { href: "/app/me", label: "Meus dados", hint: "Perfil e preferencias" },
   { href: "/app/quiz", label: "Quiz", hint: "Responda os quizzes de um curso" },
   { href: "/app/notebooks", label: "Cadernos", hint: "Suas anotacoes por curso e aula" },
   { href: "/app/favorites/courses", label: "Favoritos", hint: "Cursos e aulas marcados" },
   { href: "/app/playlists", label: "Playlists", hint: "Trilhas de aulas montadas por voce" },
-  { href: "/app/notifications", label: "Avisos", hint: "Respostas as suas duvidas e lembretes" },
   { href: "/app/schedule", label: "Cronograma", hint: "Plano de estudo por dia" },
-  { href: "/app/me", label: "Meus dados", hint: "Perfil e preferencias" },
 ];
 
 export default function MorePage() {

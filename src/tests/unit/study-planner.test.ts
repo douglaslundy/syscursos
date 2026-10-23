@@ -16,6 +16,13 @@ const weekdays = [1, 2, 3, 4, 5];
 const base = { startDate: "2026-10-19", weekdays, startMinute: 0 };
 
 describe("study planner", () => {
+  it("pula o periodo reservado e continua depois dele", () => {
+    const blocked = [{ start: "2026-10-20", end: "2026-10-24" }];
+    const dates = buildSchedule({ ...base, courses: [course("a", 4, 30)], dailyMinutes: 30, blocked }).map((day) => day.date);
+
+    expect(dates).toEqual(["2026-10-19", "2026-10-26", "2026-10-27", "2026-10-28"]);
+  });
+
   it("fills days in order and skips non-study weekdays", () => {
     // 2026-10-16 is a Friday
     const days = buildSchedule({

@@ -22,12 +22,20 @@ export type PlanDay = {
   lessons: ScheduledLesson[];
 };
 
+// Periodo reservado sem estudo, datas inclusivas.
+export type BlockedRange = { start: string; end: string };
+
 type ScheduleInput = {
   courses: PlannerCourse[];
   startDate: string;
   weekdays: number[];
   startMinute: number;
+  blocked?: BlockedRange[];
 };
+
+export function isBlocked(date: string, blocked: BlockedRange[] = []) {
+  return blocked.some((range) => date >= range.start && date <= range.end);
+}
 
 export function addDays(date: string, days: number) {
   const value = toUtc(date);
@@ -82,7 +90,7 @@ export function buildSchedule(input: ScheduleInput & { dailyMinutes: number }): 
 
     const date = addDays(startDate, offset);
 
-    if (!weekdays.includes(weekdayOf(date))) continue;
+    if (!weekdays.includes(weekdayOf(date)) || isBlocked(date, input.blocked)) continue;
 
     const day: PlanDay = { date, startMinute, minutes: 0, lessons: [] };
     let used = 0;
@@ -124,7 +132,8 @@ export function minutesPerDayForDeadline(input: ScheduleInput & { targetDate: st
   let studyDays = 0;
 
   for (let offset = 0; offset <= diffDays(startDate, targetDate); offset += 1) {
-    if (weekdays.includes(weekdayOf(addDays(startDate, offset)))) studyDays += 1;
+    const date = addDays(startDate, offset);
+    if (weekdays.includes(weekdayOf(date)) && !isBlocked(date, input.blocked)) studyDays += 1;
   }
 
   if (studyDays === 0) {

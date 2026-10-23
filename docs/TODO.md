@@ -937,3 +937,5 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [ ] Smoke no navegador logado de todas as telas novas; testar IA com chave real (quiz, prova, chat); testar o cron.
 - [ ] Decidir confirmacao de e-mail no cadastro (precisa de SMTP no Supabase) e promover o CSP de Report-Only para ativo.
 - [ ] Pendentes: dividir `admin-actions.ts` e extrair hooks de `lesson-transcriber.tsx`; sem sincronizacao offline (PWA so mostra tela offline).
+- [x] Cronograma: nome do curso em cada aula, botao Reprogramar (recalcular a partir de hoje ou reservar periodo sem estudo, minimo 5 dias), menu Cronograma e nova ordem do menu (Avisos e Meus dados abaixo de Buscar). Migration `20261023120000_study_schedule_blocked_ranges` aplicada.
+- [ ] Smoke no navegador logado do Reprogramar e das reservas no calendario.

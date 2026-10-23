@@ -9,8 +9,14 @@ import {
   formatMinutes,
 } from "@/components/student/study-calendar";
 import { SubmitButton } from "@/components/admin/submit-button";
-import { removeStudyPlanAction, saveStudyPlanAction } from "@/server/actions/study-plan-actions";
-import { MAX_SCHEDULE_COURSES, getStudyScheduleView } from "@/server/services/study-plan-service";
+import { ReschedulePanel } from "@/components/student/reschedule-panel";
+import {
+  removeBlockedRangeAction,
+  removeStudyPlanAction,
+  rescheduleStudyPlanAction,
+  saveStudyPlanAction,
+} from "@/server/actions/study-plan-actions";
+import { MAX_BLOCK_DAYS, MAX_SCHEDULE_COURSES, MIN_BLOCK_DAYS, getStudyScheduleView } from "@/server/services/study-plan-service";
 
 type SchedulePageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -27,6 +33,8 @@ const messages: Record<string, { text: string; ok: boolean }> = {
   no_study_days: { text: "Nao ha dias de estudo ate essa data. Ajuste seus dias em Meus dados.", ok: false },
   after_expiry: { text: "O cronograma termina depois do fim da matricula de algum curso. Aumente o tempo por dia ou escolha uma data anterior.", ok: false },
   too_long: { text: "Com esse tempo por dia o cronograma passa de 10 anos. Aumente os minutos por dia.", ok: false },
+  rescheduled: { text: "Cronograma reprogramado.", ok: true },
+  invalid_block: { text: "A reserva precisa comecar hoje ou depois e ter de 5 a 365 dias.", ok: false },
 };
 
 export default async function SchedulePage(props: { searchParams: Promise<SchedulePageProps["searchParams"]> }) {
@@ -131,6 +139,12 @@ export default async function SchedulePage(props: { searchParams: Promise<Schedu
             >
               Refazer cronograma
             </Link>
+            <Link
+              className="inline-flex min-h-10 items-center rounded-md border border-brand-primary px-4 text-sm font-medium text-brand-primary hover:bg-surface-hover"
+              href={searchParams?.reschedule === "1" ? "/app/schedule" : "/app/schedule?reschedule=1"}
+            >
+              Reprogramar
+            </Link>
             <form action={removeStudyPlanAction}>
               <SubmitButton destructive confirmMessage="Apagar o cronograma?">
                 Apagar cronograma
@@ -138,7 +152,34 @@ export default async function SchedulePage(props: { searchParams: Promise<Schedu
             </form>
           </div>
 
-          <StudyCalendar courses={plan.courses} days={plan.days} today={view.today} />
+          {searchParams?.reschedule === "1" ? (
+            <ReschedulePanel
+              action={rescheduleStudyPlanAction}
+              maxDays={MAX_BLOCK_DAYS}
+              minDate={view.today}
+              minDays={MIN_BLOCK_DAYS}
+              overdue={plan.overdue}
+            />
+          ) : null}
+
+          {plan.blocked.length > 0 ? (
+            <ul className="space-y-2 text-sm text-copy-secondary">
+              {plan.blocked.map((range) => (
+                <li className="flex flex-wrap items-center gap-3" key={range.start}>
+                  <span>
+                    Sem estudo: <span className="font-semibold text-copy-primary">{formatDate(range.start)}</span> a{" "}
+                    <span className="font-semibold text-copy-primary">{formatDate(range.end)}</span>
+                  </span>
+                  <form action={removeBlockedRangeAction}>
+                    <input name="start" type="hidden" value={range.start} />
+                    <SubmitButton confirmMessage="Remover esta reserva e refazer o cronograma?">Remover reserva</SubmitButton>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          <StudyCalendar blocked={plan.blocked} courses={plan.courses} days={plan.days} today={view.today} />
         </div>
       ) : null}
     </section>

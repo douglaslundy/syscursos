@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import {
+  MAX_BLOCK_DAYS,
+  MIN_BLOCK_DAYS,
+  removeBlockedRange,
   removeStudySchedule,
+  rescheduleStudySchedule,
   saveStudyPreferences,
   saveStudySchedule,
   setCourseScheduleMode,
@@ -42,6 +46,38 @@ export async function setCourseModeAction(formData: FormData) {
   const error = await setCourseScheduleMode(courseId.data, formData.get("mode") === "modules" ? "modules" : "sequential");
   revalidatePath("/app/schedule");
   redirect(error ? `/app/schedule?status=${error}&edit=1` : "/app/schedule?status=saved");
+}
+
+const rescheduleSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("catchup") }),
+  z.object({
+    kind: z.literal("block"),
+    start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    days: z.coerce.number().int().min(MIN_BLOCK_DAYS).max(MAX_BLOCK_DAYS),
+  }),
+]);
+
+export async function rescheduleStudyPlanAction(formData: FormData) {
+  const parsed = rescheduleSchema.safeParse({
+    kind: formData.get("kind"),
+    start: formData.get("start"),
+    days: formData.get("days"),
+  });
+
+  if (!parsed.success) {
+    redirect("/app/schedule?status=invalid_block&reschedule=1");
+  }
+
+  const error = await rescheduleStudySchedule(parsed.data);
+  revalidatePath("/app/schedule");
+  redirect(error ? `/app/schedule?status=${error}&reschedule=1` : "/app/schedule?status=rescheduled");
+}
+
+export async function removeBlockedRangeAction(formData: FormData) {
+  const start = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).safeParse(formData.get("start"));
+  const error = start.success ? await removeBlockedRange(start.data) : "invalid_block";
+  revalidatePath("/app/schedule");
+  redirect(error ? `/app/schedule?status=${error}` : "/app/schedule?status=rescheduled");
 }
 
 export async function removeStudyPlanAction() {

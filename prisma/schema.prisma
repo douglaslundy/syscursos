@@ -352,7 +352,8 @@ model StudySchedule {
   studentId    String         @unique @map("student_id") @db.Uuid
   courseIds    String[]       @map("course_ids") @db.Uuid
   courseModes  Json           @default("{}") @map("course_modes")
-  targetDate   DateTime       @map("target_date") @db.Date
+  blockedRanges Json          @default("[]") @map("blocked_ranges")
+  targetDate  DateTime       @map("target_date") @db.Date
   dailyMinutes Int            @map("daily_minutes")
   schedule     Json           @default("[]")
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)

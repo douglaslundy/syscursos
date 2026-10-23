@@ -2,16 +2,20 @@ import * as repository from "@/server/repositories/student-repository";
 import * as plans from "@/server/repositories/study-plan-repository";
 import { getCourseAccessStatus, requireStudentProfileId } from "@/server/services/student-service";
 import {
+  addDays,
   buildSchedule,
   countLessons,
   diffDays,
   FALLBACK_LESSON_SECONDS,
   minutesPerDayForDeadline,
   totalSeconds,
+  type BlockedRange,
   type PlannerCourse,
 } from "@/server/services/study-planner";
 
 export const MAX_SCHEDULE_COURSES = 5;
+export const MIN_BLOCK_DAYS = 5;
+export const MAX_BLOCK_DAYS = 365;
 const MIN_DAILY_MINUTES = 1;
 const MAX_DAILY_MINUTES = 16 * 60;
 
@@ -22,8 +26,12 @@ export type StudyPlanInput = {
   modes?: CourseModes;
   targetDate?: string;
   minutesPerDay?: number;
+  // Sem valor, mantem os periodos reservados que ainda nao terminaram.
+  blocked?: BlockedRange[];
 };
+export type RescheduleInput = { kind: "catchup" } | { kind: "block"; start: string; days: number };
 export type StudyPlanError =
+  | "invalid_block"
   | "no_lessons"
   | "past_date"
   | "no_study_days"
@@ -108,6 +116,7 @@ export async function getStudyScheduleView() {
     plan: {
       courses: planCourses,
       modes: readModes(stored.courseModes),
+      blocked: readBlocked(stored.blockedRanges).filter((range) => range.end >= today),
       targetDate: stored.targetDate.toISOString().slice(0, 10),
       dailyMinutes: stored.dailyMinutes,
       days,
@@ -127,8 +136,14 @@ export async function saveStudySchedule(input: StudyPlanInput): Promise<StudyPla
 
   if (courseIds.length > MAX_SCHEDULE_COURSES) return "too_many";
 
-  const [enrolled, prefs] = await Promise.all([listEnrolledCourses(studentId), plans.getStudyPreferences(studentId)]);
-  const chosen = courseIds.map((id) => enrolled.find((course) => course.id === id && course.available));
+  const [enrolled, prefs, current] = await Promise.all([
+    listEnrolledCourses(studentId),
+    plans.getStudyPreferences(studentId),
+    plans.getStudySchedule(studentId),
+  ]);
+  const today = todayInSaoPaulo();
+  const blocked = input.blocked ?? readBlocked(current?.blockedRanges).filter((range) => range.end >= today);
+  const chosen =courseIds.map((id) => enrolled.find((course) => course.id === id && course.available));
 
   if (courseIds.length === 0 || chosen.some((course) => !course)) return "invalid_courses";
 
@@ -137,8 +152,7 @@ export async function saveStudySchedule(input: StudyPlanInput): Promise<StudyPla
 
   if (countLessons(courses) === 0) return "no_lessons";
 
-  const today = todayInSaoPaulo();
-  const base = { courses, startDate: today, weekdays: prefs.studyWeekdays, startMinute: prefs.studyStartMinute };
+  const base = { courses, startDate: today, weekdays: prefs.studyWeekdays, startMinute: prefs.studyStartMinute, blocked };
   let dailyMinutes: number;
 
   if (input.minutesPerDay !== undefined) {
@@ -179,6 +193,7 @@ export async function saveStudySchedule(input: StudyPlanInput): Promise<StudyPla
   await plans.upsertStudySchedule(studentId, {
     courseIds,
     courseModes: modes,
+    blockedRanges: blocked,
     targetDate: new Date(`${input.targetDate ?? finish}T00:00:00.000Z`),
     dailyMinutes,
     schedule,
@@ -197,6 +212,51 @@ export async function setCourseScheduleMode(courseId: string, mode: CourseMode):
     modes: { ...readModes(stored.courseModes), [courseId]: mode },
     minutesPerDay: stored.dailyMinutes,
   });
+}
+
+// Refaz o calendario a partir de hoje com as aulas ainda nao assistidas (as atrasadas entram de novo), mantendo cursos,
+// modos e minutos por dia. "block" reserva antes um periodo sem estudo (minimo MIN_BLOCK_DAYS dias, a partir de hoje).
+export async function rescheduleStudySchedule(input: RescheduleInput): Promise<StudyPlanError | null> {
+  const stored = await plans.getStudySchedule(await requireStudentProfileId());
+
+  if (!stored) return "invalid_courses";
+
+  const today = todayInSaoPaulo();
+  const blocked = readBlocked(stored.blockedRanges).filter((range) => range.end >= today);
+
+  if (input.kind === "block") {
+    const validStart = /^\d{4}-\d{2}-\d{2}$/.test(input.start) && input.start >= today;
+
+    if (!validStart || !Number.isInteger(input.days) || input.days < MIN_BLOCK_DAYS || input.days > MAX_BLOCK_DAYS) {
+      return "invalid_block";
+    }
+
+    blocked.push({ start: input.start, end: addDays(input.start, input.days - 1) });
+  }
+
+  return saveStudySchedule({
+    courseIds: stored.courseIds,
+    modes: readModes(stored.courseModes),
+    minutesPerDay: stored.dailyMinutes,
+    blocked,
+  });
+}
+
+export async function removeBlockedRange(start: string): Promise<StudyPlanError | null> {
+  const stored = await plans.getStudySchedule(await requireStudentProfileId());
+
+  if (!stored) return "invalid_courses";
+
+  return saveStudySchedule({
+    courseIds: stored.courseIds,
+    modes: readModes(stored.courseModes),
+    minutesPerDay: stored.dailyMinutes,
+    blocked: readBlocked(stored.blockedRanges).filter((range) => range.start !== start),
+  });
+}
+
+function readBlocked(value: unknown): BlockedRange[] {
+  return Array.isArray(value) ? (value as BlockedRange[]).filter((range) => range?.start && range?.end) : [];
 }
 
 // Modo do curso no cronograma atual; null quando o curso nao esta nele.

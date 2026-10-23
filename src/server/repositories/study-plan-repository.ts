@@ -9,7 +9,7 @@ export async function getStudySchedule(studentId: string) {
 
 export async function upsertStudySchedule(
   studentId: string,
-  data: { courseIds: string[]; courseModes: Prisma.InputJsonValue; targetDate: Date; dailyMinutes: number; schedule: Prisma.InputJsonValue },
+  data: { courseIds: string[]; courseModes: Prisma.InputJsonValue; blockedRanges: Prisma.InputJsonValue; targetDate: Date; dailyMinutes: number; schedule: Prisma.InputJsonValue },
 ) {
   return prisma.studySchedule.upsert({ where: { studentId }, create: { studentId, ...data }, update: data });
 }

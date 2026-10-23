@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bell, Brain, FileText, HelpCircle, Home, ListVideo, MoreHorizontal, Search, Star, User } from "lucide-react";
+import { BarChart3, Bell, Brain, CalendarDays, FileText, HelpCircle, Home, ListVideo, MoreHorizontal, Search, Star, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -18,6 +18,18 @@ const navigationItems = [
     label: "Buscar",
     icon: Search,
     match: (pathname: string) => pathname.startsWith("/app/search"),
+  },
+  {
+    href: "/app/notifications",
+    label: "Avisos",
+    icon: Bell,
+    match: (pathname: string) => pathname.startsWith("/app/notifications"),
+  },
+  {
+    href: "/app/me",
+    label: "Meus dados",
+    icon: User,
+    match: (pathname: string) => pathname.startsWith("/app/me"),
   },
   {
     href: "/app/review",
@@ -38,6 +50,12 @@ const navigationItems = [
     match: (pathname: string) => pathname.startsWith("/app/progress"),
   },
   {
+    href: "/app/schedule",
+    label: "Cronograma",
+    icon: CalendarDays,
+    match: (pathname: string) => pathname.startsWith("/app/schedule"),
+  },
+  {
     href: "/app/notebooks",
     label: "Cadernos",
     icon: FileText,
@@ -54,18 +72,6 @@ const navigationItems = [
     label: "Playlists",
     icon: ListVideo,
     match: (pathname: string) => pathname.startsWith("/app/playlists"),
-  },
-  {
-    href: "/app/notifications",
-    label: "Avisos",
-    icon: Bell,
-    match: (pathname: string) => pathname.startsWith("/app/notifications"),
-  },
-  {
-    href: "/app/me",
-    label: "Meus dados",
-    icon: User,
-    match: (pathname: string) => pathname.startsWith("/app/me"),
   },
 ] as const;
 

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import type { CronogramaDay, CronogramaLesson } from "@/server/services/study-plan-service";
-import { addDays, weekdayOf } from "@/server/services/study-planner";
+import { addDays, isBlocked, weekdayOf, type BlockedRange } from "@/server/services/study-planner";
 
 const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
 const MONTH_LABELS = [
@@ -68,11 +68,13 @@ function monthCells(month: string) {
 
 function LessonChip({
   colorClass,
+  courseTitle,
   date,
   lesson,
   today,
 }: {
   colorClass: string;
+  courseTitle: string;
   date: string;
   lesson: CronogramaLesson;
   today: string;
@@ -84,8 +86,9 @@ function LessonChip({
     <Link
       className={cn("block rounded-md px-2 py-1 text-left text-slate-900 transition", colorClass)}
       href={`/app/courses/${lesson.courseId}/lessons/${lesson.id}`}
-      title={`${lesson.title} - ${label}`}
+      title={`${courseTitle} - ${lesson.title} - ${label}`}
     >
+      <span className="block truncate pl-3.5 text-[10px] font-medium uppercase text-slate-600">{courseTitle}</span>
       <span className="flex items-center gap-1.5">
         <span
           aria-label={label}
@@ -107,8 +110,19 @@ function LessonChip({
   );
 }
 
-export function StudyCalendar({ courses, days, today }: { courses: CalendarCourse[]; days: CronogramaDay[]; today: string }) {
+export function StudyCalendar({
+  blocked = [],
+  courses,
+  days,
+  today,
+}: {
+  blocked?: BlockedRange[];
+  courses: CalendarCourse[];
+  days: CronogramaDay[];
+  today: string;
+}) {
   const byDate = new Map(days.map((day) => [day.date, day]));
+  const titleOf = (courseId: string) => courses.find((course) => course.id === courseId)?.title ?? "";
   const colorOf = (courseId: string) => COURSE_COLORS[Math.max(0, courses.findIndex((course) => course.id === courseId)) % COURSE_COLORS.length];
 
   return (
@@ -133,7 +147,10 @@ export function StudyCalendar({ courses, days, today }: { courses: CalendarCours
 
                 return (
                   <div
-                    className="min-h-28 space-y-1 border-b border-r border-stroke-subtle p-1.5 text-left"
+                    className={cn(
+                      "min-h-28 space-y-1 border-b border-r border-stroke-subtle p-1.5 text-left",
+                      date && isBlocked(date, blocked) && "bg-surface-hover",
+                    )}
                     key={date ?? `blank-${index}`}
                   >
                     {date ? (
@@ -146,11 +163,14 @@ export function StudyCalendar({ courses, days, today }: { courses: CalendarCours
                         {Number(date.slice(8))}
                       </div>
                     ) : null}
+                    {date && isBlocked(date, blocked) ? (
+                      <p className="text-center text-[11px] text-copy-muted">Sem estudo</p>
+                    ) : null}
                     {date
                       ? lessons
                           .slice(0, VISIBLE_PER_DAY)
                           .map((lesson) => (
-                            <LessonChip colorClass={colorOf(lesson.courseId)} date={date} key={lesson.id} lesson={lesson} today={today} />
+                            <LessonChip colorClass={colorOf(lesson.courseId)} courseTitle={titleOf(lesson.courseId)} date={date} key={lesson.id} lesson={lesson} today={today} />
                           ))
                       : null}
                     {date && extra.length > 0 ? (
@@ -160,7 +180,7 @@ export function StudyCalendar({ courses, days, today }: { courses: CalendarCours
                         </summary>
                         <div className="mt-1 space-y-1">
                           {extra.map((lesson) => (
-                            <LessonChip colorClass={colorOf(lesson.courseId)} date={date} key={lesson.id} lesson={lesson} today={today} />
+                            <LessonChip colorClass={colorOf(lesson.courseId)} courseTitle={titleOf(lesson.courseId)} date={date} key={lesson.id} lesson={lesson} today={today} />
                           ))}
                         </div>
                       </details>
