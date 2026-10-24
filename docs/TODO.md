@@ -939,3 +939,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [ ] Pendentes: dividir `admin-actions.ts` e extrair hooks de `lesson-transcriber.tsx`; sem sincronizacao offline (PWA so mostra tela offline).
 - [x] Cronograma: nome do curso em cada aula, botao Reprogramar (recalcular a partir de hoje ou reservar periodo sem estudo, minimo 5 dias), menu Cronograma e nova ordem do menu (Avisos e Meus dados abaixo de Buscar). Migration `20261023120000_study_schedule_blocked_ranges` aplicada.
 - [ ] Smoke no navegador logado do Reprogramar e das reservas no calendario.
+- [ ] Testar em producao: transcricao pelo metodo OpenAI (gravacao do audio) e resumo/mapa/quiz com a chave da Anthropic (nao verificado com chave real).
+- [x] API do agente (MCP `/api/mcp`) para OpenClaw/WhatsApp: 10 tools (cursos, quiz/revisao em choice ou baralho, pendente ou tudo, resumo, mapa, transcricao, chat). Testes: `agent-*.test.ts`. Smoke local com dados reais (somente leitura) ok.
+- [x] Varios alunos: vinculo do WhatsApp por codigo (Meus dados > WhatsApp), tool `link_whatsapp`, `phone` em toda tool.
+- [ ] Aplicar a migration `20261024120000_whatsapp_link` (`prisma migrate deploy`), definir `AGENT_API_TOKEN` na Vercel, deploy, colar o prompt de `docs/OPENCLAW-AGENT-PROMPT.md` no OpenClaw e testar o vinculo + fluxo no WhatsApp (nao verificado com o OpenClaw real).

@@ -6,14 +6,17 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import {
+  removeAnthropicApiKey,
   removeOpenAiApiKey,
   saveActiveAiProvider,
   saveActiveTechniques,
   saveGeminiAiKey,
+  saveAnthropicApiKey,
   saveOpenAiApiKey,
   testAiKey,
 } from "@/server/services/ai/ai-settings-service";
 import { askLessonChat, type ChatResult } from "@/server/services/ai/chat-service";
+import type { AiProviderId } from "@/server/services/ai/providers";
 import { recordAudit } from "@/server/services/audit-service";
 import { generateAiContent, type AiGenerateResult } from "@/server/services/ai/ai-content-service";
 
@@ -49,7 +52,13 @@ function readKey(formData: FormData) {
 }
 
 const isValidKey = (key: string) => key.length >= 20 && key.length <= 200 && !/\s/.test(key);
-const providerOf = (formData: FormData) => (formData.get("provider") === "gemini" ? "gemini" : "openai");
+const providerOf = (formData: FormData): AiProviderId => {
+  const value = formData.get("provider");
+
+  return value === "gemini" || value === "anthropic" ? value : "openai";
+};
+
+const saveKeyFor = { openai: saveOpenAiApiKey, gemini: saveGeminiAiKey, anthropic: saveAnthropicApiKey } as const;
 
 export async function saveAiKeyAction(formData: FormData) {
   const key = readKey(formData);
@@ -59,7 +68,7 @@ export async function saveAiKeyAction(formData: FormData) {
     redirect(`${AI_PATH}?status=ai_invalid_format`);
   }
 
-  await (provider === "gemini" ? saveGeminiAiKey(key) : saveOpenAiApiKey(key));
+  await saveKeyFor[provider](key);
   await recordAudit("ai.key_save", "setting", provider);
   redirect(`${AI_PATH}?status=ai_key_saved`);
 }
@@ -72,6 +81,12 @@ export async function testAiKeyAction(formData: FormData) {
 export async function removeOpenAiKeyAction() {
   await removeOpenAiApiKey();
   await recordAudit("ai.key_remove", "setting", "openai");
+  redirect(`${AI_PATH}?status=ai_key_removed`);
+}
+
+export async function removeAnthropicKeyAction() {
+  await removeAnthropicApiKey();
+  await recordAudit("ai.key_remove", "setting", "anthropic");
   redirect(`${AI_PATH}?status=ai_key_removed`);
 }
 

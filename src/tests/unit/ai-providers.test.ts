@@ -34,6 +34,22 @@ describe("callProvider", () => {
     expect(sent.messages[0]).toEqual({ role: "system", content: "sys" });
   });
 
+  it("calls Anthropic with x-api-key and trims the JSON answer out of code fences", async () => {
+    const fetchMock = stubFetch(200, {
+      content: [{ type: "text", text: 'Aqui:\n```json\n{"ok":1}\n```' }],
+      usage: { input_tokens: 80, output_tokens: 15 },
+    });
+    const result = await callProvider("anthropic", "sk-ant-test", request);
+    const [url, init] = fetchMock.mock.calls[0];
+    const sent = JSON.parse(init.body as string);
+
+    expect(result).toMatchObject({ ok: true, text: '{"ok":1}', inputTokens: 80, outputTokens: 15 });
+    expect(url).toContain("api.anthropic.com/v1/messages");
+    expect(init.headers["x-api-key"]).toBe("sk-ant-test");
+    expect(sent.system).toContain("sys");
+    expect(sent.messages).toEqual([{ role: "user", content: "usr" }]);
+  });
+
   it("calls Gemini with the key in a header and counts thinking tokens as output", async () => {
     const fetchMock = stubFetch(200, {
       candidates: [{ content: { parts: [{ text: "ola" }] } }],

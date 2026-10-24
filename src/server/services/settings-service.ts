@@ -136,12 +136,28 @@ export async function saveRegistrationOpen(open: boolean) {
 const GEMINI_KEY = "gemini_api_key";
 const METHOD_KEY = "transcription_method";
 
-export type TranscriptionMethod = "browser" | "gemini";
+export type TranscriptionMethod = "browser" | "gemini" | "openai";
 export type GeminiKeyTestResult = "ok" | "empty" | "invalid" | "quota" | "network";
 
 export async function getGeminiApiKey() {
   const row = await appSettings.findUnique({ where: { key: GEMINI_KEY } });
   return row ? decryptSecret(row.value) : null;
+}
+
+// A mesma chave da OpenAI cadastrada em Configuracoes > IA serve para transcrever o audio das aulas.
+export async function getOpenAiApiKey() {
+  const row = await appSettings.findUnique({ where: { key: "openai_api_key" } });
+  return row ? decryptSecret(row.value) : null;
+}
+
+export async function getOpenAiKeyStatus() {
+  await requireRole("ADMIN");
+  const key = await getOpenAiApiKey();
+  return { configured: key !== null, hint: key ? `...${key.slice(-4)}` : null };
+}
+
+async function methodKey(method: TranscriptionMethod) {
+  return method === "gemini" ? getGeminiApiKey() : method === "openai" ? getOpenAiApiKey() : "browser";
 }
 
 export async function getGeminiKeyStatus() {
@@ -175,12 +191,14 @@ export async function testGeminiApiKey(candidate: string | null): Promise<Gemini
   return result.reason === "invalid_key" ? "invalid" : result.reason === "quota" ? "quota" : "network";
 }
 
-// Metodo efetivo: "gemini" so vale com chave legivel; o padrao e "browser".
+// Metodo efetivo: "gemini" e "openai" so valem com chave legivel; o padrao e "browser".
 export async function getTranscriptionMethod(): Promise<TranscriptionMethod> {
   const row = await appSettings.findUnique({ where: { key: METHOD_KEY } });
 
-  if (row?.value === "gemini" && (await getGeminiApiKey())) {
-    return "gemini";
+  const chosen = row?.value;
+
+  if ((chosen === "gemini" || chosen === "openai") && (await methodKey(chosen))) {
+    return chosen;
   }
 
   return "browser";
@@ -189,7 +207,7 @@ export async function getTranscriptionMethod(): Promise<TranscriptionMethod> {
 export async function saveTranscriptionMethod(method: TranscriptionMethod): Promise<"saved" | "need_key"> {
   await requireRole("ADMIN");
 
-  if (method === "gemini" && !(await getGeminiApiKey())) {
+  if (!(await methodKey(method))) {
     return "need_key";
   }
 

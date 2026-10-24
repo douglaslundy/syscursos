@@ -1,4 +1,4 @@
-export type AiProviderId = "openai" | "gemini";
+export type AiProviderId = "openai" | "gemini" | "anthropic";
 export type AiRequest = { system: string; user: string; json: boolean };
 export type AiFailure = "invalid_key" | "quota" | "network" | "failed";
 export type AiCallResult =
@@ -8,6 +8,7 @@ export type AiCallResult =
 // Confira os nomes dos modelos na documentacao de cada provedor se a chamada passar a falhar com 404.
 export const OPENAI_MODEL = "gpt-4o-mini";
 export const GEMINI_TEXT_MODEL = "gemini-2.5-flash";
+export const ANTHROPIC_MODEL = "claude-haiku-5-5";
 
 const TIMEOUT_MS = 55_000;
 
@@ -18,6 +19,11 @@ type OpenAiResponse = {
 type GeminiResponse = {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
   usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number; totalTokenCount?: number };
+};
+
+type AnthropicResponse = {
+  content?: Array<{ type?: string; text?: string }>;
+  usage?: { input_tokens?: number; output_tokens?: number };
 };
 
 async function post(url: string, headers: Record<string, string>, body: unknown) {
@@ -93,9 +99,43 @@ async function callGemini(key: string, request: AiRequest): Promise<AiCallResult
   return { ok: true, text, inputTokens, outputTokens, model: GEMINI_TEXT_MODEL };
 }
 
+// A API da Anthropic nao tem modo JSON: o pedido reforca o formato e a resposta e reduzida ao objeto (sem cercas de codigo).
+async function callAnthropic(key: string, request: AiRequest): Promise<AiCallResult> {
+  const response = await post(
+    "https://api.anthropic.com/v1/messages",
+    { "x-api-key": key, "anthropic-version": "2023-06-01" },
+    {
+      model: ANTHROPIC_MODEL,
+      max_tokens: 8192,
+      system: request.json ? `${request.system}
+
+Responda somente com um objeto JSON valido, sem texto antes ou depois.` : request.system,
+      messages: [{ role: "user", content: request.user }],
+    },
+  );
+
+  if (!response.ok) return { ok: false, reason: failureFor(response.status, await response.text()) };
+
+  const data = (await response.json()) as AnthropicResponse;
+  const joined = (data.content ?? []).map((part) => part.text ?? "").join("").trim();
+  const text = request.json ? joined.slice(joined.indexOf("{"), joined.lastIndexOf("}") + 1) : joined;
+
+  if (!text) return { ok: false, reason: "failed" };
+
+  return {
+    ok: true,
+    text,
+    inputTokens: data.usage?.input_tokens ?? 0,
+    outputTokens: data.usage?.output_tokens ?? 0,
+    model: ANTHROPIC_MODEL,
+  };
+}
+
 export async function callProvider(provider: AiProviderId, key: string, request: AiRequest): Promise<AiCallResult> {
   try {
-    return provider === "openai" ? await callOpenAi(key, request) : await callGemini(key, request);
+    if (provider === "openai") return await callOpenAi(key, request);
+
+    return provider === "anthropic" ? await callAnthropic(key, request) : await callGemini(key, request);
   } catch (error) {
     console.error("AI request failed.", { provider, name: error instanceof Error ? error.name : typeof error });
     return { ok: false, reason: "network" };

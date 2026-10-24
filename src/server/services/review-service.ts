@@ -83,6 +83,18 @@ export async function getReviewQueue(now = new Date()): Promise<{ due: ReviewCar
   return { due, fresh, dueTotal };
 }
 
+// Um cartao (com o verso) de uma aula a que o aluno tem acesso; null se nao existe ou o acesso e negado.
+export async function findReviewCard(courseId: string, lessonId: string, key: string): Promise<ReviewCard | null> {
+  const found = await findTranscribableLesson(courseId, lessonId);
+
+  if (!found) return null;
+
+  const lesson = (await lessonsCards([lessonId], [courseId])).get(lessonId);
+  const card = lesson?.cards.get(key);
+
+  return lesson && card ? { courseId, courseTitle: lesson.courseTitle, moduleTitle: lesson.moduleTitle, lessonId, lessonTitle: lesson.lessonTitle, cardKey: key, q: card.q, a: card.a, isNew: false } : null;
+}
+
 // Registra a nota de um cartao e agenda a proxima revisao. Vale para cartoes de aulas as quais o aluno tem acesso.
 export async function reviewCard(input: { courseId: string; lessonId: string; cardKey: string; grade: ReviewGrade }) {
   const found = await findTranscribableLesson(input.courseId, input.lessonId);

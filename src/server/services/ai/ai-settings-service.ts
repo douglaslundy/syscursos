@@ -3,14 +3,15 @@ import { appSettings } from "@/server/services/app-settings";
 import { requireRole } from "@/server/auth/guards";
 import { decryptSecret, encryptSecret } from "@/server/security/secret-box";
 import { callProvider, type AiProviderId } from "@/server/services/ai/providers";
-import { getGeminiApiKey } from "@/server/services/settings-service";
+import { getGeminiApiKey, getOpenAiApiKey } from "@/server/services/settings-service";
 
 const OPENAI_KEY = "openai_api_key";
+const ANTHROPIC_KEY = "anthropic_api_key";
 const GEMINI_KEY = "gemini_api_key"; // a mesma chave usada na transcricao
 const ACTIVE_KEY = "ai_active_provider";
 const TECHNIQUES_KEY = "ai_summary_techniques";
 
-export const AI_PROVIDERS: readonly AiProviderId[] = ["openai", "gemini"];
+export const AI_PROVIDERS: readonly AiProviderId[] = ["openai", "gemini", "anthropic"];
 export type AiKeyTestResult = "ok" | "empty" | "invalid" | "quota" | "network";
 
 async function readSecret(key: string) {
@@ -18,12 +19,14 @@ async function readSecret(key: string) {
   return { value: row ? decryptSecret(row.value) : null, stored: row !== null };
 }
 
-export async function getOpenAiApiKey() {
-  return (await readSecret(OPENAI_KEY)).value;
+export async function getAnthropicApiKey() {
+  return (await readSecret(ANTHROPIC_KEY)).value;
 }
 
 async function providerKey(provider: AiProviderId) {
-  return provider === "openai" ? getOpenAiApiKey() : getGeminiApiKey();
+  if (provider === "openai") return getOpenAiApiKey();
+
+  return provider === "anthropic" ? getAnthropicApiKey() : getGeminiApiKey();
 }
 
 async function configuredProviders() {
@@ -56,9 +59,10 @@ export async function getActiveAiCredentials() {
 
 export async function getAiSettingsStatus() {
   await requireRole("ADMIN");
-  const [openai, gemini, active, techniques] = await Promise.all([
+  const [openai, gemini, anthropic, active, techniques] = await Promise.all([
     readSecret(OPENAI_KEY),
     readSecret(GEMINI_KEY),
+    readSecret(ANTHROPIC_KEY),
     getActiveAiProvider(),
     getActiveTechniques(),
   ]);
@@ -68,7 +72,7 @@ export async function getAiSettingsStatus() {
     unreadable: secret.stored && secret.value === null,
   });
 
-  return { openai: describe(openai), gemini: describe(gemini), active, techniques };
+  return { openai: describe(openai), gemini: describe(gemini), anthropic: describe(anthropic), active, techniques };
 }
 
 export async function saveOpenAiApiKey(key: string) {
@@ -81,12 +85,25 @@ export async function removeOpenAiApiKey() {
   await requireRole("ADMIN");
   await appSettings.deleteMany({ where: { key: OPENAI_KEY } });
   await appSettings.deleteMany({ where: { key: ACTIVE_KEY, value: "openai" } });
+  await appSettings.deleteMany({ where: { key: "transcription_method", value: "openai" } });
 }
 
 export async function saveGeminiAiKey(key: string) {
   await requireRole("ADMIN");
   const value = encryptSecret(key);
   await appSettings.upsert({ where: { key: GEMINI_KEY }, create: { key: GEMINI_KEY, value }, update: { value } });
+}
+
+export async function saveAnthropicApiKey(key: string) {
+  await requireRole("ADMIN");
+  const value = encryptSecret(key);
+  await appSettings.upsert({ where: { key: ANTHROPIC_KEY }, create: { key: ANTHROPIC_KEY, value }, update: { value } });
+}
+
+export async function removeAnthropicApiKey() {
+  await requireRole("ADMIN");
+  await appSettings.deleteMany({ where: { key: ANTHROPIC_KEY } });
+  await appSettings.deleteMany({ where: { key: ACTIVE_KEY, value: "anthropic" } });
 }
 
 export async function testAiKey(provider: AiProviderId, candidate: string | null): Promise<AiKeyTestResult> {

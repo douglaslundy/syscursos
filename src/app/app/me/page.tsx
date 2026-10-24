@@ -1,10 +1,12 @@
 import { Feedback } from "@/components/admin/feedback";
+import { WhatsappLinkPanel } from "@/components/student/whatsapp-link-panel";
 import { saveOwnStudentProfileAction } from "@/server/actions/student-actions";
 import { savePlaybackRateFormAction } from "@/server/actions/study-actions";
 import { saveStudyPreferencesAction } from "@/server/actions/study-plan-actions";
 import { PLAYBACK_RATES } from "@/lib/study/playback";
 import { getOwnStudentProfile } from "@/server/services/student-service";
 import { getPlaybackRate } from "@/server/services/study-stats-service";
+import { getWhatsappStatus } from "@/server/services/whatsapp-link-service";
 
 type StudentMePageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -18,7 +20,7 @@ function toClock(minute: number) {
 
 export default async function StudentMePage(props: { searchParams: Promise<StudentMePageProps["searchParams"]> }) {
   const searchParams = await props.searchParams;
-  const [profile, playbackRate] = await Promise.all([getOwnStudentProfile(), getPlaybackRate().catch(() => 1)]);
+  const [profile, playbackRate, whatsapp] = await Promise.all([getOwnStudentProfile(), getPlaybackRate().catch(() => 1), getWhatsappStatus().catch(() => ({ linked: false, masked: null }))]);
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
 
   return (
@@ -98,6 +100,8 @@ export default async function StudentMePage(props: { searchParams: Promise<Stude
           Salvar velocidade
         </button>
       </form>
+
+      <WhatsappLinkPanel linked={whatsapp.linked} masked={whatsapp.masked} />
     </section>
   );
 }

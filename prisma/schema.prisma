@@ -119,6 +119,10 @@ model StudentProfile {
   questions          LessonQuestion[]
   playlists          Playlist[]
   weeklyGoalMinutes  Int                 @default(0) @map("weekly_goal_minutes")
+  // WhatsApp vinculado ao agente (OpenClaw). O codigo de vinculo e guardado so como hash e vale por poucos minutos.
+  whatsappPhone         String?   @unique @map("whatsapp_phone") @db.VarChar(20)
+  whatsappCodeHash      String?   @unique @map("whatsapp_code_hash") @db.VarChar(64)
+  whatsappCodeExpiresAt DateTime? @map("whatsapp_code_expires_at") @db.Timestamptz(6)
   playbackRate       Float               @default(1) @map("playback_rate")
   studyWeekdays      Int[]               @default([1, 2, 3, 4, 5]) @map("study_weekdays")
   studyStartMinute   Int                 @default(1140) @map("study_start_minute")

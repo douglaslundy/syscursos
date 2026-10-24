@@ -20,7 +20,7 @@ const MIN_SAMPLES = SAMPLE_RATE / 2;
 const NO_GPU_KEY = "syscursos:whisper-no-gpu";
 const ENDED_GRACE_MS = 2500;
 
-type Method = "browser" | "gemini";
+type Method = "browser" | "gemini" | "openai";
 type Phase = "idle" | "loading" | "recording" | "paused" | "finishing" | "importing" | "review" | "saving" | "done" | "error";
 type Part = { start: number; text: string };
 

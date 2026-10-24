@@ -9,7 +9,7 @@ export type UsageTotals = { calls: number; inputTokens: number; outputTokens: nu
 export type UsageRow = { label: string; totals: UsageTotals };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const PROVIDERS = ["openai", "gemini"];
+const PROVIDERS = ["openai", "gemini", "anthropic"];
 
 function toTotals(sum: { inputTokens: number | null; outputTokens: number | null }, calls: number): UsageTotals {
   const inputTokens = sum.inputTokens ?? 0;

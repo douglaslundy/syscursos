@@ -20,7 +20,7 @@ type LessonTranscriptProps = {
   transcript: string | null;
   isYouTube: boolean;
   canReset: boolean;
-  method: "browser" | "gemini";
+  method: "browser" | "gemini" | "openai";
   durationSeconds: number | null;
   youtubeGemini: boolean;
   status?: string;

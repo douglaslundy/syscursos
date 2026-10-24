@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
+import { getAgentStudentId } from "@/server/auth/agent-context";
 import { requireAnyRole } from "@/server/auth/guards";
 import { getCachedCourseContent } from "@/server/cache/course-content";
 import * as repository from "@/server/repositories/student-repository";
@@ -287,6 +288,10 @@ export async function updateOwnStudentProfile(input: StudentProfileInput) {
 }
 
 export async function requireStudentProfileId() {
+  const agentStudentId = getAgentStudentId();
+
+  if (agentStudentId) return agentStudentId;
+
   const user = await requireAnyRole(["STUDENT"]);
 
   if (!user.studentProfileId) {

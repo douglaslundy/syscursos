@@ -72,7 +72,7 @@ function isValidKey(key: string) {
 export async function saveTranscriptionMethodAction(formData: FormData) {
   const method = formData.get("method");
 
-  if (method !== "browser" && method !== "gemini") {
+  if (method !== "browser" && method !== "gemini" && method !== "openai") {
     redirect(`${TRANSCRIPTION_PATH}?status=invalid`);
   }
 

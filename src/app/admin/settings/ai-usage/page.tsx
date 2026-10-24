@@ -92,6 +92,7 @@ export default async function AiUsagePage(props: { searchParams: Promise<PagePro
             <option value="">Todas</option>
             <option value="openai">OpenAI</option>
             <option value="gemini">Gemini</option>
+            <option value="anthropic">Claude</option>
           </select>
         </label>
         <label className="grid gap-1 text-sm">

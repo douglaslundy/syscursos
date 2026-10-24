@@ -9,7 +9,7 @@ import {
   testGeminiKeyAction,
 } from "@/server/actions/settings-actions";
 import { requireRole } from "@/server/auth/guards";
-import { getGeminiKeyStatus, getTranscriptionMethod } from "@/server/services/settings-service";
+import { getGeminiKeyStatus, getOpenAiKeyStatus, getTranscriptionMethod } from "@/server/services/settings-service";
 
 type PageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -32,13 +32,21 @@ const methods = [
     where: "So o texto fica salvo, no cadastro da aula, e todos os alunos passam a ver. O audio nao e guardado por nos: passa pelo servidor e segue para o Google.",
     cost: "A chave e sua. O Gemini tem uma faixa gratuita com limite de uso e, acima dela, cobra por uso (confira os valores atuais no site do Google). No plano gratuito o Google pode usar o conteudo enviado para melhorar seus produtos: leia os termos antes de ativar.",
   },
+  {
+    value: "openai",
+    title: "3. OpenAI (ChatGPT)",
+    how: "A gravacao e igual a dos outros metodos, mas o audio vai em pedacos de 1 minuto para o nosso servidor, que pede ao modelo gpt-4o-mini-transcribe da OpenAI para escrever o texto. Usa a mesma chave da OpenAI ja cadastrada em Configuracoes > IA nas aulas.",
+    when: "Durante a aula, em tempo real, um minuto por vez. Como nos outros metodos, o aluno deixa a aba aberta ate o fim. A OpenAI nao le videos do YouTube pelo link: aulas do YouTube continuam usando a legenda do YouTube ou o Gemini.",
+    where: "So o texto fica salvo, no cadastro da aula. O audio nao e guardado por nos: passa pelo servidor e segue para a OpenAI.",
+    cost: "Cobrado na sua conta da OpenAI por minuto de audio (confira os valores atuais no site da OpenAI).",
+  },
 ] as const;
 
 export default async function TranscriptionSettingsPage(props: { searchParams: Promise<PageProps["searchParams"]> }) {
   const searchParams = await props.searchParams;
   await requireRole("ADMIN");
   const status = typeof searchParams?.status === "string" ? searchParams.status : undefined;
-  const [method, key] = await Promise.all([getTranscriptionMethod(), getGeminiKeyStatus()]);
+  const [method, key, openAiKey] = await Promise.all([getTranscriptionMethod(), getGeminiKeyStatus(), getOpenAiKeyStatus()]);
 
   return (
     <section className="space-y-8">
@@ -88,9 +96,23 @@ export default async function TranscriptionSettingsPage(props: { searchParams: P
           Salvar metodo
         </button>
         <p className="text-sm text-muted-foreground">
-          Metodo em uso agora: <strong>{method === "gemini" ? "Gemini" : "Navegador do aluno"}</strong>.
+          Metodo em uso agora: <strong>{method === "gemini" ? "Gemini" : method === "openai" ? "OpenAI (ChatGPT)" : "Navegador do aluno"}</strong>.
         </p>
       </form>
+
+      <div className="max-w-3xl space-y-2 rounded-md border bg-background p-4">
+        <h3 className="text-base font-semibold">Chave da OpenAI</h3>
+        <p className="text-sm">
+          {openAiKey.configured
+            ? `Chave da OpenAI ja cadastrada (${openAiKey.hint}) e em uso pelo metodo 3. `
+            : "Nenhuma chave da OpenAI cadastrada. "}
+          Para cadastrar ou trocar, use{" "}
+          <Link className="underline" href="/admin/settings/ai">
+            Configuracoes &gt; IA
+          </Link>
+          .
+        </p>
+      </div>
 
       <div className="max-w-3xl space-y-3 rounded-md border bg-background p-4">
         <h3 className="text-base font-semibold">Chave do Gemini</h3>

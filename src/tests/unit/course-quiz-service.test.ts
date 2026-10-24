@@ -126,4 +126,20 @@ describe("course quiz", () => {
     expect(forbidden).toEqual({ ok: false, error: "forbidden" });
     expect(db.$transaction).not.toHaveBeenCalled();
   });
+
+  it("onlyDue skips questions still inside their interval and reports none_pending when nothing is due", async () => {
+    const future = new Date(Date.now() + 5 * 86_400_000);
+    const row = (q: string, lessonId: string) => ({ lessonId, cardKey: `quiz:${cardKey(q)}`, dueAt: future });
+
+    db.flashcardReview.findMany.mockResolvedValue([row("Pergunta A", "l1")]);
+
+    const some = await startCourseQuiz("c1", 10, { onlyDue: true });
+
+    expect(some.ok && some.quiz.questions.map((item) => item.q).sort()).toEqual(["Pergunta B", "Pergunta C"]);
+
+    db.flashcardReview.findMany.mockResolvedValue([row("Pergunta A", "l1"), row("Pergunta B", "l1"), row("Pergunta C", "l2")]);
+
+    expect(await startCourseQuiz("c1", 10, { onlyDue: true })).toEqual({ ok: false, error: "none_pending" });
+    expect((await startCourseDeck("c1", 10, { onlyDue: true })).ok).toBe(false);
+  });
 });

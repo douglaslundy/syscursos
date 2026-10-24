@@ -4,6 +4,7 @@ import { Feedback } from "@/components/admin/feedback";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { SUMMARY_TECHNIQUES } from "@/lib/ai/techniques";
 import {
+  removeAnthropicKeyAction,
   removeOpenAiKeyAction,
   saveActiveProviderAction,
   saveAiKeyAction,
@@ -23,6 +24,11 @@ const providers = [
     id: "gemini",
     title: "Google Gemini",
     help: "Crie a chave em aistudio.google.com/apikey. E a mesma chave usada na transcricao das aulas. Modelo usado: gemini-2.5-flash.",
+  },
+  {
+    id: "anthropic",
+    title: "Anthropic (Claude)",
+    help: "Crie a chave em console.anthropic.com/settings/keys. Modelo usado: claude-haiku-5-5. Serve para resumos, mapas mentais, quizzes e chat; nao transcreve audio.",
   },
 ] as const;
 
@@ -93,9 +99,9 @@ export default async function AiSettingsPage(props: { searchParams: Promise<Page
                 ) : null}
               </div>
             </form>
-            {provider.id === "openai" && key.configured ? (
-              <form action={removeOpenAiKeyAction}>
-                <SubmitButton destructive confirmMessage="Remover a chave da OpenAI?">
+            {(provider.id === "openai" || provider.id === "anthropic") && key.configured ? (
+              <form action={provider.id === "openai" ? removeOpenAiKeyAction : removeAnthropicKeyAction}>
+                <SubmitButton destructive confirmMessage={`Remover a chave da ${provider.id === "openai" ? "OpenAI" : "Anthropic"}?`}>
                   Remover chave
                 </SubmitButton>
               </form>
@@ -106,7 +112,7 @@ export default async function AiSettingsPage(props: { searchParams: Promise<Page
       <p className="max-w-3xl text-sm text-muted-foreground">
         IA em uso agora:{" "}
         <strong>
-          {settings.active === "openai" ? "OpenAI" : settings.active === "gemini" ? "Gemini" : "nenhuma (os botoes de IA ficam indisponiveis para os alunos)"}
+          {settings.active === "openai" ? "OpenAI" : settings.active === "gemini" ? "Gemini" : settings.active === "anthropic" ? "Claude (Anthropic)" : "nenhuma (os botoes de IA ficam indisponiveis para os alunos)"}
         </strong>
         . Para remover a chave do Gemini, use a tela de transcricao.
       </p>

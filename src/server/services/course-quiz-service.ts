@@ -73,11 +73,12 @@ export async function getCourseQuizSummary(courseId: string) {
   return (await listQuizCourses()).find((course) => course.courseId === courseId) ?? null;
 }
 
-export type StartCourseQuizResult = { ok: true; quiz: Quiz; refs: QuizRef[] } | { ok: false; error: "forbidden" | "no_quiz" };
-export type StartCourseDeckResult = { ok: true; cards: ReviewCard[] } | { ok: false; error: "forbidden" | "no_quiz" };
+export type StartCourseQuizResult = { ok: true; quiz: Quiz; refs: QuizRef[] } | { ok: false; error: "forbidden" | "no_quiz" | "none_pending" };
+export type StartCourseDeckResult = { ok: true; cards: ReviewCard[] } | { ok: false; error: "forbidden" | "no_quiz" | "none_pending" };
+export type DrawOptions = { onlyDue?: boolean };
 
 // courseId null = todos os cursos liberados ao aluno, misturados.
-async function drawQuestions(courseId: string | null, count: number) {
+async function drawQuestions(courseId: string | null, count: number, options: DrawOptions = {}) {
   const studentId = await requireStudentProfileId();
   const courses = await listAvailableCourses(studentId);
 
@@ -96,14 +97,19 @@ async function drawQuestions(courseId: string | null, count: number) {
   });
   const idOf = (item: BankItem) => `${item.lessonId}:${QUIZ_CARD_PREFIX}${item.key}`;
   const reviewed = new Map(rows.map((row) => [`${row.lessonId}:${row.cardKey}`, row.dueAt]));
-  const picked = pickDueFirst(items, (item) => (reviewed.get(idOf(item))?.getTime() ?? 0) <= now.getTime(), count);
+  const isDue = (item: BankItem) => (reviewed.get(idOf(item))?.getTime() ?? 0) <= now.getTime();
+  const pool = options.onlyDue ? items.filter(isDue) : items;
+
+  if (pool.length === 0) return { ok: false as const, error: "none_pending" as const };
+
+  const picked = pickDueFirst(pool, isDue, count);
 
   return { ok: true as const, picked, courses, isNew: (item: BankItem) => !reviewed.has(idOf(item)) };
 }
 
 // Sorteia as perguntas do banco (de um curso ou de todos). As referencias voltam na correcao.
-export async function startCourseQuiz(courseId: string | null, count: number): Promise<StartCourseQuizResult> {
-  const drawn = await drawQuestions(courseId, count);
+export async function startCourseQuiz(courseId: string | null, count: number, options?: DrawOptions): Promise<StartCourseQuizResult> {
+  const drawn = await drawQuestions(courseId, count, options);
 
   if (!drawn.ok) return drawn;
 
@@ -111,8 +117,8 @@ export async function startCourseQuiz(courseId: string | null, count: number): P
 }
 
 // Mesmas perguntas em formato de baralho (frente = pergunta, verso = resposta); a nota de cada cartao agenda a revisao.
-export async function startCourseDeck(courseId: string | null, count: number): Promise<StartCourseDeckResult> {
-  const drawn = await drawQuestions(courseId, count);
+export async function startCourseDeck(courseId: string | null, count: number, options?: DrawOptions): Promise<StartCourseDeckResult> {
+  const drawn = await drawQuestions(courseId, count, options);
 
   if (!drawn.ok) return drawn;
 
