@@ -4,8 +4,8 @@ import { matchAnswer, suggestGrade } from "@/lib/study/answer-match";
 import { DEFAULT_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
 import { generateAiContent, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { askLessonChat } from "@/server/services/ai/chat-service";
-import { startCourseDeck, startCourseQuiz, submitCourseQuiz } from "@/server/services/course-quiz-service";
-import { countPendingMaterials, generatePendingMaterials } from "@/server/services/material-queue-service";
+import { countPendingQuizByCourse, startCourseDeck, startCourseQuiz, submitCourseQuiz } from "@/server/services/course-quiz-service";
+import { countPendingMaterials, countPendingGenerationByCourse, generatePendingMaterials } from "@/server/services/material-queue-service";
 import { isFeatureEnabled } from "@/server/services/feature-service";
 import { findReviewCard, getReviewQueue, reviewCard, type ReviewCard } from "@/server/services/review-service";
 import { getStudentCourse, getStudentDashboard } from "@/server/services/student-service";
@@ -28,7 +28,7 @@ const LETTERS = ["A", "B", "C", "D"];
 // Cartão para o agente: só a frente. O verso fica no servidor (answer_card) para o agente não vazar a resposta antes de o aluno responder.
 const frontOf = (card: ReviewCard) => ({ courseId: card.courseId, courseTitle: card.courseTitle, lessonId: card.lessonId, lessonTitle: card.lessonTitle, cardKey: card.cardKey, q: card.q, isNew: card.isNew });
 
-const listCourses = z.object({ includeFinished: z.boolean().optional() });
+const listCourses = z.object({ includeFinished: z.boolean().optional(), scope: z.enum(["pending", "all"]).optional(), kind: z.enum(["quiz", "review", "material", "generate"]).optional() });
 const startSession = z.object({
   kind: z.enum(["quiz", "review"]),
   format: z.enum(["choice", "deck"]),
@@ -45,6 +45,20 @@ const material = lessonRef.extend({ kind: z.enum(["summary", "mindmap", "flashca
 const generate = lessonRef.extend({ kind: z.enum(["summary", "mindmap", "flashcards", "quiz"]), technique: z.string().max(32).optional() });
 const pendingArgs = z.object({ courseId: id, kind: z.enum(["quiz", "summary", "mindmap", "flashcards"]), technique: z.string().max(32).optional() });
 const ask = lessonRef.extend({ question: z.string().min(3).max(2000) });
+
+// Quantidade pendente por curso para o menu de cursos do agente (so aulas concluidas entram).
+async function pendingCounts(kind: "quiz" | "review" | "material" | "generate", courses: Array<{ id: string; progress: { completedLessons: number } }>) {
+  if (kind === "quiz") return countPendingQuizByCourse();
+  if (kind === "generate") return countPendingGenerationByCourse();
+  if (kind === "material") return new Map(courses.map((course) => [course.id, course.progress.completedLessons]));
+
+  const queue = await getReviewQueue();
+  const counts = new Map<string, number>();
+
+  for (const card of [...queue.due, ...queue.fresh]) counts.set(card.courseId, (counts.get(card.courseId) ?? 0) + 1);
+
+  return counts;
+}
 
 async function runStartSession(args: z.infer<typeof startSession>): Promise<AgentToolResult> {
   const courseId = args.courseId ?? null;
@@ -77,14 +91,28 @@ const KIND = { summary: "SUMMARY", mindmap: "MINDMAP", flashcards: "FLASHCARDS",
 export const AGENT_TOOLS: AgentTool[] = [
   {
     name: "list_courses",
-    description: "Lista os cursos do aluno em andamento (matrícula ativa e menos de 100% concluídos) com a porcentagem de conclusão. Use no início para mostrar o menu de cursos.",
-    inputSchema: { type: "object", properties: { includeFinished: { type: "boolean", description: "Inclui cursos já 100% concluídos." } } },
+    description:
+      "Lista os cursos do aluno com a porcentagem de conclusão. Sem scope: só cursos em andamento (menos de 100%). Com scope + kind (use depois de perguntar ao aluno o escopo, ANTES de escolher curso): scope pending = só cursos que têm algo pendente para aquele kind (campo pending = quantidade); scope all = TODOS os cursos, inclusive concluídos. kind: quiz (perguntas novas ou vencidas), review (cartões vencidos/novos), generate (aulas concluídas sem material), material (cursos com aulas concluídas).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        includeFinished: { type: "boolean", description: "Inclui cursos já 100% concluídos." },
+        scope: { type: "string", enum: ["pending", "all"] },
+        kind: { type: "string", enum: ["quiz", "review", "material", "generate"] },
+      },
+    },
     schema: listCourses,
     run: async (args: z.infer<typeof listCourses>) => {
       const { courses } = await getStudentDashboard();
-      const list = courses.filter((course) => course.enrollmentStatus === "AVAILABLE" && (args.includeFinished || course.progress.percentage < 100));
+      const available = courses.filter((course) => course.enrollmentStatus === "AVAILABLE");
+      const shape = (course: (typeof available)[number], pending?: number) => ({ courseId: course.id, title: course.title, percent: course.progress.percentage, completedLessons: course.progress.completedLessons, totalLessons: course.progress.totalLessons, ...(pending === undefined ? {} : { pending }) });
 
-      return ok({ courses: list.map((course) => ({ courseId: course.id, title: course.title, percent: course.progress.percentage, completedLessons: course.progress.completedLessons, totalLessons: course.progress.totalLessons })) });
+      if (!args.scope || !args.kind) return ok({ courses: available.filter((course) => args.includeFinished || course.progress.percentage < 100).map((course) => shape(course)) });
+
+      const counts = await pendingCounts(args.kind, available);
+      const list = available.map((course) => shape(course, counts.get(course.id) ?? 0));
+
+      return ok({ scope: args.scope, courses: args.scope === "all" ? list : list.filter((course) => (course.pending ?? 0) > 0) });
     },
   },
   {

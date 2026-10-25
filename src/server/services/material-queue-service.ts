@@ -72,3 +72,20 @@ export async function generatePendingMaterials(courseId: string, kind: MaterialK
 
   return { generated, failed, remaining: Math.max(0, found.ready.length - generated.length - failed.length) };
 }
+
+// Aulas concluidas, com transcricao, que ainda nao tem quiz, resumo ou flashcards, por curso (so cursos com pendencia).
+export async function countPendingGenerationByCourse(): Promise<Map<string, number>> {
+  const studentId = await requireStudentProfileId();
+  const courseIds = (await listAvailableCourses(studentId)).map((course) => course.id);
+  const lessons = await prisma.lesson.findMany({
+    where: { status: "ACTIVE", transcript: { not: null }, module: { courseId: { in: courseIds }, status: "ACTIVE" }, progress: { some: { studentId, status: "COMPLETED" } } },
+    select: { module: { select: { courseId: true } }, aiContents: { where: { kind: { in: ["QUIZ", "SUMMARY", "FLASHCARDS"] } }, select: { kind: true } } },
+  });
+  const counts = new Map<string, number>();
+
+  for (const lesson of lessons) {
+    if (new Set(lesson.aiContents.map((row) => row.kind)).size < 3) counts.set(lesson.module.courseId, (counts.get(lesson.module.courseId) ?? 0) + 1);
+  }
+
+  return counts;
+}

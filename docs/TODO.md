@@ -951,3 +951,5 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Agente: tools `pending_materials` e `generate_pending` (um curso por vez, so aulas concluidas, 3 aulas por chamada).
 - [x] Lembretes: pagina `/app/reminders` (ate 3 por dia, horarios ou intervalo, horario de Brasilia), colunas `reminder_*` em `student_profiles` (migration `20261025120000_study_reminders`, aplicada), tool `due_reminders` para o agendamento do OpenClaw.
 - [ ] Criar no OpenClaw o agendamento a cada 5 min que chama `due_reminders` (secao 9 do prompt); nao verificado que o OpenClaw tem agendador.
+
+- [x] Agente: escopo (pendente x tudo de novo) e a primeira pergunta; `list_courses` aceita `scope` + `kind` e, em pending, so lista cursos com pendencia (quiz, revisao, gerar, material). Nao verificado com o OpenClaw real.

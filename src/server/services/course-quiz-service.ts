@@ -78,6 +78,31 @@ export type StartCourseQuizResult = { ok: true; quiz: Quiz; refs: QuizRef[] } | 
 export type StartCourseDeckResult = { ok: true; cards: ReviewCard[] } | { ok: false; error: "forbidden" | "no_quiz" | "none_pending" };
 export type DrawOptions = { onlyDue?: boolean };
 
+async function reviewedQuizCards(studentId: string, items: BankItem[]) {
+  const rows = await prisma.flashcardReview.findMany({
+    where: { studentId, lessonId: { in: Array.from(new Set(items.map((item) => item.lessonId))) }, cardKey: { startsWith: QUIZ_CARD_PREFIX } },
+    select: { lessonId: true, cardKey: true, dueAt: true },
+  });
+
+  return { reviewed: new Map(rows.map((row) => [`${row.lessonId}:${row.cardKey}`, row.dueAt])), idOf: (item: BankItem) => `${item.lessonId}:${QUIZ_CARD_PREFIX}${item.key}` };
+}
+
+// Perguntas pendentes (novas ou vencidas, de aulas concluidas) por curso. Cursos sem pendencia nao aparecem.
+export async function countPendingQuizByCourse(): Promise<Map<string, number>> {
+  const studentId = await requireStudentProfileId();
+  const courses = await listAvailableCourses(studentId);
+  const items = Array.from((await loadBank(studentId, courses.map((course) => course.id))).values()).flatMap((entry) => entry.items);
+  const { reviewed, idOf } = await reviewedQuizCards(studentId, items);
+  const now = Date.now();
+  const counts = new Map<string, number>();
+
+  for (const item of items) {
+    if ((reviewed.get(idOf(item))?.getTime() ?? 0) <= now) counts.set(item.courseId, (counts.get(item.courseId) ?? 0) + 1);
+  }
+
+  return counts;
+}
+
 // courseId null = todos os cursos liberados ao aluno, misturados.
 async function drawQuestions(courseId: string | null, count: number, options: DrawOptions = {}) {
   const studentId = await requireStudentProfileId();
@@ -92,12 +117,7 @@ async function drawQuestions(courseId: string | null, count: number, options: Dr
 
   // Repeticao espacada: o que e novo ou ja venceu entra antes do que ainda esta dentro do intervalo.
   const now = new Date();
-  const rows = await prisma.flashcardReview.findMany({
-    where: { studentId, lessonId: { in: Array.from(new Set(items.map((item) => item.lessonId))) }, cardKey: { startsWith: QUIZ_CARD_PREFIX } },
-    select: { lessonId: true, cardKey: true, dueAt: true },
-  });
-  const idOf = (item: BankItem) => `${item.lessonId}:${QUIZ_CARD_PREFIX}${item.key}`;
-  const reviewed = new Map(rows.map((row) => [`${row.lessonId}:${row.cardKey}`, row.dueAt]));
+  const { reviewed, idOf } = await reviewedQuizCards(studentId, items);
   const isDue = (item: BankItem) => (reviewed.get(idOf(item))?.getTime() ?? 0) <= now.getTime();
   const pool = options.onlyDue ? items.filter(isDue) : items;
 

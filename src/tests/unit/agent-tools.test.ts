@@ -43,6 +43,16 @@ describe("agent tools", () => {
     expect(await callAgentTool("list_courses", { includeFinished: true })).toMatchObject({ data: { courses: [{ courseId: "a" }, { courseId: "b" }, { courseId: "d" }] } });
   });
 
+  it("list_courses com scope pending mostra só cursos com pendência; all mostra todos, inclusive concluídos", async () => {
+    const card = (id: string, percentage: number) => ({ id, title: `Curso ${id}`, enrollmentStatus: "AVAILABLE", progress: { completedLessons: percentage, totalLessons: 100, percentage } });
+
+    svc.dashboard.mockResolvedValue({ courses: [card("a", 40), card("b", 100), card("d", 0)] });
+    svc.queue.mockResolvedValue({ due: [{ courseId: "b" }, { courseId: "b" }], fresh: [{ courseId: "d" }], dueTotal: 2 });
+
+    expect(await callAgentTool("list_courses", { scope: "pending", kind: "review" })).toMatchObject({ data: { courses: [{ courseId: "b", pending: 2 }, { courseId: "d", pending: 1 }] } });
+    expect(await callAgentTool("list_courses", { scope: "all", kind: "review" })).toMatchObject({ data: { courses: [{ courseId: "a", pending: 0 }, { courseId: "b" }, { courseId: "d" }] } });
+  });
+
   it("start_session quiz de múltipla escolha esconde o gabarito e usa só pendentes", async () => {
     svc.startQuiz.mockResolvedValue({
       ok: true,
