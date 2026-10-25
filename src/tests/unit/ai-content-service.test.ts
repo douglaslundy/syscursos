@@ -30,7 +30,7 @@ const row = (content: string, kind = "SUMMARY", technique = "pareto") => ({
 beforeEach(() => {
   vi.clearAllMocks();
   resetAiRateLimit();
-  findLesson.mockResolvedValue({ studentId: "s1", lesson: { title: "Aula", transcript: "texto da aula" } });
+  findLesson.mockResolvedValue({ studentId: "s1", completed: true, lesson: { title: "Aula", transcript: "texto da aula" } });
   db.lessonAiContent.findUnique.mockResolvedValue(null);
   db.lessonAiContent.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ ...row(String(data.content), String(data.kind), String(data.technique)) }));
 });
@@ -85,7 +85,7 @@ describe("generateAiContent", () => {
     expect(db.aiUsage.create).toHaveBeenCalledWith({ data: expect.objectContaining({ kind: "QUIZ" }) });
 
     // Outro aluno, depois: a linha salva no banco e devolvida e a IA nao e chamada de novo.
-    findLesson.mockResolvedValue({ studentId: "s2", lesson: { title: "Aula", transcript: "texto da aula" } });
+    findLesson.mockResolvedValue({ studentId: "s2", completed: true, lesson: { title: "Aula", transcript: "texto da aula" } });
     db.lessonAiContent.findUnique.mockResolvedValueOnce(row(quizJson, "QUIZ", ""));
     callProvider.mockClear();
     db.aiUsage.create.mockClear();
@@ -106,7 +106,7 @@ describe("generateAiContent", () => {
 
   it("limits how many generations one student can trigger per minute", async () => {
     callProvider.mockResolvedValue({ ok: true, text: "## Resumo", inputTokens: 1, outputTokens: 1, model: "m" });
-    findLesson.mockResolvedValue({ studentId: "spammer", lesson: { title: "Aula", transcript: "texto" } });
+    findLesson.mockResolvedValue({ studentId: "spammer", completed: true, lesson: { title: "Aula", transcript: "texto" } });
 
     const results = [];
     for (let index = 0; index < 6; index += 1) {
@@ -130,7 +130,10 @@ describe("generateAiContent", () => {
     findLesson.mockResolvedValueOnce(null);
     expect(await generateAiContent({ ...ids, kind: "FLASHCARDS" })).toEqual({ ok: false, error: "forbidden" });
 
-    findLesson.mockResolvedValueOnce({ studentId: "s1", lesson: { title: "Aula", transcript: null } });
+    findLesson.mockResolvedValueOnce({ studentId: "s1", completed: false, lesson: { title: "Aula", transcript: "texto" } });
+    expect(await generateAiContent({ ...ids, kind: "FLASHCARDS" })).toEqual({ ok: false, error: "not_completed" });
+
+    findLesson.mockResolvedValueOnce({ studentId: "s1", completed: true, lesson: { title: "Aula", transcript: null } });
     expect(await generateAiContent({ ...ids, kind: "FLASHCARDS" })).toEqual({ ok: false, error: "no_transcript" });
   });
 

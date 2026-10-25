@@ -5,6 +5,7 @@ import { DEFAULT_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
 import { generateAiContent, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { askLessonChat } from "@/server/services/ai/chat-service";
 import { startCourseDeck, startCourseQuiz, submitCourseQuiz } from "@/server/services/course-quiz-service";
+import { countPendingMaterials, generatePendingMaterials } from "@/server/services/material-queue-service";
 import { isFeatureEnabled } from "@/server/services/feature-service";
 import { findReviewCard, getReviewQueue, reviewCard, type ReviewCard } from "@/server/services/review-service";
 import { getStudentCourse, getStudentDashboard } from "@/server/services/student-service";
@@ -42,6 +43,7 @@ const courseOnly = z.object({ courseId: id });
 const lessonRef = z.object({ courseId: id, lessonId: id });
 const material = lessonRef.extend({ kind: z.enum(["summary", "mindmap", "flashcards", "quiz", "transcript"]), technique: z.string().max(32).optional() });
 const generate = lessonRef.extend({ kind: z.enum(["summary", "mindmap", "flashcards", "quiz"]), technique: z.string().max(32).optional() });
+const pendingArgs = z.object({ courseId: id, kind: z.enum(["quiz", "summary", "mindmap", "flashcards"]), technique: z.string().max(32).optional() });
 const ask = lessonRef.extend({ question: z.string().min(3).max(2000) });
 
 async function runStartSession(args: z.infer<typeof startSession>): Promise<AgentToolResult> {
@@ -177,6 +179,8 @@ export const AGENT_TOOLS: AgentTool[] = [
 
       if (!found) return fail("forbidden");
 
+      if (args.kind !== "transcript" && !found.completed) return fail("not_completed");
+
       if (args.kind === "transcript") {
         const text = found.lesson.transcript ?? "";
 
@@ -189,8 +193,30 @@ export const AGENT_TOOLS: AgentTool[] = [
     },
   },
   {
+    name: "pending_materials",
+    description: "Conta o que falta gerar em UM curso: aulas que o aluno já CONCLUIU e ainda não têm o material do tipo pedido (quiz também serve para o baralho; flashcards alimentam a revisão). Não gasta IA. Use antes de generate_pending para mostrar quantas aulas serão geradas.",
+    inputSchema: { type: "object", properties: { courseId: uuid, kind: { type: "string", enum: ["quiz", "summary", "mindmap", "flashcards"] }, technique: { type: "string", description: "Só summary e mindmap; omitido usa a primeira técnica ativa." } }, required: ["courseId", "kind"] },
+    schema: pendingArgs,
+    run: async (args: z.infer<typeof pendingArgs>) => {
+      const found = await countPendingMaterials(args.courseId, args.kind, args.technique);
+
+      return found ? ok(found) : fail("forbidden");
+    },
+  },
+  {
+    name: "generate_pending",
+    description: "Gera o material pendente de UM curso, só de aulas concluídas, até 3 aulas por chamada (gasta IA). Devolve generated, failed e remaining; repita enquanto remaining > 0 e o aluno quiser. Antes, confirme o gasto de IA com o aluno.",
+    inputSchema: { type: "object", properties: { courseId: uuid, kind: { type: "string", enum: ["quiz", "summary", "mindmap", "flashcards"] }, technique: { type: "string" } }, required: ["courseId", "kind"] },
+    schema: pendingArgs,
+    run: async (args: z.infer<typeof pendingArgs>) => {
+      const result = await generatePendingMaterials(args.courseId, args.kind, args.technique);
+
+      return result ? ok(result) : fail("forbidden");
+    },
+  },
+  {
     name: "generate_material",
-    description: "Gera (ou devolve o já salvo) resumo, mapa mental, flashcards ou quiz de uma aula com a IA configurada na plataforma. Gasta tokens; exige transcrição. Mapa mental exige um resumo da mesma technique.",
+    description: "Gera (ou devolve o já salvo) resumo, mapa mental, flashcards ou quiz de UMA aula com a IA configurada na plataforma. Só aulas que o aluno já concluiu (senão not_completed). Gasta tokens; exige transcrição. Mapa mental exige um resumo da mesma technique.",
     inputSchema: { type: "object", properties: { courseId: uuid, lessonId: uuid, kind: { type: "string", enum: ["summary", "mindmap", "flashcards", "quiz"] }, technique: { type: "string", description: "Técnica de resumo (ex.: pareto). Só para summary e mindmap." } }, required: ["courseId", "lessonId", "kind"] },
     schema: generate,
     run: async (args: z.infer<typeof generate>) => {

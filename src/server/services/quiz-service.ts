@@ -28,7 +28,7 @@ export async function getLessonQuiz(lessonId: string): Promise<Quiz | null> {
 export async function submitQuiz(input: { courseId: string; lessonId: string; answers: Array<number | null> }): Promise<QuizSubmitResult> {
   const found = await findTranscribableLesson(input.courseId, input.lessonId);
 
-  if (!found) return { ok: false, error: "forbidden" };
+  if (!found || !found.completed) return { ok: false, error: "forbidden" };
 
   const quiz = await getLessonQuiz(input.lessonId);
 

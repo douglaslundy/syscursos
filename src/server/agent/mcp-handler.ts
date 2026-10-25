@@ -3,7 +3,8 @@ import { z } from "zod";
 import { authenticateGateway } from "@/server/agent/agent-auth";
 import { AGENT_TOOLS, callAgentTool } from "@/server/agent/agent-tools";
 import { runAsAgentStudent } from "@/server/auth/agent-context";
-import { getDisabledFeatures } from "@/server/services/feature-service";
+import { getDisabledFeatures, isFeatureEnabled } from "@/server/services/feature-service";
+import { collectDueAgentReminders } from "@/server/services/reminder-config-service";
 import { hitGlobal } from "@/server/security/rate-limit";
 import { findStudentByPhone, linkWhatsappByCode } from "@/server/services/whatsapp-link-service";
 
@@ -22,6 +23,12 @@ const LINK_TOOL = {
   inputSchema: { type: "object", properties: { phone: phoneProperty, code: { type: "string", description: "Código de 8 caracteres gerado no site." } }, required: ["phone", "code"] },
 };
 
+const REMINDERS_TOOL = {
+  name: "due_reminders",
+  description: "Para o agendamento do gateway (NÃO é para o aluno): devolve os lembretes de estudo que vencem agora como lista de { phone, text }. Cada item já sai marcado como enviado: envie cada text ao WhatsApp do phone indicado. Não precisa de phone na chamada.",
+  inputSchema: { type: "object", properties: {} },
+};
+
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 const rpcError = (id: string | number | null, code: number, text: string, status = 200) => json({ jsonrpc: "2.0", id, error: { code, message: text } }, status);
 const toolResult = (id: string | number, payload: unknown, isError: boolean) => json({ jsonrpc: "2.0", id, result: { isError, content: [{ type: "text", text: JSON.stringify(payload) }] } });
@@ -37,6 +44,12 @@ async function callTool(id: string | number, name: string, rawArgs: unknown) {
   const args = rawArgs && typeof rawArgs === "object" ? (rawArgs as Record<string, unknown>) : {};
   const { phone, ...rest } = args;
   const phoneText = typeof phone === "string" ? phone : "";
+
+  if (name === "due_reminders") {
+    if (!(await isFeatureEnabled("agent:due_reminders"))) return toolResult(id, { error: "disabled" }, true);
+
+    return toolResult(id, { reminders: await collectDueAgentReminders() }, false);
+  }
 
   if (name === "link_whatsapp") {
     const parsed = linkArgs.safeParse(args);
@@ -95,7 +108,7 @@ export async function handleMcpPost(request: Request): Promise<Response> {
     case "tools/list": {
       const disabled = await getDisabledFeatures();
 
-      return json({ jsonrpc: "2.0", id, result: { tools: [LINK_TOOL, ...AGENT_TOOLS.filter((tool) => !disabled.has(`agent:${tool.name}`)).map(withPhone)] } });
+      return json({ jsonrpc: "2.0", id, result: { tools: [LINK_TOOL, ...(disabled.has("agent:due_reminders") ? [] : [REMINDERS_TOOL]), ...AGENT_TOOLS.filter((tool) => !disabled.has(`agent:${tool.name}`)).map(withPhone)] } });
     }
     case "tools/call": {
       const call = callParams.safeParse(params);

@@ -21,6 +21,7 @@ const isLessonKind = (kind: AiContentKind): kind is LessonAiKind => (LESSON_KIND
 export type AiItem = { kind: LessonAiKind; technique: string; content: string; provider: string; createdAt: string };
 export type AiGenerateError =
   | "forbidden"
+  | "not_completed"
   | "no_transcript"
   | "invalid_technique"
   | "no_summary"
@@ -97,6 +98,7 @@ async function runGenerate(input: {
   const found = await findTranscribableLesson(input.courseId, input.lessonId);
 
   if (!found) return { ok: false, error: "forbidden" };
+  if (!found.completed) return { ok: false, error: "not_completed" };
   if (!found.lesson.transcript) return { ok: false, error: "no_transcript" };
 
   const technique = TECHNIQUELESS.has(input.kind) ? "" : (input.technique ?? "");

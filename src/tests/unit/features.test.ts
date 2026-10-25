@@ -13,7 +13,7 @@ describe("parseDisabled", () => {
     expect(parseDisabled('{"a":1}')).toEqual([]);
   });
 
-  it("cobre as 10 tools do agente (link_whatsapp fica sempre ligado)", () => {
-    expect(AGENT_FEATURES).toHaveLength(10);
+  it("cobre as 13 tools do agente (link_whatsapp fica sempre ligado)", () => {
+    expect(AGENT_FEATURES).toHaveLength(13);
   });
 });

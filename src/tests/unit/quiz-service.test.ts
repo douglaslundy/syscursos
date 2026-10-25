@@ -24,7 +24,7 @@ const input = { courseId: "c1", lessonId: "l1" };
 
 beforeEach(() => {
   vi.clearAllMocks();
-  findLesson.mockResolvedValue({ studentId: "s1", lesson: {} });
+  findLesson.mockResolvedValue({ studentId: "s1", completed: true, lesson: {} });
   db.lessonAiContent.findUnique.mockResolvedValue({ content: JSON.stringify(quiz) });
   db.flashcardReview.findMany.mockResolvedValue([]);
 });
@@ -63,6 +63,9 @@ describe("submitQuiz", () => {
     expect(await submitQuiz({ ...input, answers: [0, 0] })).toEqual({ ok: false, error: "no_quiz" });
 
     findLesson.mockResolvedValueOnce(null);
+    expect(await submitQuiz({ ...input, answers: [0, 0] })).toEqual({ ok: false, error: "forbidden" });
+
+    findLesson.mockResolvedValueOnce({ studentId: "s1", completed: false, lesson: {} });
     expect(await submitQuiz({ ...input, answers: [0, 0] })).toEqual({ ok: false, error: "forbidden" });
     expect(db.quizAttempt.create).not.toHaveBeenCalled();
   });

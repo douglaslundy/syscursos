@@ -31,11 +31,11 @@ function cardsOf(rows: Array<{ kind: string; content: string }>) {
   return cards;
 }
 
-async function lessonsCards(lessonIds: string[], courseIds: string[]): Promise<Map<string, LessonCards>> {
+async function lessonsCards(studentId: string, lessonIds: string[], courseIds: string[]): Promise<Map<string, LessonCards>> {
   if (lessonIds.length === 0 || courseIds.length === 0) return new Map();
 
   const lessons = await prisma.lesson.findMany({
-    where: { id: { in: lessonIds }, status: "ACTIVE", module: { courseId: { in: courseIds } } },
+    where: { id: { in: lessonIds }, status: "ACTIVE", module: { courseId: { in: courseIds } }, progress: { some: { studentId, status: "COMPLETED" } } },
     select: { id: true, title: true, module: { select: { title: true, courseId: true, course: { select: { title: true } } } }, aiContents: { where: { kind: { in: ["FLASHCARDS", "QUIZ"] } }, select: { kind: true, content: true } } },
   });
 
@@ -64,7 +64,7 @@ export async function getReviewQueue(now = new Date()): Promise<{ due: ReviewCar
     select: { lessonId: true, cardKey: true },
   });
   const seen = new Set(reviewed.map((row) => `${row.lessonId}:${row.cardKey}`));
-  const byLesson = await lessonsCards(Array.from(new Set([...dueRows.map((row) => row.lessonId), ...completed.map((row) => row.lessonId)])), courseIds);
+  const byLesson = await lessonsCards(studentId, Array.from(new Set([...dueRows.map((row) => row.lessonId), ...completed.map((row) => row.lessonId)])), courseIds);
   const toCard = (lessonId: string, key: string, isNew: boolean): ReviewCard[] => {
     const lesson = byLesson.get(lessonId);
     const card = lesson?.cards.get(key);
@@ -89,7 +89,7 @@ export async function findReviewCard(courseId: string, lessonId: string, key: st
 
   if (!found) return null;
 
-  const lesson = (await lessonsCards([lessonId], [courseId])).get(lessonId);
+  const lesson = (await lessonsCards(found.studentId, [lessonId], [courseId])).get(lessonId);
   const card = lesson?.cards.get(key);
 
   return lesson && card ? { courseId, courseTitle: lesson.courseTitle, moduleTitle: lesson.moduleTitle, lessonId, lessonTitle: lesson.lessonTitle, cardKey: key, q: card.q, a: card.a, isNew: false } : null;

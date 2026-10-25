@@ -14,9 +14,10 @@ export type QuizRef = { courseId: string; lessonId: string; key: string };
 export type CourseQuizSummary = { courseId: string; title: string; questions: number; lessons: number; attempts: number; bestPercent: number | null };
 
 // Quizzes gerados por IA sao da aula (o que um aluno gerou serve para todos); aqui so se le o que ja existe.
-async function loadBank(courseIds: string[]) {
+// So entram aulas que o aluno ja concluiu.
+async function loadBank(studentId: string, courseIds: string[]) {
   const lessons = await prisma.lesson.findMany({
-    where: { status: "ACTIVE", module: { courseId: { in: courseIds }, status: "ACTIVE" }, aiContents: { some: { kind: "QUIZ" } } },
+    where: { status: "ACTIVE", module: { courseId: { in: courseIds }, status: "ACTIVE" }, progress: { some: { studentId, status: "COMPLETED" } }, aiContents: { some: { kind: "QUIZ" } } },
     orderBy: [{ module: { position: "asc" } }, { position: "asc" }],
     select: { id: true, title: true, module: { select: { courseId: true, title: true } }, aiContents: { where: { kind: "QUIZ" }, select: { content: true } } },
   });
@@ -47,7 +48,7 @@ export async function listQuizCourses(): Promise<CourseQuizSummary[]> {
   if (ids.length === 0) return [];
 
   const [bank, attempts] = await Promise.all([
-    loadBank(ids),
+    loadBank(studentId, ids),
     prisma.quizAttempt.findMany({ where: { studentId, courseId: { in: ids } }, select: { courseId: true, score: true, total: true } }),
   ]);
 
@@ -85,7 +86,7 @@ async function drawQuestions(courseId: string | null, count: number, options: Dr
   if (courseId && !courses.some((course) => course.id === courseId)) return { ok: false as const, error: "forbidden" as const };
 
   const scope = courseId ? [courseId] : courses.map((course) => course.id);
-  const items = Array.from((await loadBank(scope)).values()).flatMap((entry) => entry.items);
+  const items = Array.from((await loadBank(studentId, scope)).values()).flatMap((entry) => entry.items);
 
   if (items.length === 0) return { ok: false as const, error: "no_quiz" as const };
 
@@ -151,7 +152,7 @@ export async function submitCourseQuiz(input: { refs: QuizRef[]; answers: Array<
 
   if (courseIds.some((id) => !allowed.has(id))) return { ok: false, error: "forbidden" };
 
-  const bank = await loadBank(courseIds);
+  const bank = await loadBank(studentId, courseIds);
   const byRef = new Map(Array.from(bank.values()).flatMap((entry) => entry.items).map((item) => [`${item.courseId}:${item.lessonId}:${item.key}`, item.question]));
   const questions: QuizQuestion[] = [];
 

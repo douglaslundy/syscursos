@@ -31,6 +31,12 @@ describe("course quiz", () => {
     expect(await listQuizCourses()).toEqual([{ courseId: "c1", title: "Curso", questions: 3, lessons: 2, attempts: 1, bestPercent: 50 }]);
   });
 
+  it("only reads quizzes of lessons the student already completed", async () => {
+    await startCourseQuiz("c1", 2);
+
+    expect(db.lesson.findMany.mock.calls.at(-1)?.[0].where.progress).toEqual({ some: { studentId: expect.any(String), status: "COMPLETED" } });
+  });
+
   it("draws the requested number of questions from the whole course", async () => {
     const result = await startCourseQuiz("c1", 2);
 

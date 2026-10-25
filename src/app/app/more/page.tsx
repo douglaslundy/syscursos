@@ -9,6 +9,7 @@ const links = [
   { href: "/app/notebooks", label: "Cadernos", hint: "Suas anotacoes por curso e aula" },
   { href: "/app/favorites/courses", label: "Favoritos", hint: "Cursos e aulas marcados" },
   { href: "/app/playlists", label: "Playlists", hint: "Trilhas de aulas montadas por voce" },
+  { href: "/app/reminders", label: "Lembretes", hint: "Quando o agente do WhatsApp avisa para estudar" },
   { href: "/app/schedule", label: "Cronograma", hint: "Plano de estudo por dia" },
 ];
 

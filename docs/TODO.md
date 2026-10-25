@@ -946,3 +946,8 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [ ] Colar o prompt de `docs/OPENCLAW-AGENT-PROMPT.md` no OpenClaw e testar o vinculo + fluxo no WhatsApp (nao verificado com o OpenClaw real).
 
 - [x] Painel `/admin/settings/features`: liga/desliga secoes do menu do aluno (404 quando desligado) e as 10 tools do agente (chave `features_disabled` em `app_settings`; tudo ligado por padrao). Nao verificado no navegador logado.
+
+- [x] Regra: quiz, baralho, revisao, resumo, mapa mental e flashcards so de aulas CONCLUIDAS pelo aluno (servicos + pagina da aula + agente). Geracao de IA tambem exige aula concluida (`not_completed`).
+- [x] Agente: tools `pending_materials` e `generate_pending` (um curso por vez, so aulas concluidas, 3 aulas por chamada).
+- [x] Lembretes: pagina `/app/reminders` (ate 3 por dia, horarios ou intervalo, horario de Brasilia), colunas `reminder_*` em `student_profiles` (migration `20261025120000_study_reminders`, aplicada), tool `due_reminders` para o agendamento do OpenClaw.
+- [ ] Criar no OpenClaw o agendamento a cada 5 min que chama `due_reminders` (secao 9 do prompt); nao verificado que o OpenClaw tem agendador.

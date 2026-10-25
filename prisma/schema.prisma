@@ -95,39 +95,46 @@ model Organization {
 }
 
 model StudentProfile {
-  id                 String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId             String              @unique @map("user_id") @db.Uuid
-  document           String?             @unique @db.VarChar(32)
-  phone              String?             @db.VarChar(32)
-  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollments        Enrollment[]
-  notes              LessonNote[]
-  progress           LessonProgress[]
-  enrollmentRequests EnrollmentRequest[]
-  favoriteCourses    FavoriteCourse[]
-  favoriteLessons    FavoriteLesson[]
-  studyPlans         StudyPlan[]
-  studySchedule      StudySchedule?
-  aiUsages           AiUsage[]
-  quizAttempts       QuizAttempt[]
-  flashcardReviews   FlashcardReview[]
-  bookmarks          LessonBookmark[]
-  studyDays          StudyDay[]
-  certificates       Certificate[]
-  questions          LessonQuestion[]
-  playlists          Playlist[]
-  weeklyGoalMinutes  Int                 @default(0) @map("weekly_goal_minutes")
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String              @unique @map("user_id") @db.Uuid
+  document              String?             @unique @db.VarChar(32)
+  phone                 String?             @db.VarChar(32)
+  createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments           Enrollment[]
+  notes                 LessonNote[]
+  progress              LessonProgress[]
+  enrollmentRequests    EnrollmentRequest[]
+  favoriteCourses       FavoriteCourse[]
+  favoriteLessons       FavoriteLesson[]
+  studyPlans            StudyPlan[]
+  studySchedule         StudySchedule?
+  aiUsages              AiUsage[]
+  quizAttempts          QuizAttempt[]
+  flashcardReviews      FlashcardReview[]
+  bookmarks             LessonBookmark[]
+  studyDays             StudyDay[]
+  certificates          Certificate[]
+  questions             LessonQuestion[]
+  playlists             Playlist[]
+  weeklyGoalMinutes     Int                 @default(0) @map("weekly_goal_minutes")
   // WhatsApp vinculado ao agente (OpenClaw). O codigo de vinculo e guardado so como hash e vale por poucos minutos.
-  whatsappPhone         String?   @unique @map("whatsapp_phone") @db.VarChar(20)
-  whatsappCodeHash      String?   @unique @map("whatsapp_code_hash") @db.VarChar(64)
-  whatsappCodeExpiresAt DateTime? @map("whatsapp_code_expires_at") @db.Timestamptz(6)
-  playbackRate       Float               @default(1) @map("playback_rate")
-  studyWeekdays      Int[]               @default([1, 2, 3, 4, 5]) @map("study_weekdays")
-  studyStartMinute   Int                 @default(1140) @map("study_start_minute")
-  studyEndMinute     Int                 @default(1260) @map("study_end_minute")
-  producers          ProducerStudent[]   @relation("ProducerStudentStudent")
+  whatsappPhone         String?             @unique @map("whatsapp_phone") @db.VarChar(20)
+  whatsappCodeHash      String?             @unique @map("whatsapp_code_hash") @db.VarChar(64)
+  whatsappCodeExpiresAt DateTime?           @map("whatsapp_code_expires_at") @db.Timestamptz(6)
+  // Lembretes de estudo entregues pelo agente do WhatsApp: ate 3 horarios por dia (HH:MM, Brasilia). reminderSlots e o resultado final.
+  reminderMode          String              @default("off") @map("reminder_mode") @db.VarChar(10)
+  reminderCount         Int                 @default(1) @map("reminder_count")
+  reminderStart         String              @default("08:00") @map("reminder_start") @db.VarChar(5)
+  reminderIntervalMin   Int                 @default(120) @map("reminder_interval_min")
+  reminderSlots         String[]            @default([]) @map("reminder_slots")
+  reminderLastSent      String?             @map("reminder_last_sent") @db.VarChar(16)
+  playbackRate          Float               @default(1) @map("playback_rate")
+  studyWeekdays         Int[]               @default([1, 2, 3, 4, 5]) @map("study_weekdays")
+  studyStartMinute      Int                 @default(1140) @map("study_start_minute")
+  studyEndMinute        Int                 @default(1260) @map("study_end_minute")
+  producers             ProducerStudent[]   @relation("ProducerStudentStudent")
 
   @@map("student_profiles")
 }
@@ -352,17 +359,17 @@ model StudyPlan {
 
 // Cronograma unico do aluno com ate 5 cursos; o calendario fica em `schedule` e e remontado com os dados atuais a cada acesso.
 model StudySchedule {
-  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  studentId    String         @unique @map("student_id") @db.Uuid
-  courseIds    String[]       @map("course_ids") @db.Uuid
-  courseModes  Json           @default("{}") @map("course_modes")
-  blockedRanges Json          @default("[]") @map("blocked_ranges")
-  targetDate  DateTime       @map("target_date") @db.Date
-  dailyMinutes Int            @map("daily_minutes")
-  schedule     Json           @default("[]")
-  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
-  student      StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId     String         @unique @map("student_id") @db.Uuid
+  courseIds     String[]       @map("course_ids") @db.Uuid
+  courseModes   Json           @default("{}") @map("course_modes")
+  blockedRanges Json           @default("[]") @map("blocked_ranges")
+  targetDate    DateTime       @map("target_date") @db.Date
+  dailyMinutes  Int            @map("daily_minutes")
+  schedule      Json           @default("[]")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student       StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("study_schedules")
 }

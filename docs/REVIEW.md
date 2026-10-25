@@ -3549,3 +3549,10 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 
 - `src/lib/features.ts` (registro), `feature-service.ts`, `feature-actions.ts`, pagina `/admin/settings/features`, layouts por secao em `src/app/app/*/layout.tsx` (`requireFeature`), menu/"Mais" filtrados, agente filtra `tools/list` e devolve `disabled`. Sem mudanca de banco. tsc, lint, 350 testes e build verdes.
 - Nao verificado: telas no navegador logado; cache de 30 s por instancia (`app-settings.ts`) atrasa o efeito; `link_whatsapp` fica sempre ligado.
+
+## Material so de aulas concluidas, gerar pendentes e lembretes (2026-10-25)
+
+- `findTranscribableLesson` passou a devolver `completed`; `loadBank` (quiz/baralho do curso), `lessonsCards` (revisao), `submitQuiz`, `runGenerate`, `get_material` e a pagina da aula exigem aula concluida. Baralho do curso ja reaproveitava as perguntas do quiz (kind QUIZ); flashcards (kind FLASHCARDS) alimentam so a revisao.
+- `material-queue-service.ts`: `countPendingMaterials` e `generatePendingMaterials` (lote de 3, para no primeiro erro global de IA).
+- Lembretes: `reminder-slots.ts` (puro, testado), `reminder-config-service.ts`, tool MCP `due_reminders` (marca enviado antes de devolver; descarta atraso maior que 90 min). Entrega depende de agendador no OpenClaw: a Vercel Hobby so roda cron diario.
+- Nao verificado: telas no navegador logado, `generate_pending` com chave de IA real, agendador do OpenClaw. Material ja visto antes da regra some das telas ate a aula ser concluida.

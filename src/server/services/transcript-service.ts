@@ -81,7 +81,13 @@ export async function findTranscribableLesson(courseId: string, lessonId: string
   }
 
   const lesson = await repository.getActiveLessonForStudent(courseId, lessonId);
-  return lesson ? { lesson, studentId } : null;
+
+  if (!lesson) return null;
+
+  // Material de estudo (quiz, resumo, mapa, baralho) so existe para o aluno depois de concluir a aula.
+  const progress = await prisma.lessonProgress.findUnique({ where: { studentId_lessonId: { studentId, lessonId } }, select: { status: true } });
+
+  return { lesson, studentId, completed: progress?.status === "COMPLETED" };
 }
 
 // Transcricao gravada por um aluno so pode ser apagada por ele; a de legenda do YouTube ou antiga (sem autor) por qualquer aluno.

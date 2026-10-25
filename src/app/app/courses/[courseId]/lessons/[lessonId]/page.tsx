@@ -174,7 +174,13 @@ export default async function StudentLessonPage(props: { params: Promise<Student
 
       <LessonQuestions courseId={courseId} initial={questions} lessonId={lessonId} />
 
-      {data.lesson.transcript ? (
+      {data.lesson.transcript && !data.isCompleted ? (
+        <p className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4 text-sm text-copy-secondary">
+          Quiz, resumo, mapa mental e baralho desta aula ficam disponiveis depois que voce concluir a aula.
+        </p>
+      ) : null}
+
+      {data.lesson.transcript && data.isCompleted ? (
         <LessonStudyTools
           aiEnabled={ai.enabled}
           courseId={courseId}

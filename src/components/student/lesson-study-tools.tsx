@@ -27,6 +27,7 @@ type Panel = "summary" | "flashcards" | "mindmap" | "quiz" | null;
 
 const errorText: Record<AiGenerateError, string> = {
   forbidden: "Voce nao tem acesso a esta aula.",
+  not_completed: "Conclua a aula para liberar este material.",
   no_transcript: "Esta aula ainda nao tem transcricao.",
   invalid_technique: "Esta tecnica nao esta disponivel.",
   no_summary: "Gere antes o resumo desta tecnica.",

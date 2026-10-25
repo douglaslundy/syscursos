@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bell, Brain, CalendarDays, FileText, HelpCircle, Home, ListVideo, MoreHorizontal, Search, Star, User } from "lucide-react";
+import { AlarmClock, BarChart3, Bell, Brain, CalendarDays, FileText, HelpCircle, Home, ListVideo, MoreHorizontal, Search, Star, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -66,6 +66,12 @@ const navigationItems = [
     label: "Favoritos",
     icon: Star,
     match: (pathname: string) => pathname.startsWith("/app/favorites"),
+  },
+  {
+    href: "/app/reminders",
+    label: "Lembretes",
+    icon: AlarmClock,
+    match: (pathname: string) => pathname.startsWith("/app/reminders"),
   },
   {
     href: "/app/playlists",

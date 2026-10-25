@@ -11,6 +11,7 @@ export const STUDENT_FEATURES: FeatureDef[] = [
   { id: "schedule", group: "student", label: "Cronograma", description: "Plano de estudo e calendario.", href: "/app/schedule" },
   { id: "notebooks", group: "student", label: "Cadernos", description: "Anotacoes dos alunos.", href: "/app/notebooks" },
   { id: "favorites", group: "student", label: "Favoritos", description: "Cursos e aulas favoritos.", href: "/app/favorites/courses" },
+  { id: "reminders", group: "student", label: "Lembretes", description: "Lembretes de estudo pelo WhatsApp (ate 3 por dia).", href: "/app/reminders" },
   { id: "playlists", group: "student", label: "Playlists", description: "Playlists de aulas.", href: "/app/playlists" },
 ];
 
@@ -22,7 +23,10 @@ export const AGENT_FEATURES: FeatureDef[] = [
   ["rate_card", "Avaliar cartao do baralho"],
   ["list_lessons", "Listar aulas"],
   ["get_material", "Ler resumo, mapa ou transcricao"],
-  ["generate_material", "Gerar material com IA (gasta IA)"],
+  ["due_reminders", "Entregar lembretes de estudo (usado pelo agendamento do OpenClaw)"],
+  ["pending_materials", "Contar material pendente de um curso"],
+  ["generate_pending", "Gerar material pendente de um curso (gasta IA)"],
+  ["generate_material", "Gerar material de uma aula com IA (gasta IA)"],
   ["transcribe_lesson", "Transcrever aula"],
   ["ask_lesson", "Perguntar sobre a aula (gasta IA)"],
 ].map(([name, label]) => ({ id: `agent:${name}`, group: "agent" as const, label: name, description: label }));
