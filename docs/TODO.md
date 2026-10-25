@@ -933,13 +933,14 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Chat com a aula (IA so com a transcricao), duvidas por aula com resposta do produtor, avisos, busca global, exportar Markdown/Anki, playlists.
 - [x] Relatorios do produtor, painel de saude do admin, PWA (manifest, icones, tela offline), atalhos de teclado.
 - [ ] **Aplicar `prisma migrate deploy` (migration `20261022120000_study_features`) ANTES do deploy**; o codigo novo le colunas/tabelas dela.
-- [ ] Definir `CRON_SECRET` na Vercel (lembretes diarios) e conferir `SETTINGS_ENCRYPTION_KEY`.
+- [x] `CRON_SECRET` definido na Vercel (Production, 2026-10-25); sem ele o cron responde 503, agora 401 sem auth. `SETTINGS_ENCRYPTION_KEY` nao existe na Vercel: o codigo usa a service role do Supabase como fallback (`secret-box.ts`); definir uma chave propria invalida segredos ja salvos.
 - [ ] Smoke no navegador logado de todas as telas novas; testar IA com chave real (quiz, prova, chat); testar o cron.
 - [ ] Decidir confirmacao de e-mail no cadastro (precisa de SMTP no Supabase) e promover o CSP de Report-Only para ativo.
-- [ ] Pendentes: dividir `admin-actions.ts` e extrair hooks de `lesson-transcriber.tsx`; sem sincronizacao offline (PWA so mostra tela offline).
+- [x] `admin-actions.ts` ja foi dividido (2026-10-22). [ ] Pendente: extrair hooks de gravacao/Whisper de `lesson-transcriber.tsx` (precisa de teste com microfone no navegador); sem sincronizacao offline (PWA so mostra tela offline).
 - [x] Cronograma: nome do curso em cada aula, botao Reprogramar (recalcular a partir de hoje ou reservar periodo sem estudo, minimo 5 dias), menu Cronograma e nova ordem do menu (Avisos e Meus dados abaixo de Buscar). Migration `20261023120000_study_schedule_blocked_ranges` aplicada.
 - [ ] Smoke no navegador logado do Reprogramar e das reservas no calendario.
 - [ ] Testar em producao: transcricao pelo metodo OpenAI (gravacao do audio) e resumo/mapa/quiz com a chave da Anthropic (nao verificado com chave real).
 - [x] API do agente (MCP `/api/mcp`) para OpenClaw/WhatsApp: 10 tools (cursos, quiz/revisao em choice ou baralho, pendente ou tudo, resumo, mapa, transcricao, chat). Testes: `agent-*.test.ts`. Smoke local com dados reais (somente leitura) ok.
 - [x] Varios alunos: vinculo do WhatsApp por codigo (Meus dados > WhatsApp), tool `link_whatsapp`, `phone` em toda tool.
-- [ ] Aplicar a migration `20261024120000_whatsapp_link` (`prisma migrate deploy`), definir `AGENT_API_TOKEN` na Vercel, deploy, colar o prompt de `docs/OPENCLAW-AGENT-PROMPT.md` no OpenClaw e testar o vinculo + fluxo no WhatsApp (nao verificado com o OpenClaw real).
+- [x] Migration `20261024120000_whatsapp_link` aplicada; `AGENT_API_TOKEN` definido na Vercel e deploy feito (2026-10-25, `/api/mcp` responde 401 sem token e lista as tools com token).
+- [ ] Colar o prompt de `docs/OPENCLAW-AGENT-PROMPT.md` no OpenClaw e testar o vinculo + fluxo no WhatsApp (nao verificado com o OpenClaw real).

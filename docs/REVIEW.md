@@ -3538,3 +3538,9 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Sem mudanca de banco. Testes: `course-quiz-service`, `quiz-service`, `srs-quiz-review`, `quiz-pick`, `course-quiz-format`. Nao verificado no navegador logado.
 
 - Cronograma: `rescheduleStudySchedule` e `removeBlockedRange` em `study-plan-service.ts`, painel `reschedule-panel.tsx`, calendario mostra curso e "Sem estudo". Teste novo em `study-planner.test.ts` (periodo reservado). Typecheck, lint, testes do planejador e build passam. Sem teste do service de reprogramacao; nao verificado no navegador logado.
+
+## Agente WhatsApp em producao (2026-10-25)
+
+- `AGENT_API_TOKEN` e `CRON_SECRET` criados na Vercel (Production) e redeploy feito em `https://syscursos.vercel.app`. `POST /api/mcp`: 503 antes da env; depois 401 sem token e `tools/list` com token. `/api/cron/study-reminders` sem auth responde 401.
+- Prompt pronto para colar (dominio e token embutidos) fora do repositorio, na area de trabalho do usuario; `docs/OPENCLAW-AGENT-PROMPT.md` segue com placeholder.
+- Nao verificado: tools com aluno real que tenha cursos, tela Meus dados no navegador, telefone do remetente no OpenClaw, execucao do cron na Vercel. Hooks de gravacao/Whisper de `lesson-transcriber.tsx` seguem sem extrair (sem teste de microfone).
