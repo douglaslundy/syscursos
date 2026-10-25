@@ -134,7 +134,10 @@ export async function upsertStudent(
   actorRole: ActorRole,
   input: StudentInput,
 ) {
-  if (actorRole === UserRole.ADMIN) {
+  const isEdit = Boolean(input.id && input.studentProfileId);
+
+  // Admin so edita aluno existente (ex.: trocar senha); cadastro novo segue exclusivo de produtor.
+  if (actorRole === UserRole.ADMIN && !isEdit) {
     throw new Error("Apenas produtores cadastram alunos.");
   }
 
@@ -164,7 +167,7 @@ export async function upsertStudent(
       );
     }
 
-    if (currentProfile.producers.length === 0) {
+    if (actorRole !== UserRole.ADMIN && currentProfile.producers.length === 0) {
       await prisma.producerStudent.upsert({
         where: {
           producerId_studentId: {

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { DateInput } from "@/components/ui/date-input";
+
 import { SubmitButton } from "@/components/admin/submit-button";
 
 type ReschedulePanelProps = {
@@ -47,7 +49,7 @@ export function ReschedulePanel({ action, minDate, minDays, maxDays, overdue }: 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="space-y-1 text-sm text-copy-secondary">
             Inicio da reserva
-            <input className={inputClass} defaultValue={minDate} min={minDate} name="start" required type="date" />
+            <DateInput className={inputClass} defaultValue={minDate} min={minDate} name="start" required />
           </label>
           <label className="space-y-1 text-sm text-copy-secondary">
             Quantidade de dias (minimo {minDays})

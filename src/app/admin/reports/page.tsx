@@ -26,6 +26,7 @@ export default async function ReportsPage() {
         {report.lowCompletion.length === 0 ? (
           <p className="text-sm text-muted-foreground">Sem dados suficientes ainda.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
@@ -48,6 +49,7 @@ export default async function ReportsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

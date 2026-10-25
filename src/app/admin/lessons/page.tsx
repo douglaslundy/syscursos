@@ -119,7 +119,7 @@ export default async function AdminLessonsPage(props: { searchParams: Promise<Ad
             ) : (
               lessonData.lessons.items.map((lesson) => (
                 <article className="rounded-md border bg-background p-4" key={lesson.id}>
-                  <div className="grid gap-2 md:grid-cols-[1.2fr_120px_120px]">
+                  <div className="grid gap-2 md:grid-cols-[minmax(0,1.2fr)_120px_120px]">
                     <div>
                       <div className="text-xs text-muted-foreground">Titulo</div>
                       <div className="font-medium">{lesson.title}</div>

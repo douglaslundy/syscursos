@@ -105,7 +105,7 @@ export default async function StudentsPage(props: { searchParams: Promise<Studen
       <div className="space-y-3">
         {students.items.map((student) => (
           <article className="rounded-md border bg-background p-4" key={student.id}>
-            <div className="grid gap-2 md:grid-cols-[1.2fr_1.4fr_120px]">
+            <div className="grid gap-2 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.4fr)_120px]">
               <div>
                 <div className="text-xs text-muted-foreground">Nome</div>
                 <div className="font-medium">{student.user.name}</div>
@@ -196,7 +196,7 @@ type StudentFormProps = {
 
 function EmailLookupForm({ initialEmail }: { initialEmail?: string }) {
   return (
-    <form action={verifyStudentEmailAction} className="grid gap-3 md:grid-cols-[1fr_auto]">
+    <form action={verifyStudentEmailAction} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
       <input
         autoComplete="off"
         className="rounded-md border px-3 py-2 text-sm outline-none"
@@ -215,7 +215,7 @@ function StudentEditForm({ student }: { student: NonNullable<StudentFormProps["s
     <form
       action={saveStudentAction}
       autoComplete="off"
-      className="grid gap-3 md:grid-cols-[1fr_1fr_160px_140px_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_140px_auto]"
     >
       <input name="studentUserId" type="hidden" value={student.id} />
       <input name="studentProfileId" type="hidden" value={student.studentProfileId} />
@@ -283,7 +283,7 @@ function StudentCreateForm({ initialEmail }: { initialEmail: string }) {
     <form
       action={saveStudentAction}
       autoComplete="off"
-      className="grid gap-3 md:grid-cols-[1fr_1fr_160px_140px_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_140px_auto]"
     >
       <input
         autoComplete="off"
@@ -342,7 +342,7 @@ function StudentReadonlyView({
   };
 }) {
   return (
-    <div className="grid gap-3 md:grid-cols-[1fr_1fr_160px_140px_auto]">
+    <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_160px_140px_auto]">
       <input className="rounded-md border px-3 py-2 text-sm outline-none" readOnly value={student.name} />
       <input className="rounded-md border px-3 py-2 text-sm outline-none" readOnly value={student.email} />
       <input className="rounded-md border px-3 py-2 text-sm outline-none" readOnly value="********" />

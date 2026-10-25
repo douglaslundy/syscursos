@@ -4,6 +4,7 @@ import { Feedback } from "@/components/admin/feedback";
 import { Pagination } from "@/components/admin/pagination";
 import { SearchForm } from "@/components/admin/search-form";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { DateInput } from "@/components/ui/date-input";
 import { cancelEnrollmentAction, saveEnrollmentAction } from "@/server/actions/admin-people-actions";
 import {
   getCourseOptions,
@@ -11,6 +12,7 @@ import {
   getStudentOptions,
 } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
+import { formatDateBr } from "@/lib/format-date";
 
 type EnrollmentsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -162,11 +164,11 @@ function EnrollmentForm({ students, courses, enrollment }: EnrollmentFormProps) 
   return (
     <form
       action={saveEnrollmentAction}
-      className="grid gap-3 md:grid-cols-[1fr_1fr_150px_150px_140px_auto]"
+      className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_150px_150px_140px_auto]"
     >
       {enrollment ? <input name="id" type="hidden" value={enrollment.id} /> : null}
       <select
-        className="rounded-md border px-3 py-2 text-sm outline-none"
+        className="w-full min-w-0 rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={enrollment?.studentId ?? ""}
         name="studentId"
         required
@@ -179,7 +181,7 @@ function EnrollmentForm({ students, courses, enrollment }: EnrollmentFormProps) 
         ))}
       </select>
       <select
-        className="rounded-md border px-3 py-2 text-sm outline-none"
+        className="w-full min-w-0 rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={enrollment?.courseId ?? ""}
         name="courseId"
         required
@@ -191,21 +193,19 @@ function EnrollmentForm({ students, courses, enrollment }: EnrollmentFormProps) 
           </option>
         ))}
       </select>
-      <input
-        className="rounded-md border px-3 py-2 text-sm outline-none"
+      <DateInput
+        className="w-full min-w-0 rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={formatDateInput(enrollment?.startsAt)}
         name="startsAt"
         required
-        type="date"
       />
-      <input
-        className="rounded-md border px-3 py-2 text-sm outline-none"
+      <DateInput
+        className="w-full min-w-0 rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={formatDateInput(enrollment?.expiresAt)}
         name="expiresAt"
-        type="date"
       />
       <select
-        className="rounded-md border px-3 py-2 text-sm outline-none"
+        className="w-full min-w-0 rounded-md border px-3 py-2 text-sm outline-none"
         defaultValue={enrollment?.status ?? "ACTIVE"}
         name="status"
       >
@@ -219,7 +219,7 @@ function EnrollmentForm({ students, courses, enrollment }: EnrollmentFormProps) 
 }
 
 function formatDate(date: Date | null) {
-  return date ? new Intl.DateTimeFormat("pt-BR").format(date) : "Sem expiracao";
+  return date ? formatDateBr(date) : "Sem expiracao";
 }
 
 function formatDateInput(date: Date | null | undefined) {

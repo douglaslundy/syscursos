@@ -1,4 +1,5 @@
 import { Feedback } from "@/components/admin/feedback";
+import { TimeInput } from "@/components/ui/time-input";
 import { WhatsappLinkPanel } from "@/components/student/whatsapp-link-panel";
 import { saveOwnStudentProfileAction } from "@/server/actions/student-actions";
 import { savePlaybackRateFormAction } from "@/server/actions/study-actions";
@@ -72,11 +73,11 @@ export default async function StudentMePage(props: { searchParams: Promise<Stude
         <div className="grid grid-cols-2 gap-3 text-sm">
           <label className="grid gap-1">
             Inicio
-            <input className="rounded-md border px-3 py-2 outline-none" defaultValue={toClock(profile.studyStartMinute)} name="start" required type="time" />
+            <TimeInput className="rounded-md border px-3 py-2 outline-none" defaultValue={toClock(profile.studyStartMinute)} name="start" required />
           </label>
           <label className="grid gap-1">
             Fim
-            <input className="rounded-md border px-3 py-2 outline-none" defaultValue={toClock(profile.studyEndMinute)} name="end" required type="time" />
+            <TimeInput className="rounded-md border px-3 py-2 outline-none" defaultValue={toClock(profile.studyEndMinute)} name="end" required />
           </label>
         </div>
         <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground" type="submit">

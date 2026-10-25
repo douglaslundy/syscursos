@@ -30,7 +30,7 @@ export function LessonForm({
     <form
       action={saveLessonAction}
       autoComplete="off"
-      className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,1fr)_100px_140px_auto]"
       encType="multipart/form-data"
       key={baseKey}
     >

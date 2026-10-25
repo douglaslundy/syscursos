@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
 import { saveLessonNoteAction } from "@/server/actions/student-actions";
+import { formatTimeBr } from "@/lib/format-date";
 
 type NoteAutosaveEditorProps = {
   courseId: string;
@@ -53,10 +54,7 @@ export function NoteAutosaveEditor({
             currentContent === nextContent ? result.content : currentContent,
           );
           setMessage(
-            `Salvo em ${new Intl.DateTimeFormat("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }).format(new Date(result.updatedAt))}`,
+            `Salvo em ${formatTimeBr(result.updatedAt)}`,
           );
           return;
         }

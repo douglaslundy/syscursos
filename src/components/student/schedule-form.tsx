@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { DateInput } from "@/components/ui/date-input";
 import { formatMinutes } from "@/components/student/study-calendar";
 
 type Option = { id: string; title: string; lessons: number; seconds: number };
@@ -128,13 +129,12 @@ export function ScheduleForm({ action, options, selected, modules, maxCourses, m
             <input checked={mode === "date"} onChange={() => setMode("date")} type="radio" />
             Ou ate que data quer terminar
           </label>
-          <input
+          <DateInput
             className={inputClass}
             disabled={mode !== "date"}
             min={minDate}
             name="targetDate"
             required={mode === "date"}
-            type="date"
           />
           <button className="rounded-md bg-brand-primary px-4 py-2 text-sm font-medium text-copy-primary" type="submit">
             Gerar cronograma

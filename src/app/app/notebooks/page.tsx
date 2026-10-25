@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/student/empty-state";
 import { MarkdownContent } from "@/components/student/markdown-content";
 import { getStudentNotebook } from "@/server/services/student-service";
 import { notebookQuerySchema } from "@/server/validators/student";
+import { formatDateTimeBr } from "@/lib/format-date";
 
 type NotebooksPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -112,9 +113,7 @@ function buildNotebookMarkdown(groups: NotebookGroup[]) {
       const moduleHeader = `## Modulo ${group.modulePosition}: ${group.moduleTitle}`;
       const notes = group.notes.map(
         (note) =>
-          `### ${note.lessonPosition}. ${note.lessonTitle}\n\n${note.content}\n\nAtualizado em ${new Intl.DateTimeFormat(
-            "pt-BR",
-          ).format(note.updatedAt)}`,
+          `### ${note.lessonPosition}. ${note.lessonTitle}\n\n${note.content}\n\nAtualizado em ${formatDateTimeBr(note.updatedAt).slice(0, 10)}`,
       );
 
       return [moduleHeader, ...notes];

@@ -61,7 +61,7 @@ export default async function CoursesPage(props: { searchParams: Promise<Courses
       <div className="space-y-3">
         {courses.items.map((course) => (
           <article className="scroll-mt-4 rounded-md border bg-background p-4" id={`course-${course.id}`} key={course.id}>
-            <div className="grid gap-2 md:grid-cols-[1.4fr_1fr_120px]">
+            <div className="grid gap-2 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_120px]">
               <div>
                 <div className="text-xs text-muted-foreground">Titulo</div>
                 <div className="font-medium">{course.title}</div>
@@ -182,7 +182,7 @@ function CourseForm({ course }: CourseFormProps) {
   return (
     <form
       action={saveCourseAction}
-      className="grid gap-3 md:grid-cols-[1fr_1fr_auto_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]"
       encType="multipart/form-data"
     >
       {course ? <input name="id" type="hidden" value={course.id} /> : null}

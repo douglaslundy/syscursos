@@ -1,5 +1,6 @@
 import { Feedback } from "@/components/admin/feedback";
 import { SubmitButton } from "@/components/admin/submit-button";
+import { DateInput } from "@/components/ui/date-input";
 import {
   approveEnrollmentRequestAction,
   rejectEnrollmentRequestAction,
@@ -42,12 +43,11 @@ export default async function EnrollmentRequestsPage(props: { searchParams: Prom
                   <input name="id" type="hidden" value={request.id} />
                   <label className="text-xs text-muted-foreground">
                     Validade ate
-                    <input
+                    <DateInput
                       className="mt-1 block rounded-md border px-3 py-2 text-sm outline-none"
                       defaultValue={defaultExpiresAt}
                       name="expiresAt"
                       required
-                      type="date"
                     />
                   </label>
                   <SubmitButton>Aprovar</SubmitButton>

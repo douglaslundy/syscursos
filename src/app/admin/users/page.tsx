@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 
 import { Feedback } from "@/components/admin/feedback";
+import { DateInput } from "@/components/ui/date-input";
 import { saveManagedUserAction } from "@/server/actions/admin-people-actions";
 
 type UsersPageProps = {
@@ -39,7 +40,7 @@ export default async function AdminUsersPage(props: { searchParams: Promise<User
           required
           type="password"
         />
-        <input className="rounded-md border px-3 py-2 text-sm outline-none" name="accessExpiresAt" type="date" />
+        <DateInput className="rounded-md border px-3 py-2 text-sm outline-none" name="accessExpiresAt" />
         <input className="rounded-md border px-3 py-2 text-sm outline-none" name="document" placeholder="CPF (nao aplicavel)" />
         <input className="rounded-md border px-3 py-2 text-sm outline-none" name="phone" placeholder="Telefone (nao aplicavel)" />
         <select className="rounded-md border px-3 py-2 text-sm outline-none" defaultValue="ACTIVE" name="status">

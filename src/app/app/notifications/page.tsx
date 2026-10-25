@@ -3,8 +3,9 @@ import Link from "next/link";
 import { EmptyState } from "@/components/student/empty-state";
 import { requireAnyRole } from "@/server/auth/guards";
 import { listNotifications, markAllNotificationsRead } from "@/server/services/notification-service";
+import { formatDateTimeBr } from "@/lib/format-date";
 
-const date = (iso: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
+const date = (iso: string) => formatDateTimeBr(iso);
 
 export default async function NotificationsPage() {
   const user = await requireAnyRole(["STUDENT"]);

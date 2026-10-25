@@ -1,6 +1,7 @@
 import { getSystemHealth } from "@/server/services/health-service";
+import { formatDateTimeBr } from "@/lib/format-date";
 
-const when = (iso: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
+const when = (iso: string) => formatDateTimeBr(iso);
 
 export default async function HealthPage() {
   const health = await getSystemHealth();
@@ -46,6 +47,7 @@ export default async function HealthPage() {
         {health.aiCost.length === 0 ? (
           <p className="mt-2 text-sm text-muted-foreground">Nenhum uso de IA no periodo.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="mt-3 min-w-full text-sm">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
@@ -64,6 +66,7 @@ export default async function HealthPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

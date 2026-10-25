@@ -3,6 +3,7 @@ import { AdminLink as Link } from "@/components/admin/admin-link";
 import { Pagination } from "@/components/admin/pagination";
 import { getCoursesByStudent } from "@/server/services/admin-service";
 import { getPagination } from "@/server/validators/pagination";
+import { formatDateBr } from "@/lib/format-date";
 
 type StudentCoursesPageProps = {
   params: { studentId: string };
@@ -31,7 +32,7 @@ export default async function StudentCoursesPage(props: { params: Promise<Studen
             <div className="text-sm text-muted-foreground">
               {enrollment.status} - expira em{" "}
               {enrollment.expiresAt
-                ? new Intl.DateTimeFormat("pt-BR").format(enrollment.expiresAt)
+                ? formatDateBr(enrollment.expiresAt)
                 : "sem data"}
             </div>
           </article>

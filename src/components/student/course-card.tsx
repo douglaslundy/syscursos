@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { ProgressBar } from "@/components/student/progress-bar";
 import { cn } from "@/lib/utils";
+import { formatDateBr } from "@/lib/format-date";
 
 type CourseCardProps = {
   id: string;
@@ -75,7 +76,7 @@ export function CourseCard({
         />
         <p className="flex items-center gap-2 text-xs text-copy-muted">
           <Clock3 aria-hidden="true" className="h-3.5 w-3.5" />
-          Expira em {expiresAt ? new Intl.DateTimeFormat("pt-BR").format(expiresAt) : "sem data"}
+          Expira em {expiresAt ? formatDateBr(expiresAt) : "sem data"}
         </p>
       </div>
     </Link>

@@ -64,7 +64,7 @@ export default async function ModulesPage(props: { params: Promise<ModulesPagePr
       <div className="space-y-3">
         {modules.items.map((module) => (
           <article className="rounded-md border bg-background p-4" key={module.id}>
-            <div className="grid gap-2 md:grid-cols-[1.4fr_120px_120px]">
+            <div className="grid gap-2 md:grid-cols-[minmax(0,1.4fr)_120px_120px]">
               <div>
                 <div className="text-xs text-muted-foreground">Titulo</div>
                 <div className="font-medium">{module.title}</div>
@@ -159,7 +159,7 @@ function ModuleForm({ courseId, module }: ModuleFormProps) {
     <form
       action={saveModuleAction}
       autoComplete="off"
-      className="grid gap-3 md:grid-cols-[1fr_100px_140px_auto]"
+      className="grid gap-3 md:grid-cols-[minmax(0,1fr)_100px_140px_auto]"
       key={baseKey}
     >
       <input name="courseId" type="hidden" value={courseId} />

@@ -96,7 +96,7 @@ export default async function LessonsPage(props: { params: Promise<LessonsPagePr
       <div className="space-y-3">
         {lessons.items.map((lesson) => (
           <article className="rounded-md border bg-background p-4" key={lesson.id}>
-            <div className="grid gap-2 md:grid-cols-[1.2fr_120px_120px]">
+            <div className="grid gap-2 md:grid-cols-[minmax(0,1.2fr)_120px_120px]">
               <div>
                 <div className="text-xs text-muted-foreground">Titulo</div>
                 <div className="font-medium">{lesson.title}</div>
@@ -214,7 +214,7 @@ type LessonMaterialFormProps = {
 
 function LessonMaterialForm({ lessonId, moduleId, courseId, suggestedPosition }: LessonMaterialFormProps) {
   return (
-    <form action={saveLessonMaterialAction} className="mt-3 grid gap-2 md:grid-cols-[120px_1fr_1fr_100px_120px_auto]">
+    <form action={saveLessonMaterialAction} className="mt-3 grid gap-2 md:grid-cols-[120px_minmax(0,1fr)_minmax(0,1fr)_100px_120px_auto]">
       <input name="lessonId" type="hidden" value={lessonId} />
       <input name="moduleId" type="hidden" value={moduleId} />
       <input name="courseId" type="hidden" value={courseId} />

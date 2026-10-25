@@ -1,4 +1,5 @@
 import { AdminLink as Link } from "@/components/admin/admin-link";
+import { formatDateTimeBr } from "@/lib/format-date";
 
 type AdminPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
@@ -148,9 +149,7 @@ export default async function AdminPage(props: { searchParams: Promise<AdminPage
                   <td className="py-2">{item.completedLessons}</td>
                   <td className="py-2">
                     {item.lastLoginAt
-                      ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
-                          item.lastLoginAt,
-                        )
+                      ? formatDateTimeBr(item.lastLoginAt)
                       : "Nunca"}
                   </td>
                 </tr>

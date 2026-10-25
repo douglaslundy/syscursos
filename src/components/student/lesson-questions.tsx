@@ -5,10 +5,11 @@ import { useState, useTransition } from "react";
 import { primaryClass } from "@/components/student/study-modal";
 import { askQuestionAction } from "@/server/actions/question-actions";
 import type { LessonQuestionItem } from "@/server/services/question-service";
+import { formatDateTimeBr } from "@/lib/format-date";
 
 type LessonQuestionsProps = { courseId: string; lessonId: string; initial: LessonQuestionItem[] };
 
-const date = (iso: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(iso));
+const date = (iso: string) => formatDateTimeBr(iso).slice(0, 10);
 
 export function LessonQuestions({ courseId, lessonId, initial }: LessonQuestionsProps) {
   const [items, setItems] = useState(initial);

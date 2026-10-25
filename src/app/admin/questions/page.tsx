@@ -3,10 +3,11 @@ import Link from "next/link";
 import { SubmitButton } from "@/components/admin/submit-button";
 import { answerQuestionAction } from "@/server/actions/question-actions";
 import { listQuestionsForStaff } from "@/server/services/question-service";
+import { formatDateTimeBr } from "@/lib/format-date";
 
 type QuestionsPageProps = { searchParams?: Record<string, string | string[] | undefined> };
 
-const date = (iso: string) => new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(iso));
+const date = (iso: string) => formatDateTimeBr(iso);
 
 export default async function QuestionsPage(props: { searchParams: Promise<QuestionsPageProps["searchParams"]> }) {
   const searchParams = await props.searchParams;

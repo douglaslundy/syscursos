@@ -14,6 +14,7 @@ import { setTranscribing } from "@/lib/transcription/guard";
 import { encodeWav } from "@/lib/transcription/wav";
 import { useBusyGuard, useDraftAutosave, useVideoEnded } from "@/components/student/use-transcriber-effects";
 import { saveRecordedTranscriptAction } from "@/server/actions/transcript-actions";
+import { formatDateTimeBr } from "@/lib/format-date";
 
 const SEGMENT_SECONDS = 60;
 const MIN_SAMPLES = SAMPLE_RATE / 2;
@@ -534,7 +535,7 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
         <div className="space-y-2 rounded-md border border-brand-primary/40 p-3">
           <p>
             Ha uma transcricao desta aula que nao foi salva (guardada neste navegador em{" "}
-            {new Date(saved.savedAt).toLocaleString("pt-BR")}). Pode estar incompleta.
+            {formatDateTimeBr(saved.savedAt)}). Pode estar incompleta.
           </p>
           <div className="flex flex-wrap gap-3">
             <button

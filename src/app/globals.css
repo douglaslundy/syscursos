@@ -115,3 +115,9 @@
     @apply outline-none ring-2 ring-brand-primary ring-offset-2 ring-offset-background;
   }
 }
+
+/* Controles dentro de grid nao podem forcar a coluna alem do bloco (min-width:auto). */
+.grid > :is(input, select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+}

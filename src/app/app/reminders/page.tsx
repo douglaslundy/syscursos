@@ -1,4 +1,5 @@
 import { Feedback } from "@/components/admin/feedback";
+import { TimeInput } from "@/components/ui/time-input";
 import { INTERVAL_OPTIONS, MAX_REMINDERS } from "@/lib/study/reminder-slots";
 import { saveReminderAction } from "@/server/actions/reminder-actions";
 import { getReminderConfig } from "@/server/services/reminder-config-service";
@@ -51,14 +52,14 @@ export default async function RemindersPage(props: { searchParams: Promise<Recor
           <legend className="text-sm font-medium">Horarios fixos (os primeiros da quantidade escolhida)</legend>
           <div className="flex flex-wrap gap-2">
             {times.map((time, index) => (
-              <input aria-label={`Horario ${index + 1}`} className={input} defaultValue={time} key={index} name={`time${index + 1}`} type="time" />
+              <TimeInput aria-label={`Horario ${index + 1}`} className={input} defaultValue={time} key={index} name={`time${index + 1}`} />
             ))}
           </div>
         </fieldset>
         <fieldset className="grid gap-2">
           <legend className="text-sm font-medium">Ou por intervalo: comecar as e repetir a cada</legend>
           <div className="flex flex-wrap gap-2">
-            <input aria-label="Comecar as" className={input} defaultValue={config.start} name="start" type="time" />
+            <TimeInput aria-label="Comecar as" className={input} defaultValue={config.start} name="start" />
             <select aria-label="Intervalo" className={input} defaultValue={String(config.intervalMin)} name="intervalMin">
               {INTERVAL_OPTIONS.map((minutes) => (
                 <option key={minutes} value={minutes}>
