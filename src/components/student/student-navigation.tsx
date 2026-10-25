@@ -78,13 +78,14 @@ const navigationItems = [
 // Celular: 4 atalhos + "Mais" (que lista o resto), para a barra inferior nao ficar apertada.
 const bottomHrefs = ["/app", "/app/search", "/app/review", "/app/progress"];
 const bottomItems = navigationItems.filter((item) => bottomHrefs.includes(item.href));
+const visible = (items: readonly (typeof navigationItems)[number][], hidden: string[]) => items.filter((item) => !hidden.includes(item.href));
 
-export function StudentDesktopNavigation({ unread = 0 }: { unread?: number }) {
+export function StudentDesktopNavigation({ unread = 0, hidden = [] }: { unread?: number; hidden?: string[] }) {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Navegacao principal" className="mt-8 space-y-1">
-      {navigationItems.map((item) => {
+      {visible(navigationItems, hidden).map((item) => {
         const Icon = item.icon;
         const isActive = item.match(pathname);
 
@@ -111,7 +112,7 @@ export function StudentDesktopNavigation({ unread = 0 }: { unread?: number }) {
   );
 }
 
-export function StudentBottomNavigation({ unread = 0 }: { unread?: number }) {
+export function StudentBottomNavigation({ unread = 0, hidden = [] }: { unread?: number; hidden?: string[] }) {
   const pathname = usePathname();
 
   return (
@@ -120,7 +121,7 @@ export function StudentBottomNavigation({ unread = 0 }: { unread?: number }) {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-stroke-subtle bg-surface-elevated/95 px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.24)] backdrop-blur md:hidden"
     >
       <div className="mx-auto grid max-w-sm grid-cols-5 gap-2">
-        {bottomItems.map((item) => {
+        {visible(bottomItems, hidden).map((item) => {
           const Icon = item.icon;
           const isActive = item.match(pathname);
 

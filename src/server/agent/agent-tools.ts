@@ -5,6 +5,7 @@ import { DEFAULT_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
 import { generateAiContent, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { askLessonChat } from "@/server/services/ai/chat-service";
 import { startCourseDeck, startCourseQuiz, submitCourseQuiz } from "@/server/services/course-quiz-service";
+import { isFeatureEnabled } from "@/server/services/feature-service";
 import { findReviewCard, getReviewQueue, reviewCard, type ReviewCard } from "@/server/services/review-service";
 import { getStudentCourse, getStudentDashboard } from "@/server/services/student-service";
 import { findTranscribableLesson, generateLessonTranscript } from "@/server/services/transcript-service";
@@ -225,6 +226,7 @@ export async function callAgentTool(name: string, rawArgs: unknown): Promise<Age
   const tool = AGENT_TOOLS.find((item) => item.name === name);
 
   if (!tool) return fail("unknown_tool");
+  if (!(await isFeatureEnabled(`agent:${name}`))) return fail("disabled");
 
   const parsed = tool.schema.safeParse(rawArgs ?? {});
 

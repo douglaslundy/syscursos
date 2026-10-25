@@ -3544,3 +3544,8 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - `AGENT_API_TOKEN` e `CRON_SECRET` criados na Vercel (Production) e redeploy feito em `https://syscursos.vercel.app`. `POST /api/mcp`: 503 antes da env; depois 401 sem token e `tools/list` com token. `/api/cron/study-reminders` sem auth responde 401.
 - Prompt pronto para colar (dominio e token embutidos) fora do repositorio, na area de trabalho do usuario; `docs/OPENCLAW-AGENT-PROMPT.md` segue com placeholder.
 - Nao verificado: tools com aluno real que tenha cursos, tela Meus dados no navegador, telefone do remetente no OpenClaw, execucao do cron na Vercel. Hooks de gravacao/Whisper de `lesson-transcriber.tsx` seguem sem extrair (sem teste de microfone).
+
+## Painel de recursos (2026-10-25)
+
+- `src/lib/features.ts` (registro), `feature-service.ts`, `feature-actions.ts`, pagina `/admin/settings/features`, layouts por secao em `src/app/app/*/layout.tsx` (`requireFeature`), menu/"Mais" filtrados, agente filtra `tools/list` e devolve `disabled`. Sem mudanca de banco. tsc, lint, 350 testes e build verdes.
+- Nao verificado: telas no navegador logado; cache de 30 s por instancia (`app-settings.ts`) atrasa o efeito; `link_whatsapp` fica sempre ligado.

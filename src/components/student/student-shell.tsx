@@ -12,10 +12,11 @@ import type { AuthenticatedUser } from "@/server/auth/types";
 type StudentShellProps = Readonly<{
   user: AuthenticatedUser;
   unread?: number;
+  hidden?: string[];
   children: React.ReactNode;
 }>;
 
-export function StudentShell({ user, unread = 0, children }: StudentShellProps) {
+export function StudentShell({ user, unread = 0, hidden = [], children }: StudentShellProps) {
   return (
     <div className="min-h-screen bg-background">
       <input className="peer/sidebar sr-only" defaultChecked id="student-sidebar-toggle" type="checkbox" />
@@ -56,7 +57,7 @@ export function StudentShell({ user, unread = 0, children }: StudentShellProps) 
           />
         </Link>
 
-        <StudentDesktopNavigation unread={unread} />
+        <StudentDesktopNavigation hidden={hidden} unread={unread} />
 
         <div className="mt-auto rounded-md border border-stroke-subtle bg-surface p-4">
           <p className="text-xs font-medium uppercase tracking-[0.12em] text-copy-muted">
@@ -110,7 +111,7 @@ export function StudentShell({ user, unread = 0, children }: StudentShellProps) 
         </main>
       </div>
 
-      <StudentBottomNavigation unread={unread} />
+      <StudentBottomNavigation hidden={hidden} unread={unread} />
     </div>
   );
 }

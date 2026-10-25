@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { getHiddenStudentHrefs } from "@/server/services/feature-service";
+
 const links = [
   { href: "/app/notifications", label: "Avisos", hint: "Respostas as suas duvidas e lembretes" },
   { href: "/app/me", label: "Meus dados", hint: "Perfil e preferencias" },
@@ -10,12 +12,14 @@ const links = [
   { href: "/app/schedule", label: "Cronograma", hint: "Plano de estudo por dia" },
 ];
 
-export default function MorePage() {
+export default async function MorePage() {
+  const hidden = await getHiddenStudentHrefs();
+
   return (
     <section>
       <h1 className="text-3xl font-semibold tracking-normal">Mais</h1>
       <ul className="mt-6 grid gap-3">
-        {links.map((item) => (
+        {links.filter((item) => !hidden.includes(item.href)).map((item) => (
           <li key={item.href}>
             <Link className="block rounded-md border border-stroke-subtle bg-surface p-4 transition hover:bg-surface-hover" href={item.href}>
               <p className="text-sm font-semibold text-copy-primary">{item.label}</p>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { authenticateGateway } from "@/server/agent/agent-auth";
 import { AGENT_TOOLS, callAgentTool } from "@/server/agent/agent-tools";
 import { runAsAgentStudent } from "@/server/auth/agent-context";
+import { getDisabledFeatures } from "@/server/services/feature-service";
 import { hitGlobal } from "@/server/security/rate-limit";
 import { findStudentByPhone, linkWhatsappByCode } from "@/server/services/whatsapp-link-service";
 
@@ -91,8 +92,11 @@ export async function handleMcpPost(request: Request): Promise<Response> {
     }
     case "ping":
       return json({ jsonrpc: "2.0", id, result: {} });
-    case "tools/list":
-      return json({ jsonrpc: "2.0", id, result: { tools: [LINK_TOOL, ...AGENT_TOOLS.map(withPhone)] } });
+    case "tools/list": {
+      const disabled = await getDisabledFeatures();
+
+      return json({ jsonrpc: "2.0", id, result: { tools: [LINK_TOOL, ...AGENT_TOOLS.filter((tool) => !disabled.has(`agent:${tool.name}`)).map(withPhone)] } });
+    }
     case "tools/call": {
       const call = callParams.safeParse(params);
 

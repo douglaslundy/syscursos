@@ -944,3 +944,5 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Varios alunos: vinculo do WhatsApp por codigo (Meus dados > WhatsApp), tool `link_whatsapp`, `phone` em toda tool.
 - [x] Migration `20261024120000_whatsapp_link` aplicada; `AGENT_API_TOKEN` definido na Vercel e deploy feito (2026-10-25, `/api/mcp` responde 401 sem token e lista as tools com token).
 - [ ] Colar o prompt de `docs/OPENCLAW-AGENT-PROMPT.md` no OpenClaw e testar o vinculo + fluxo no WhatsApp (nao verificado com o OpenClaw real).
+
+- [x] Painel `/admin/settings/features`: liga/desliga secoes do menu do aluno (404 quando desligado) e as 10 tools do agente (chave `features_disabled` em `app_settings`; tudo ligado por padrao). Nao verificado no navegador logado.

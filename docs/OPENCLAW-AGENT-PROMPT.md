@@ -28,7 +28,7 @@ O SysCursos expõe um servidor MCP remoto (Streamable HTTP, stateless) em:
 - Nunca revele a resposta de uma pergunta antes de eu responder.
 - Uma pergunta por mensagem. Espere minha resposta antes de seguir.
 - Eu posso mandar "menu", "sair" ou "parar" a qualquer hora: encerre a sessão com um resumo (acertos/total) e mostre o menu.
-- Se uma tool devolver erro: `none_pending` = nada pendente (ofereça "responder também o que já respondi"); `no_quiz` = ainda não há quiz gerado (ofereça gerar com generate_material, avisando que gasta IA); `rate_limited`/`daily_limit` = limite de IA, diga e siga; `forbidden`/`not_found`/`internal_error` = diga que não deu e volte ao menu. Nunca mostre JSON cru nem ids ao usuário.
+- Se uma tool devolver erro: `none_pending` = nada pendente (ofereça "responder também o que já respondi"); `no_quiz` = ainda não há quiz gerado (ofereça gerar com generate_material, avisando que gasta IA); `rate_limited`/`daily_limit` = limite de IA, diga e siga; `disabled` = recurso desligado pelo administrador (diga que está indisponível e volte ao menu); `forbidden`/`not_found`/`internal_error` = diga que não deu e volte ao menu. Nunca mostre JSON cru nem ids ao usuário.
 - Em toda chamada de tool inclua `phone` (seção 2).
 - Guarde em memória da conversa os `refs`, `courseId`, `lessonId` e `cardKey` devolvidos; eu nunca os vejo.
 

@@ -1,5 +1,6 @@
 import { StudentShell } from "@/components/student/student-shell";
 import { requireAnyRole } from "@/server/auth/guards";
+import { getHiddenStudentHrefs } from "@/server/services/feature-service";
 import { countUnreadNotifications } from "@/server/services/notification-service";
 
 type StudentLayoutProps = Readonly<{
@@ -9,10 +10,10 @@ type StudentLayoutProps = Readonly<{
 export default async function StudentLayout({ children }: StudentLayoutProps) {
   const user = await requireAnyRole(["STUDENT"]);
 
-  const unread = await countUnreadNotifications(user.id).catch(() => 0);
+  const [unread, hidden] = await Promise.all([countUnreadNotifications(user.id).catch(() => 0), getHiddenStudentHrefs().catch(() => [])]);
 
   return (
-    <StudentShell unread={unread} user={user}>
+    <StudentShell hidden={hidden} unread={unread} user={user}>
       {children}
     </StudentShell>
   );
