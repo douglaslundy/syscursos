@@ -71,7 +71,7 @@ async function runStartSession(args: z.infer<typeof startSession>): Promise<Agen
 
     if (!result.ok) return fail(result.error);
 
-    return ok({ format: "choice", questions: result.quiz.questions.map((item, index) => ({ n: index + 1, q: item.q, options: item.options })), refs: result.refs });
+    return ok({ format: "choice", questions: result.quiz.questions.map((item, index) => ({ n: index + 1, q: item.q, ...(item.context ? { context: item.context } : {}), options: item.options })), refs: result.refs });
   }
 
   // Revisão pendente em baralho: fila do SRS (flashcards da IA + cartões de quiz vencidos + novos do dia).

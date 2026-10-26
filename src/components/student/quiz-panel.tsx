@@ -155,6 +155,11 @@ export function QuizPanel({ quiz, submit: submitAnswers, check, passScore, attem
             </div>
           </div>
 
+          {question.context ? (
+            <p className="whitespace-pre-line rounded-md border border-stroke-subtle bg-surface p-3 text-sm leading-6 text-copy-secondary" key={`ctx-${current}`}>
+              {question.context}
+            </p>
+          ) : null}
           <fieldset className="rounded-md border border-stroke-subtle bg-background p-4" key={current}>
             <legend className="px-1 text-sm font-semibold text-copy-primary">
               {current + 1}. {question.q}

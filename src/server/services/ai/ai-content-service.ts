@@ -3,7 +3,7 @@ import { Prisma, type AiContentKind } from "@prisma/client";
 import { hitGlobal, resetRateLimits } from "@/server/security/rate-limit";
 import { parseFlashcards, parseMindMap } from "@/lib/ai/parsers";
 import { parseQuiz } from "@/lib/ai/quiz";
-import { buildPrompt, type AiKind } from "@/lib/ai/prompts";
+import { buildPrompt, buildReviewPrompt, type AiKind } from "@/lib/ai/prompts";
 import { isTechniqueId } from "@/lib/ai/techniques";
 import { prisma } from "@/lib/db/prisma";
 import { getActiveAiCredentials, getActiveAiProvider, getActiveTechniques } from "@/server/services/ai/ai-settings-service";
@@ -193,9 +193,52 @@ export async function callAndRecord(input: {
     },
   });
 
-  const content = normalize(input.kind, result.text);
+  const content = await applyReview(input, credentials, normalize(input.kind, result.text));
 
   return content ? { ok: true, content, provider: credentials.provider, model: result.model } : { ok: false, error: "failed" };
+}
+
+type Credentials = NonNullable<Awaited<ReturnType<typeof getActiveAiCredentials>>>;
+
+const textField = (value: unknown) => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "");
+
+// Crivo: segunda chamada que reescreve perguntas/cartoes para fazerem sentido sozinhos. Mantem alternativas e gabarito do original;
+// se a revisao falhar ou vier fora de formato, fica o rascunho (ja validado) em vez de perder o material.
+async function applyReview(input: Parameters<typeof callAndRecord>[0], credentials: Credentials, content: string | null) {
+  if (!content || (input.kind !== "QUIZ" && input.kind !== "FLASHCARDS")) return content;
+
+  const reviewed = await callProvider(
+    credentials.provider,
+    credentials.key,
+    buildReviewPrompt({ kind: input.kind, lessonTitle: input.prompt.user.split("\n")[0] ?? "", source: input.prompt.user, draft: content }),
+  );
+
+  if (!reviewed.ok) return content;
+
+  await prisma.aiUsage.create({
+    data: { provider: credentials.provider, model: reviewed.model, kind: input.kind, inputTokens: reviewed.inputTokens, outputTokens: reviewed.outputTokens, studentId: input.studentId, courseId: input.courseId },
+  });
+
+  try {
+    const draft = JSON.parse(content) as { questions?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>;
+    const fixed = JSON.parse(reviewed.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "")) as { questions?: Array<Record<string, unknown>>; cards?: Array<Record<string, unknown>> };
+
+    if (input.kind === "QUIZ") {
+      const original = (draft as { questions: Array<Record<string, unknown>> }).questions;
+
+      if (!Array.isArray(fixed.questions) || fixed.questions.length !== original.length) return content;
+
+      return JSON.stringify({ questions: original.map((question, index) => ({ ...question, q: textField(fixed.questions?.[index]?.q) || question.q, ...(textField(fixed.questions?.[index]?.context) ? { context: textField(fixed.questions?.[index]?.context).slice(0, 600) } : {}) })) });
+    }
+
+    const original = draft as Array<Record<string, unknown>>;
+
+    if (!Array.isArray(fixed.cards) || fixed.cards.length !== original.length) return content;
+
+    return JSON.stringify(original.map((card, index) => ({ q: textField(fixed.cards?.[index]?.q) || card.q, a: textField(fixed.cards?.[index]?.a) || card.a })));
+  } catch {
+    return content;
+  }
 }
 
 // Resumo fica como markdown; cartoes e mapa mental viram JSON ja validado.

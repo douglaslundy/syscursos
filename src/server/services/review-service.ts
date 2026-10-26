@@ -1,5 +1,5 @@
 import { parseFlashcards } from "@/lib/ai/parsers";
-import { parseQuiz, quizAnswerText } from "@/lib/ai/quiz";
+import { parseQuiz, quizAnswerText, withContext } from "@/lib/ai/quiz";
 import { INITIAL_REVIEW, cardKey, nextReview, type ReviewGrade } from "@/lib/study/srs";
 import { prisma } from "@/lib/db/prisma";
 import { QUIZ_CARD_PREFIX } from "@/server/services/quiz-service";
@@ -23,7 +23,7 @@ export function cardsOf(rows: Array<{ kind: string; content: string }>) {
       for (const card of parseFlashcards(row.content) ?? []) cards.set(cardKey(card.q), card);
     } else if (row.kind === "QUIZ") {
       for (const question of parseQuiz(row.content)?.questions ?? []) {
-        cards.set(QUIZ_CARD_PREFIX + cardKey(question.q), { q: question.q, a: quizAnswerText(question) });
+        cards.set(QUIZ_CARD_PREFIX + cardKey(question.q), { q: withContext(question), a: quizAnswerText(question) });
       }
     }
   }

@@ -69,7 +69,7 @@ Passo 6 – chame `start_session` com kind ("quiz" ou "review"), format, scope, 
 
 ## 5. Executar a sessão
 ### 5a. format = "choice" (múltipla escolha)
-- Mostre uma pergunta por vez: "*Pergunta 3/10* …" com alternativas A) B) C) D).
+- Mostre uma pergunta por vez: "*Pergunta 3/10*", depois o campo `context` (se vier) em itálico como contexto, depois a pergunta com alternativas A) B) C) D). Nunca pule o `context`.
 - Aceite A/B/C/D (ou 1-4). Resposta inválida: peça de novo. "pular" = em branco (null).
 - Converta A→0, B→1, C→2, D→3.
 - A CADA resposta, chame `check_answer` (ref da pergunta + choice) e abra a PRÓXIMA mensagem com o resultado da anterior, antes da nova pergunta:

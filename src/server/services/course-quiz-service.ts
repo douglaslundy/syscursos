@@ -1,4 +1,4 @@
-import { parseQuiz, quizAnswerText, type Quiz, type QuizQuestion } from "@/lib/ai/quiz";
+import { parseQuiz, quizAnswerText, withContext, type Quiz, type QuizQuestion } from "@/lib/ai/quiz";
 import { prisma } from "@/lib/db/prisma";
 import { MAX_QUIZ_QUESTIONS, pickDueFirst } from "@/lib/study/quiz-pick";
 import { cardKey } from "@/lib/study/srs";
@@ -154,7 +154,7 @@ export async function startCourseDeck(courseId: string | null, count: number, op
       lessonId: item.lessonId,
       lessonTitle: item.lessonTitle,
       cardKey: QUIZ_CARD_PREFIX + item.key,
-      q: item.question.q,
+      q: withContext(item.question),
       a: quizAnswerText(item.question),
       isNew: drawn.isNew(item),
     })),

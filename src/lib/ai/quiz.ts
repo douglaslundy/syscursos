@@ -1,9 +1,16 @@
-export type QuizQuestion = { q: string; options: string[]; correct: number; explanation: string };
+// context: contexto curto (ate ~5 linhas) que antecede o enunciado, para a pergunta fazer sentido sem ter lido o resumo. Opcional (quizzes antigos nao tem).
+export type QuizQuestion = { q: string; options: string[]; correct: number; explanation: string; context?: string };
 export type Quiz = { questions: QuizQuestion[] };
 
 const OPTIONS = 4;
 
 const text = (value: unknown) => (typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "");
+const MAX_CONTEXT = 600;
+
+// Enunciado precedido do contexto, para telas que mostram a pergunta como um texto so (baralho, WhatsApp).
+export const withContext = (question: QuizQuestion) => (question.context ? `${question.context}
+
+${question.q}` : question.q);
 
 function parseJson(raw: string): unknown {
   try {
@@ -21,7 +28,7 @@ export function parseQuiz(raw: string): Quiz | null {
   if (!Array.isArray(list)) return null;
 
   const questions = list.flatMap((item): QuizQuestion[] => {
-    const entry = item as { q?: unknown; options?: unknown; correct?: unknown; explanation?: unknown };
+    const entry = item as { q?: unknown; options?: unknown; correct?: unknown; explanation?: unknown; context?: unknown };
     const options = Array.isArray(entry.options) ? entry.options.map(text) : [];
     const correct = Number(entry.correct);
     const valid =
@@ -33,7 +40,9 @@ export function parseQuiz(raw: string): Quiz | null {
       correct >= 0 &&
       correct < OPTIONS;
 
-    return valid ? [{ q: text(entry.q), options, correct, explanation: text(entry.explanation) }] : [];
+    const context = text(entry.context).slice(0, MAX_CONTEXT);
+
+    return valid ? [{ q: text(entry.q), options, correct, explanation: text(entry.explanation), ...(context ? { context } : {}) }] : [];
   });
 
   return questions.length > 0 ? { questions } : null;

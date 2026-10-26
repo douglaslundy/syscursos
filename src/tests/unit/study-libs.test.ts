@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { gradeQuiz, parseQuiz } from "@/lib/ai/quiz";
+import { gradeQuiz, parseQuiz, withContext } from "@/lib/ai/quiz";
 import { INITIAL_REVIEW, cardKey, nextReview } from "@/lib/study/srs";
 import { currentStreak, dayKey, longestStreak, weekStart } from "@/lib/study/streak";
 
@@ -18,6 +18,15 @@ describe("parseQuiz", () => {
 
     expect(quiz?.questions).toHaveLength(1);
     expect(quiz?.questions[0].correct).toBe(2);
+  });
+
+  it("guarda o contexto (aparado, sem exigir) e o antepoe ao enunciado", () => {
+    const quiz = parseQuiz(JSON.stringify({ questions: [question({ context: "  Estamos falando de   capitais. " }), question()] }));
+
+    expect(quiz?.questions[0].context).toBe("Estamos falando de capitais.");
+    expect(quiz?.questions[1].context).toBeUndefined();
+    expect(withContext(quiz!.questions[0])).toBe("Estamos falando de capitais.\n\nQual e a capital?");
+    expect(withContext(quiz!.questions[1])).toBe("Qual e a capital?");
   });
 
   it("drops questions without 4 distinct options or with an invalid answer index", () => {

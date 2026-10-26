@@ -10,12 +10,29 @@ type PromptInput = {
   summary?: string;
 };
 
+// Regra OBRIGATORIA de todo material gerado (resumo, quiz, cartoes, mapa mental, prova): precisa fazer sentido sozinho.
+const SENSE =
+  "REGRA OBRIGATORIA: tudo que voce escrever deve fazer sentido para quem NAO viu a aula. Nunca use referencias soltas como uma letra ou sigla sem explicacao (\"V\", \"X\", \"ele\", \"o autor\", \"o professor\", \"o texto\", \"o personagem\"), nem expressoes como \"na aula\" ou \"conforme dito\" sem dizer do que se trata. Se a transcricao chamar alguem ou algo de forma generica ou ambigua (ex.: uma letra, um apelido, um codinome), diga de quem ou do que se trata pela funcao ou descricao (\"o interlocutor\", \"a tecnica da respiracao diafragmatica\") ou deixe esse detalhe de fora. Escreva em linguagem natural, como uma pessoa explicaria, com sentido completo; nao copie frases truncadas ou erros da transcricao. Prefira omitir um item a incluir algo confuso, ambiguo ou sem contexto.";
 const BASE =
-  "Voce e um assistente pedagogico. Responda sempre em portugues do Brasil, com base somente no conteudo fornecido, sem inventar fatos. O conteudo e a transcricao de uma aula gravada e pode ter erros de reconhecimento de fala: corrija-os quando o contexto deixar claro.";
+  `Voce e um assistente pedagogico. Responda sempre em portugues do Brasil, com base somente no conteudo fornecido, sem inventar fatos. O conteudo e a transcricao de uma aula gravada e pode ter erros de reconhecimento de fala: corrija-os quando o contexto deixar claro. ${SENSE}`;
 const MARKDOWN = "Formate em markdown simples: titulos com '#', listas com '-' e negrito com '**'. Nao use tabelas nem HTML.";
 
 const QUIZ_RULES = (min: number, max: number) =>
-  `Crie um quiz de multipla escolha para testar a compreensao do conteudo, com ${min} a ${max} questoes conforme a extensao do material. Cada questao tem um enunciado claro (q), exatamente 4 alternativas distintas (options), o indice da alternativa correta de 0 a 3 (correct) e uma explicacao curta do porque (explanation). Misture niveis de dificuldade, varie a posicao da resposta correta e evite pegadinhas e "todas as anteriores". Responda somente com JSON no formato {"questions":[{"q":"...","options":["...","...","...","..."],"correct":0,"explanation":"..."}]}.`;
+  `Crie um quiz de multipla escolha para testar a compreensao do conteudo, com ${min} a ${max} questoes conforme a extensao do material. Cada questao tem, sempre que possivel, um contexto (context): 1 a 3 frases curtas (ate 5 linhas) que situam o assunto e dao o minimo necessario para a pergunta fazer sentido para quem NAO leu o resumo nem assistiu a aula, sem entregar a resposta e sem repetir o enunciado; omita o campo (ou use \"\") apenas quando o enunciado ja for totalmente autoexplicativo. Nunca escreva perguntas que dependam de \"na aula\", \"o professor disse\" ou \"conforme o texto\" sem esse contexto. Depois do contexto vem o enunciado claro (q), exatamente 4 alternativas distintas (options), o indice da alternativa correta de 0 a 3 (correct) e uma explicacao curta do porque (explanation). Misture niveis de dificuldade, varie a posicao da resposta correta e evite pegadinhas e "todas as anteriores". Responda somente com JSON no formato {"questions":[{"context":"...","q":"...","options":["...","...","...","..."],"correct":0,"explanation":"..."}]}.`;
+
+// Crivo de quiz e cartoes: um revisor humaniza cada item para fazer sentido sozinho. So reescreve o texto; gabarito e alternativas nao mudam.
+export function buildReviewPrompt(input: { kind: "QUIZ" | "FLASHCARDS"; lessonTitle: string; source: string; draft: string }) {
+  const isQuiz = input.kind === "QUIZ";
+  const task = isQuiz
+    ? 'Para cada questao, reescreva o contexto ("context", 1 a 3 frases, ate 5 linhas, que situam o assunto) e o enunciado ("q") para que a pergunta faca sentido completo para quem NAO viu a aula. Nao altere as alternativas, a ordem delas nem o indice correto; mantenha a mesma quantidade e ordem de questoes. Formato: {"questions":[{"context":"...","q":"..."}]}.'
+    : 'Para cada cartao, reescreva a pergunta ("q") e a resposta ("a") para que facam sentido completo para quem NAO viu a aula, mantendo o mesmo conteudo, a mesma quantidade e a mesma ordem. Formato: {"cards":[{"q":"...","a":"..."}]}.';
+
+  return {
+    system: `${BASE} Voce e um revisor editorial exigente. Receba o rascunho e o conteudo da aula e corrija tudo que seja confuso: perguntas com referencias soltas (uma letra, sigla, "ele", "o autor", "o professor", "na aula"), nomes que nao aparecem de forma clara no conteudo, trechos sem contexto ou frases truncadas. Troque cada referencia vaga pelo que ela e de fato, usando so o conteudo fornecido; se nao der para saber, reformule a pergunta sobre a ideia em si. ${task} Responda somente com JSON.`,
+    user: `Aula: ${input.lessonTitle}\n\nConteudo da aula:\n${input.source}\n\nRascunho:\n${input.draft}`,
+    json: true,
+  };
+}
 
 // Prova final do curso: parte dos titulos das aulas e de trechos do que cada uma ensina.
 export function buildExamPrompt(input: { courseTitle: string; lessons: Array<{ title: string; excerpt: string }> }) {

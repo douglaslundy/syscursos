@@ -66,14 +66,38 @@ describe("generateAiContent", () => {
 
     expect(good.ok && JSON.parse(good.item.content)).toEqual([{ q: "a?", a: "b" }]);
 
+    callProvider.mockClear();
+    db.aiUsage.create.mockClear();
     callProvider.mockResolvedValueOnce({ ok: true, text: "lixo", inputTokens: 10, outputTokens: 5, model: "m" });
     const bad = await generateAiContent({ ...ids, kind: "FLASHCARDS" });
 
     expect(bad).toEqual({ ok: false, error: "failed" });
-    expect(db.aiUsage.create).toHaveBeenCalledTimes(2);
+    expect(db.aiUsage.create).toHaveBeenCalledTimes(1);
   });
 
   const quizJson = JSON.stringify({ questions: [{ q: "Qual?", options: ["A", "B", "C", "D"], correct: 1, explanation: "Porque B." }] });
+
+  it("o crivo reescreve contexto e enunciado, mas preserva alternativas e gabarito; revisao quebrada mantem o rascunho", async () => {
+    const review = JSON.stringify({ questions: [{ context: "A tecnica X ajuda a respirar.", q: "Para que serve a tecnica X?", options: ["trocado", "x", "y", "z"], correct: 3 }] });
+
+    callProvider.mockReset();
+    callProvider.mockResolvedValueOnce({ ok: true, text: quizJson, inputTokens: 1, outputTokens: 1, model: "m" });
+    callProvider.mockResolvedValueOnce({ ok: true, text: review, inputTokens: 1, outputTokens: 1, model: "m" });
+
+    const fixed = await generateAiContent({ ...ids, kind: "QUIZ" });
+
+    expect(fixed.ok && JSON.parse(fixed.item.content).questions[0]).toEqual({ q: "Para que serve a tecnica X?", context: "A tecnica X ajuda a respirar.", options: ["A", "B", "C", "D"], correct: 1, explanation: "Porque B." });
+    expect(callProvider).toHaveBeenCalledTimes(2);
+    expect(callProvider.mock.calls[1][2].system).toContain("revisor editorial");
+
+    callProvider.mockReset();
+    callProvider.mockResolvedValueOnce({ ok: true, text: quizJson, inputTokens: 1, outputTokens: 1, model: "m" });
+    callProvider.mockResolvedValueOnce({ ok: false, reason: "failed" });
+
+    const kept = await generateAiContent({ ...ids, lessonId: "outra", kind: "QUIZ" });
+
+    expect(kept.ok && JSON.parse(kept.item.content).questions[0].q).toBe("Qual?");
+  });
 
   it("generates the quiz once, saves it for everyone and reuses it for the next student without spending tokens", async () => {
     callProvider.mockResolvedValue({ ok: true, text: quizJson, inputTokens: 500, outputTokens: 200, model: "m" });
