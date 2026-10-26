@@ -956,3 +956,7 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 
 - [x] Cadernos de cursos externos (`/app/notebooks/external`): aluno cria caderno com o nome do curso e grava aulas (titulo + transcricao e/ou resumo); cada aula tem resumo IA, flashcards, mapa mental, quiz e revisao espacada (agenda propria). Fora do cronograma. Edita/exclui caderno e aula.
 - [ ] Aplicar a migration `20261026120000_external_notebooks` no banco (nao aplicada; so `prisma generate`/`validate` rodados). Nao verificado no navegador logado nem com chave de IA real.
+
+- [x] Quiz: feedback por pergunta. Web: botao Responder confere a pergunta (certo/errado + resposta correta + explicacao) antes de avancar (quiz da aula, de curso e de caderno externo; prova final continua sem feedback). Agente: tool `check_answer`; o prompt manda abrir cada mensagem com o resultado da pergunta anterior.
+- [x] Agente: menu inicial (Atualizar resumos/quizzes/revisoes x Listar cursos em andamento); atualizar lista so cursos com aulas concluidas sem material gerado e permite gerar de todos ou de um curso. So prompt + `list_courses`/`generate_pending` existentes.
+- [ ] Re-colar o prompt no OpenClaw (mudou o menu inicial e o quiz com feedback por pergunta).

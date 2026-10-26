@@ -15,7 +15,7 @@ import {
   type LessonAiKind,
 } from "@/server/services/ai/ai-content-service";
 import { getActiveTechniques } from "@/server/services/ai/ai-settings-service";
-import { QUIZ_CARD_PREFIX, type QuizSubmitResult } from "@/server/services/quiz-service";
+import { QUIZ_CARD_PREFIX, revealAnswer, type AnswerReveal, type QuizSubmitResult } from "@/server/services/quiz-service";
 import { cardsOf, type ReviewCard } from "@/server/services/review-service";
 import { requireStudentProfileId } from "@/server/services/student-service";
 
@@ -218,6 +218,17 @@ const reviewData = (next: NextReview, now: Date) => ({
   dueAt: next.dueAt,
   lastReviewedAt: now,
 });
+
+export async function checkExternalQuizAnswer(input: { lessonId: string; index: number; choice: number }): Promise<AnswerReveal | null> {
+  if (!(await ownedLesson(input.lessonId))) return null;
+
+  const row = await prisma.externalAiContent.findUnique({
+    where: { lessonId_kind_technique: { lessonId: input.lessonId, kind: "QUIZ", technique: "" } },
+    select: { content: true },
+  });
+
+  return revealAnswer((row ? parseQuiz(row.content) : null)?.questions[input.index], input.choice);
+}
 
 // Corrige no servidor contra o quiz salvo e agenda as questoes na revisao (erro volta hoje).
 export async function submitExternalQuiz(input: { lessonId: string; answers: Array<number | null> }): Promise<QuizSubmitResult> {

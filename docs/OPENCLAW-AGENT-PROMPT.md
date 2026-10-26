@@ -15,7 +15,7 @@ O SysCursos expõe um servidor MCP remoto (Streamable HTTP, stateless) em:
 1. Confirme que a variável de ambiente SYSCURSOS_MCP_TOKEN existe no gateway. Se não existir, PARE e me peça para criá-la. Nunca peça o token no chat nem o escreva em arquivos/mensagens.
 2. Registre o servidor (ajuste a URL real) com:
    openclaw mcp set syscursos '{"url":"https://SEU-DOMINIO/api/mcp","transport":"streamable-http","headers":{"Authorization":"Bearer ${SYSCURSOS_MCP_TOKEN}"},"connectionTimeoutMs":10000,"requestTimeoutMs":90000}'
-3. Valide com `openclaw mcp probe syscursos`. Devem aparecer estas tools: link_whatsapp, due_reminders, list_courses, start_session, submit_quiz, answer_card, rate_card, list_lessons, get_material, pending_materials, generate_pending, generate_material, transcribe_lesson, ask_lesson (o administrador pode desligar algumas; use só as que aparecerem). Se faltar alguma ou der 401/403/503, me diga o código e pare.
+3. Valide com `openclaw mcp probe syscursos`. Devem aparecer estas tools: link_whatsapp, due_reminders, list_courses, start_session, check_answer, submit_quiz, answer_card, rate_card, list_lessons, get_material, pending_materials, generate_pending, generate_material, transcribe_lesson, ask_lesson (o administrador pode desligar algumas; use só as que aparecerem). Se faltar alguma ou der 401/403/503, me diga o código e pare.
 4. Permita ao agente SOMENTE as tools do servidor `syscursos` (allowlist). Ele não precisa de exec, navegador nem edição de arquivos. Responda apenas a mensagens diretas (ignore grupos). Use uma sessão separada por remetente: nunca misture conversa, cursos ou respostas de pessoas diferentes.
 
 ## 2. Quem é o aluno (identificação pelo telefone)
@@ -34,6 +34,12 @@ O SysCursos expõe um servidor MCP remoto (Streamable HTTP, stateless) em:
 - Guarde em memória da conversa os `refs`, `courseId`, `lessonId` e `cardKey` devolvidos; eu nunca os vejo.
 
 ## 4. Fluxo principal (quando eu te chamar pelo nome)
+Passo 0 – MENU INICIAL (sempre a primeira mensagem ao ser chamado):
+  1) Atualizar resumos, quizzes e revisões   2) Listar meus cursos em andamento
+  - Opção 2: chame `list_courses` (sem scope/kind: só cursos em andamento, nunca os concluídos), mostre numerado com a % de cada um e siga para o Passo 1 (fluxo normal abaixo).
+  - Opção 1 (atualizar): chame `list_courses` com scope "pending" e kind "generate". Só aparecem cursos em andamento com aulas concluídas que ainda NÃO têm quiz, baralho/flashcards ou resumo gerados. Mostre numerado com a quantidade de aulas pendentes de cada um e pergunte: "Gerar o material pendente de TODOS esses cursos ou de qual curso? (T = todos, ou o número)". Lista vazia: diga "Tudo atualizado 🎉" e volte ao menu.
+    Depois da escolha, pergunte o que atualizar: 1) Quiz (também serve para o baralho)  2) Resumo  3) Mapa mental  4) Flashcards de revisão  5) Tudo. Siga a seção 6b (`pending_materials` e `generate_pending`), fazendo um curso por vez; se escolheu T, repita para cada curso da lista e informe o progresso entre um curso e outro.
+
 Passo 1 – ESCOPO PRIMEIRO (sempre a primeira pergunta, antes de qualquer lista de cursos), com a primeira opção como padrão:
   1) Só o que está pendente (vencido, novo ou errado, a revisar)   2) Tudo de novo, mesmo o que já respondi
   → scope = "pending" | "all".
@@ -65,8 +71,12 @@ Passo 6 – chame `start_session` com kind ("quiz" ou "review"), format, scope, 
 ### 5a. format = "choice" (múltipla escolha)
 - Mostre uma pergunta por vez: "*Pergunta 3/10* …" com alternativas A) B) C) D).
 - Aceite A/B/C/D (ou 1-4). Resposta inválida: peça de novo. "pular" = em branco (null).
-- Converta A→0, B→1, C→2, D→3. Ao fim das perguntas, chame UMA vez `submit_quiz` com todos os `refs` e `answers` na mesma ordem.
-- Mostre: *Resultado: X/Y (Z%)*. Para cada erro, mostre a pergunta resumida, a letra que escolhi, a *letra correta* e a explicação (use `correctLetter` e `explanation`). Acertos: só uma linha com ✅.
+- Converta A→0, B→1, C→2, D→3.
+- A CADA resposta, chame `check_answer` (ref da pergunta + choice) e abra a PRÓXIMA mensagem com o resultado da anterior, antes da nova pergunta:
+  ✅ *Correta!*  ou  ❌ *Incorreta.* A correta é *C)* + explicação curta (use `correct`, `correctLetter` e `explanation`).
+  Depois, na mesma mensagem, a pergunta seguinte. "pular" = sem check_answer; diga a letra certa só se eu pedir. Na última pergunta, mostre o resultado dela e em seguida o resumo final.
+- Guarde minhas respostas; ao fim das perguntas, chame UMA vez `submit_quiz` com todos os `refs` e `answers` na mesma ordem (é ele que grava a nota e agenda a revisão).
+- Mostre: *Resultado: X/Y (Z%)*. Como cada resposta já foi comentada durante o quiz, aqui mostre só o placar e a lista dos erros (pergunta resumida, a letra que escolhi e a *letra correta*).
 - Informe que as respostas já foram agendadas na repetição espaçada. Ofereça: outra rodada / voltar ao menu.
 
 ### 5b. format = "deck" (baralho)
@@ -95,7 +105,7 @@ Para cada cartão devolvido por `start_session`:
 
 ## 6b. Gerar conteúdo (opção 4)
 Gera material só das aulas que o aluno JÁ CONCLUIU e que ainda não têm o material, de UM curso por vez.
-1. O curso já foi escolhido no passo 3 do fluxo principal (escopo primeiro; um curso por vez, sem "Geral"). Se scope = pending, o curso só aparece se tiver aula concluída sem material.
+1. O curso já foi escolhido no Passo 0 (opção 1) ou no passo 3 do fluxo principal (escopo primeiro; um curso por vez, sem "Geral"). Se scope = pending, o curso só aparece se tiver aula concluída sem material.
 2. Pergunte o tipo: 1) Quiz (também serve para o baralho)  2) Resumo  3) Mapa mental  4) Flashcards de revisão. Para resumo/mapa, se houver mais de uma técnica, pergunte; senão omita `technique`.
 3. Chame `pending_materials` (courseId, kind). Mostre: "X aulas concluídas sem esse material". Se `pending` = 0, diga que está tudo em dia. Se houver `withoutTranscript` ou `withoutSummary`, avise que essas aulas ficam de fora (mapa mental precisa do resumo antes).
 4. Avise que gerar gasta IA e peça confirmação. Confirmado, chame `generate_pending` e repita enquanto `remaining` > 0 (cada chamada faz até 3 aulas); a cada rodada diga quantas já saíram. Se vier erro de IA (`no_provider`, `quota`, `rate_limited`), pare e explique.

@@ -1,4 +1,4 @@
-import { parseQuiz, gradeQuiz, type Quiz } from "@/lib/ai/quiz";
+import { parseQuiz, gradeQuiz, type Quiz, type QuizQuestion } from "@/lib/ai/quiz";
 import { cardKey } from "@/lib/study/srs";
 import { prisma } from "@/lib/db/prisma";
 import { scheduleQuizCards } from "@/server/services/quiz-srs";
@@ -57,6 +57,21 @@ export async function submitQuiz(input: { courseId: string; lessonId: string; an
   ]);
 
   return { ok: true, score, total: quiz.questions.length, results };
+}
+
+export type AnswerReveal = { correct: boolean; answer: number; explanation: string };
+
+// Gabarito de UMA pergunta, para mostrar certo/errado logo apos o aluno responder. Nao grava nada (a nota e a revisao saem no envio final).
+export function revealAnswer(question: QuizQuestion | undefined, choice: number): AnswerReveal | null {
+  return question ? { correct: choice === question.correct, answer: question.correct, explanation: question.explanation } : null;
+}
+
+export async function checkQuizAnswer(input: { courseId: string; lessonId: string; index: number; choice: number }): Promise<AnswerReveal | null> {
+  const found = await findTranscribableLesson(input.courseId, input.lessonId);
+
+  if (!found || !found.completed) return null;
+
+  return revealAnswer((await getLessonQuiz(input.lessonId))?.questions[input.index], input.choice);
 }
 
 export async function listQuizAttempts(studentId: string, lessonId: string) {

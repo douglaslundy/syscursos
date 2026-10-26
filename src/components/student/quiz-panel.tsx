@@ -4,15 +4,19 @@ import { useEffect, useState, useTransition } from "react";
 
 import type { Quiz } from "@/lib/ai/quiz";
 import { Modal, buttonClass, primaryClass } from "@/components/student/study-modal";
-import type { QuizResult, QuizSubmitResult } from "@/server/services/quiz-service";
+import type { AnswerReveal, QuizResult, QuizSubmitResult } from "@/server/services/quiz-service";
 
 type QuizPanelProps = {
   quiz: Quiz;
   // Corrige no servidor (quiz da aula ou prova final).
   submit: (answers: Array<number | null>) => Promise<QuizSubmitResult>;
+  // Se vier, cada pergunta e conferida ao clicar em Responder (certo/errado + gabarito antes da proxima). Sem ele (prova final), so corrige no envio.
+  check?: (index: number, choice: number) => Promise<AnswerReveal | null>;
   passScore?: number;
   attempts: Array<{ score: number; total: number; createdAt: string }>;
 };
+
+type Reveal = AnswerReveal | "failed" | null;
 
 const errorText = {
   forbidden: "Voce nao tem acesso a esta aula.",
@@ -23,8 +27,9 @@ const errorText = {
 const letter = (index: number) => String.fromCharCode(65 + index);
 
 // Uma pergunta por vez (como slides); ao enviar, o resultado completo abre em um modal.
-export function QuizPanel({ quiz, submit: submitAnswers, passScore, attempts: initialAttempts }: QuizPanelProps) {
+export function QuizPanel({ quiz, submit: submitAnswers, check, passScore, attempts: initialAttempts }: QuizPanelProps) {
   const [answers, setAnswers] = useState<Array<number | null>>(() => quiz.questions.map(() => null));
+  const [reveals, setReveals] = useState<Reveal[]>(() => quiz.questions.map(() => null));
   const [current, setCurrent] = useState(0);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [resultOpen, setResultOpen] = useState(false);
@@ -37,10 +42,14 @@ export function QuizPanel({ quiz, submit: submitAnswers, passScore, attempts: in
   const best = attempts.reduce((max, attempt) => Math.max(max, attempt.score / attempt.total), 0);
   const question = quiz.questions[current];
   const isLast = current === total - 1;
+  const reveal = reveals[current];
+  const locked = reveal !== null;
+  // Com conferencia por pergunta, so avanca depois de Responder.
+  const canAdvance = !check || locked;
 
   // Teclas 1-4 respondem a pergunta que esta na tela.
   useEffect(() => {
-    if (result) return undefined;
+    if (result || locked) return undefined;
 
     const onKey = (event: KeyboardEvent) => {
       const option = Number(event.key) - 1;
@@ -53,7 +62,20 @@ export function QuizPanel({ quiz, submit: submitAnswers, passScore, attempts: in
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [result, current]);
+  }, [result, current, locked]);
+
+  function confirmAnswer() {
+    const choice = answers[current];
+
+    if (!check || choice === null) return;
+
+    setError(null);
+    startTransition(async () => {
+      const outcome = await check(current, choice);
+
+      setReveals((values) => values.map((value, position) => (position === current ? (outcome ?? "failed") : value)));
+    });
+  }
 
   function submit() {
     setError(null);
@@ -74,6 +96,7 @@ export function QuizPanel({ quiz, submit: submitAnswers, passScore, attempts: in
 
   function restart() {
     setAnswers(quiz.questions.map(() => null));
+    setReveals(quiz.questions.map(() => null));
     setCurrent(0);
     setResult(null);
     setResultOpen(false);
@@ -146,6 +169,7 @@ export function QuizPanel({ quiz, submit: submitAnswers, passScore, attempts: in
                 >
                   <input
                     checked={answers[current] === position}
+                    disabled={locked}
                     name={`q-${current}`}
                     onChange={() => setAnswers((values) => values.map((value, i) => (i === current ? position : value)))}
                     type="radio"
@@ -158,7 +182,16 @@ export function QuizPanel({ quiz, submit: submitAnswers, passScore, attempts: in
             </div>
           </fieldset>
 
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {reveal === "failed" ? <p className="text-sm text-copy-secondary">Nao foi possivel conferir esta pergunta agora. Siga em frente; ela sera corrigida no envio.</p> : null}
+          {reveal && reveal !== "failed" ? (
+            <div className={`rounded-md border p-3 text-sm ${reveal.correct ? "border-green-500/60" : "border-red-500/60"}`} role="status">
+              <p className="font-semibold text-copy-primary">
+                {reveal.correct ? "Resposta correta!" : `Resposta incorreta. A correta e ${letter(reveal.answer)}. ${question.options[reveal.answer]}`}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-copy-secondary">{reveal.explanation}</p>
+            </div>
+          ) : null}
+          {error ?<p className="text-sm text-destructive">{error}</p> : null}
           {isLast && answered < total ? (
             <p className="text-xs text-copy-muted">{total - answered} sem resposta. Elas contam como erradas.</p>
           ) : null}
@@ -166,13 +199,17 @@ export function QuizPanel({ quiz, submit: submitAnswers, passScore, attempts: in
             <button aria-label="Pergunta anterior" className={buttonClass} disabled={current === 0} onClick={() => setCurrent((value) => value - 1)} type="button">
               &larr;
             </button>
-            {isLast ? (
+            {check && !locked ? (
+              <button className={primaryClass} disabled={pending || answers[current] === null} onClick={confirmAnswer} type="button">
+                {pending ? "Conferindo..." : "Responder"}
+              </button>
+            ) : isLast ? (
               <button className={primaryClass} disabled={pending || answered === 0} onClick={submit} type="button">
                 {pending ? "Enviando..." : "Enviar respostas"}
               </button>
             ) : (
-              <button aria-label="Proxima pergunta" className={buttonClass} onClick={() => setCurrent((value) => value + 1)} type="button">
-                &rarr;
+              <button aria-label="Proxima pergunta" className={buttonClass} disabled={!canAdvance} onClick={() => setCurrent((value) => value + 1)} type="button">
+                Proxima &rarr;
               </button>
             )}
           </div>

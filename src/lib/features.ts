@@ -18,6 +18,7 @@ export const STUDENT_FEATURES: FeatureDef[] = [
 export const AGENT_FEATURES: FeatureDef[] = [
   ["list_courses", "Listar cursos"],
   ["start_session", "Iniciar quiz ou revisao"],
+  ["check_answer", "Conferir cada resposta do quiz na hora"],
   ["submit_quiz", "Enviar respostas do quiz"],
   ["answer_card", "Responder cartao do baralho"],
   ["rate_card", "Avaliar cartao do baralho"],

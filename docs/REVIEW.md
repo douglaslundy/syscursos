@@ -3563,3 +3563,9 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - Seguranca: dono do caderno checado em toda operacao; ids validados como uuid; limites de tamanho e quantidade; rate limit/AiUsage da IA reaproveitados.
 - Verificado: `prisma validate/generate`, `tsc`, 302 testes unitarios, eslint nos arquivos tocados. Nao verificado: telas no navegador (celular), migration no banco, geracao com IA real, `npm run build`.
 - Correcao de balanco lateral no celular: medido 360x740/390x844 nas rotas publicas sem overflow; telas autenticadas auditadas so por leitura de codigo (nao testadas no navegador).
+
+## Feedback por pergunta e menu inicial do agente (2026-10-26)
+
+- Onde: feedback e logica de servidor (SysCursos: `revealAnswer`, `checkQuizAnswer`, `checkCourseQuizAnswer`, `checkExternalQuizAnswer`, tool `check_answer`); menu inicial e conversa ficam no prompt do OpenClaw (`docs/OPENCLAW-AGENT-PROMPT.md`), sem codigo no OpenClaw.
+- Seguranca: o gabarito de UMA pergunta so sai depois de o aluno escolher e so para aula concluida / curso do aluno / caderno proprio; nada e gravado na checagem (nota e revisao saem no envio final). Prova final nao ganha feedback.
+- Verificado: tsc, lint, testes. Nao verificado: telas no navegador logado, fluxo real no OpenClaw/WhatsApp.

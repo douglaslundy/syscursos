@@ -2,7 +2,7 @@ import { parseQuiz, quizAnswerText, type Quiz, type QuizQuestion } from "@/lib/a
 import { prisma } from "@/lib/db/prisma";
 import { MAX_QUIZ_QUESTIONS, pickDueFirst } from "@/lib/study/quiz-pick";
 import { cardKey } from "@/lib/study/srs";
-import { QUIZ_CARD_PREFIX, type QuizResult, type QuizSubmitResult } from "@/server/services/quiz-service";
+import { QUIZ_CARD_PREFIX, revealAnswer, type AnswerReveal, type QuizResult, type QuizSubmitResult } from "@/server/services/quiz-service";
 import { scheduleQuizCards } from "@/server/services/quiz-srs";
 import type { ReviewCard } from "@/server/services/review-service";
 import { requireStudentProfileId } from "@/server/services/student-service";
@@ -159,6 +159,19 @@ export async function startCourseDeck(courseId: string | null, count: number, op
       isNew: drawn.isNew(item),
     })),
   };
+}
+
+export async function checkCourseQuizAnswer(input: { ref: QuizRef; choice: number }): Promise<AnswerReveal | null> {
+  const studentId = await requireStudentProfileId();
+
+  if (!(await listAvailableCourses(studentId)).some((course) => course.id === input.ref.courseId)) return null;
+
+  const bank = await loadBank(studentId, [input.ref.courseId]);
+  const item = Array.from(bank.values())
+    .flatMap((entry) => entry.items)
+    .find((candidate) => candidate.courseId === input.ref.courseId && candidate.lessonId === input.ref.lessonId && candidate.key === input.ref.key);
+
+  return revealAnswer(item?.question, input.choice);
 }
 
 // Corrige no servidor contra o banco, grava uma tentativa por curso e agenda todas as questoes na repeticao espacada.

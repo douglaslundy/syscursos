@@ -9,7 +9,7 @@ import { issueCertificate } from "@/server/services/certificate-service";
 import { ensureCourseExam, submitExam, type ExamError } from "@/server/services/exam-service";
 import { addBookmark, removeBookmark, savePosition } from "@/server/services/bookmark-service";
 import { reviewCard } from "@/server/services/review-service";
-import { submitQuiz, type QuizSubmitResult } from "@/server/services/quiz-service";
+import { checkQuizAnswer, submitQuiz, type AnswerReveal, type QuizSubmitResult } from "@/server/services/quiz-service";
 import { savePlaybackRate, recordStudyTime, saveWeeklyGoal } from "@/server/services/study-stats-service";
 
 const quizSchema = z.object({
@@ -28,6 +28,14 @@ export async function submitQuizAction(input: z.infer<typeof quizSchema>): Promi
   if (result.ok) revalidatePath("/app/review");
 
   return result;
+}
+
+const checkSchema = z.object({ courseId: z.string().uuid(), lessonId: z.string().uuid(), index: z.number().int().min(0).max(39), choice: z.number().int().min(0).max(3) });
+
+export async function checkQuizAction(input: z.infer<typeof checkSchema>): Promise<AnswerReveal | null> {
+  const parsed = checkSchema.safeParse(input);
+
+  return parsed.success ? checkQuizAnswer(parsed.data) : null;
 }
 
 const reviewSchema = z.object({

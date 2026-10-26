@@ -11,8 +11,8 @@ import { parseQuiz } from "@/lib/ai/quiz";
 import { SUMMARY_TECHNIQUES, getTechnique, type SummaryTechniqueId } from "@/lib/ai/techniques";
 import { cardKey } from "@/lib/study/srs";
 import { generateAiContentAction } from "@/server/actions/ai-actions";
-import { generateExternalAiAction, reviewExternalCardAction, submitExternalQuizAction } from "@/server/actions/external-notebook-actions";
-import { reviewCardAction, submitQuizAction } from "@/server/actions/study-actions";
+import { checkExternalQuizAction, generateExternalAiAction, reviewExternalCardAction, submitExternalQuizAction } from "@/server/actions/external-notebook-actions";
+import { checkQuizAction, reviewCardAction, submitQuizAction } from "@/server/actions/study-actions";
 import type { AiGenerateError, AiItem } from "@/server/services/ai/ai-content-service";
 
 type LessonStudyToolsProps = {
@@ -369,7 +369,12 @@ export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, tech
           {pending ? <p className="text-sm text-copy-secondary">Gerando o quiz... pode levar alguns segundos.</p> : null}
           {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
           {quiz ? (
-            <QuizPanel attempts={quizAttempts} quiz={quiz} submit={(answers) => (external ? submitExternalQuizAction({ lessonId, answers }) : submitQuizAction({ courseId, lessonId, answers }))} />
+            <QuizPanel
+              attempts={quizAttempts}
+              check={(index, choice) => (external ? checkExternalQuizAction({ lessonId, index, choice }) : checkQuizAction({ courseId, lessonId, index, choice }))}
+              quiz={quiz}
+              submit={(answers) => (external ? submitExternalQuizAction({ lessonId, answers }) : submitQuizAction({ courseId, lessonId, answers }))}
+            />
           ) : !pending ? (
             <>
               <p className="mb-3 text-sm text-copy-secondary">

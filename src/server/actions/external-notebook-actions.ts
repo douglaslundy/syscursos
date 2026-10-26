@@ -7,6 +7,7 @@ import { MAX_EXTERNAL_TEXT } from "@/lib/external-notebook";
 import type { AiGenerateResult } from "@/server/services/ai/ai-content-service";
 import {
   addExternalLesson,
+  checkExternalQuizAnswer,
   createExternalNotebook,
   deleteExternalLesson,
   deleteExternalNotebook,
@@ -17,7 +18,7 @@ import {
   updateExternalLesson,
   type ExternalResult,
 } from "@/server/services/external-notebook-service";
-import type { QuizSubmitResult } from "@/server/services/quiz-service";
+import type { AnswerReveal, QuizSubmitResult } from "@/server/services/quiz-service";
 
 const uuid = z.string().uuid();
 const BASE = "/app/notebooks";
@@ -105,6 +106,14 @@ export async function generateExternalAiAction(input: z.infer<typeof generateSch
 }
 
 const quizSchema = z.object({ lessonId: uuid, answers: z.array(z.number().int().min(0).max(3).nullable()).min(1).max(40) });
+
+const checkSchema = z.object({ lessonId: uuid, index: z.number().int().min(0).max(39), choice: z.number().int().min(0).max(3) });
+
+export async function checkExternalQuizAction(input: z.infer<typeof checkSchema>): Promise<AnswerReveal | null> {
+  const parsed = checkSchema.safeParse(input);
+
+  return parsed.success ? checkExternalQuizAnswer(parsed.data) : null;
+}
 
 export async function submitExternalQuizAction(input: z.infer<typeof quizSchema>): Promise<QuizSubmitResult> {
   const parsed = quizSchema.safeParse(input);

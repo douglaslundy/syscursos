@@ -4,7 +4,7 @@ import { matchAnswer, suggestGrade } from "@/lib/study/answer-match";
 import { DEFAULT_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
 import { generateAiContent, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { askLessonChat } from "@/server/services/ai/chat-service";
-import { countPendingQuizByCourse, startCourseDeck, startCourseQuiz, submitCourseQuiz } from "@/server/services/course-quiz-service";
+import { checkCourseQuizAnswer, countPendingQuizByCourse, startCourseDeck, startCourseQuiz, submitCourseQuiz } from "@/server/services/course-quiz-service";
 import { countPendingMaterials, countPendingGenerationByCourse, generatePendingMaterials } from "@/server/services/material-queue-service";
 import { isFeatureEnabled } from "@/server/services/feature-service";
 import { findReviewCard, getReviewQueue, reviewCard, type ReviewCard } from "@/server/services/review-service";
@@ -36,6 +36,7 @@ const startSession = z.object({
   courseId: id.optional(),
   count,
 });
+const checkAnswer = z.object({ ref, choice: z.number().int().min(0).max(3) });
 const submitQuiz = z.object({ refs: z.array(ref).min(1).max(100), answers: z.array(z.number().int().min(0).max(3).nullable()).min(1).max(100) });
 const answerCard = cardRef.extend({ userAnswer: z.string().max(4000) });
 const rateCard = cardRef.extend({ grade: z.enum(["again", "hard", "good", "easy"]) });
@@ -132,6 +133,17 @@ export const AGENT_TOOLS: AgentTool[] = [
     },
     schema: startSession,
     run: runStartSession,
+  },
+  {
+    name: "check_answer",
+    description: "Quiz de múltipla escolha: confere UMA resposta logo depois que o aluno responde. Envie o ref da pergunta (de start_session) e choice (0-3 = A-D). Devolve correct, correctLetter e explanation para mostrar junto da próxima pergunta. Não grava nada: no fim, envie tudo com submit_quiz.",
+    inputSchema: { type: "object", properties: { ref: { type: "object", properties: { courseId: uuid, lessonId: uuid, key: { type: "string" } }, required: ["courseId", "lessonId", "key"] }, choice: { type: "integer", minimum: 0, maximum: 3 } }, required: ["ref", "choice"] },
+    schema: checkAnswer,
+    run: async (args: z.infer<typeof checkAnswer>) => {
+      const reveal = await checkCourseQuizAnswer(args);
+
+      return reveal ? ok({ correct: reveal.correct, correctLetter: LETTERS[reveal.answer], explanation: reveal.explanation }) : fail("not_found");
+    },
   },
   {
     name: "submit_quiz",

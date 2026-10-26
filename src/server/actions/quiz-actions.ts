@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { MAX_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
-import { startCourseDeck, startCourseQuiz, submitCourseQuiz, type StartCourseDeckResult, type StartCourseQuizResult } from "@/server/services/course-quiz-service";
-import type { QuizSubmitResult } from "@/server/services/quiz-service";
+import { checkCourseQuizAnswer, startCourseDeck, startCourseQuiz, submitCourseQuiz, type StartCourseDeckResult, type StartCourseQuizResult } from "@/server/services/course-quiz-service";
+import type { AnswerReveal, QuizSubmitResult } from "@/server/services/quiz-service";
 
 // courseId ausente = todos os cursos do aluno, misturados.
 const startSchema = z.object({ courseId: z.string().uuid().optional(), count: z.number().int().min(1).max(MAX_QUIZ_QUESTIONS) });
@@ -39,6 +39,14 @@ export async function submitCourseQuizAction(input: z.infer<typeof submitSchema>
   }
 
   return result;
+}
+
+const checkSchema = z.object({ ref: submitSchema.shape.refs.element, choice: z.number().int().min(0).max(3) });
+
+export async function checkCourseQuizAction(input: z.infer<typeof checkSchema>): Promise<AnswerReveal | null> {
+  const parsed = checkSchema.safeParse(input);
+
+  return parsed.success ? checkCourseQuizAnswer(parsed.data) : null;
 }
 
 // Os quizzes sao lidos do banco a cada acesso; isto descarta o cache das paginas para trazer o que outros alunos geraram agora.

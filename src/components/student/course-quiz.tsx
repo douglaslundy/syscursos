@@ -8,7 +8,7 @@ import { ReviewSession } from "@/components/student/review-session";
 import { Modal, buttonClass, primaryClass } from "@/components/student/study-modal";
 import type { Quiz } from "@/lib/ai/quiz";
 import { DEFAULT_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
-import { refreshCourseQuizAction, startCourseDeckAction, startCourseQuizAction, submitCourseQuizAction } from "@/server/actions/quiz-actions";
+import { checkCourseQuizAction, refreshCourseQuizAction, startCourseDeckAction, startCourseQuizAction, submitCourseQuizAction } from "@/server/actions/quiz-actions";
 import type { QuizRef } from "@/server/services/course-quiz-service";
 import type { ReviewCard } from "@/server/services/review-service";
 
@@ -132,6 +132,7 @@ export function CourseQuiz({ courseId, courseTitle, questions }: CourseQuizProps
           ) : (
             <QuizPanel
               attempts={[]}
+              check={(index, choice) => checkCourseQuizAction({ ref: session.refs[index], choice })}
               key={session.id}
               quiz={session.quiz}
               submit={(answers) => submitCourseQuizAction({ refs: session.refs, answers })}

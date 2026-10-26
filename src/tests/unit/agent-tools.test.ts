@@ -5,6 +5,7 @@ const svc = vi.hoisted(() => ({
   startQuiz: vi.fn(),
   startDeck: vi.fn(),
   submit: vi.fn(),
+  check: vi.fn(),
   queue: vi.fn(),
   findCard: vi.fn(),
   review: vi.fn(),
@@ -13,7 +14,7 @@ const svc = vi.hoisted(() => ({
 }));
 
 vi.mock("@/server/services/student-service", () => ({ getStudentDashboard: svc.dashboard, getStudentCourse: vi.fn() }));
-vi.mock("@/server/services/course-quiz-service", () => ({ startCourseQuiz: svc.startQuiz, startCourseDeck: svc.startDeck, submitCourseQuiz: svc.submit }));
+vi.mock("@/server/services/course-quiz-service", () => ({ startCourseQuiz: svc.startQuiz, startCourseDeck: svc.startDeck, submitCourseQuiz: svc.submit, checkCourseQuizAnswer: svc.check }));
 vi.mock("@/server/services/review-service", () => ({ getReviewQueue: svc.queue, findReviewCard: svc.findCard, reviewCard: svc.review }));
 vi.mock("@/server/services/ai/ai-content-service", () => ({ generateAiContent: svc.generate, listLessonAiItems: vi.fn() }));
 vi.mock("@/server/services/ai/chat-service", () => ({ askLessonChat: svc.chat }));
@@ -109,6 +110,18 @@ describe("agent tools", () => {
     const result = await callAgentTool("submit_quiz", { refs: [{ courseId: C, lessonId: L, key: "a" }, { courseId: C, lessonId: L, key: "b" }], answers: [1, null] });
 
     expect(result).toMatchObject({ ok: true, data: { score: 1, total: 2, percent: 50, results: [{ correct: true }, { correct: false, correctLetter: "D", explanation: "e2" }] } });
+  });
+
+  it("check_answer confere uma resposta e devolve a letra certa e a explicação", async () => {
+    svc.check.mockResolvedValue({ correct: false, answer: 2, explanation: "porque sim" });
+
+    const ref = { courseId: C, lessonId: L, key: "a" };
+
+    expect(await callAgentTool("check_answer", { ref, choice: 0 })).toMatchObject({ ok: true, data: { correct: false, correctLetter: "C", explanation: "porque sim" } });
+    expect(svc.check).toHaveBeenCalledWith({ ref, choice: 0 });
+
+    svc.check.mockResolvedValue(null);
+    expect(await callAgentTool("check_answer", { ref, choice: 0 })).toEqual({ ok: false, error: "not_found" });
   });
 
   it("answer_card compara a resposta digitada e sugere a nota", async () => {
