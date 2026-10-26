@@ -73,19 +73,26 @@ export async function generatePendingMaterials(courseId: string, kind: MaterialK
   return { generated, failed, remaining: Math.max(0, found.ready.length - generated.length - failed.length) };
 }
 
+const GENERATED_LABEL: Record<string, string> = { QUIZ: "quiz", SUMMARY: "resumo", FLASHCARDS: "flashcards" };
+
 // Aulas concluidas, com transcricao, que ainda nao tem quiz, resumo ou flashcards, por curso (so cursos com pendencia).
-export async function countPendingGenerationByCourse(): Promise<Map<string, number>> {
+// Cada aula traz o que falta nela; aulas com tudo gerado nao aparecem.
+export async function pendingGenerationByCourse(): Promise<Map<string, Array<{ title: string; missing: string[] }>>> {
   const studentId = await requireStudentProfileId();
   const courseIds = (await listAvailableCourses(studentId)).map((course) => course.id);
   const lessons = await prisma.lesson.findMany({
     where: { status: "ACTIVE", transcript: { not: null }, module: { courseId: { in: courseIds }, status: "ACTIVE" }, progress: { some: { studentId, status: "COMPLETED" } } },
-    select: { module: { select: { courseId: true } }, aiContents: { where: { kind: { in: ["QUIZ", "SUMMARY", "FLASHCARDS"] } }, select: { kind: true } } },
+    orderBy: [{ module: { position: "asc" } }, { position: "asc" }],
+    select: { title: true, module: { select: { courseId: true } }, aiContents: { where: { kind: { in: ["QUIZ", "SUMMARY", "FLASHCARDS"] } }, select: { kind: true } } },
   });
-  const counts = new Map<string, number>();
+  const byCourse = new Map<string, Array<{ title: string; missing: string[] }>>();
 
   for (const lesson of lessons) {
-    if (new Set(lesson.aiContents.map((row) => row.kind)).size < 3) counts.set(lesson.module.courseId, (counts.get(lesson.module.courseId) ?? 0) + 1);
+    const have = new Set(lesson.aiContents.map((row) => row.kind as string));
+    const missing = Object.keys(GENERATED_LABEL).filter((kind) => !have.has(kind)).map((kind) => GENERATED_LABEL[kind]);
+
+    if (missing.length > 0) byCourse.set(lesson.module.courseId, [...(byCourse.get(lesson.module.courseId) ?? []), { title: lesson.title, missing }]);
   }
 
-  return counts;
+  return byCourse;
 }

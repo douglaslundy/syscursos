@@ -960,3 +960,5 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [x] Quiz: feedback por pergunta. Web: botao Responder confere a pergunta (certo/errado + resposta correta + explicacao) antes de avancar (quiz da aula, de curso e de caderno externo; prova final continua sem feedback). Agente: tool `check_answer`; o prompt manda abrir cada mensagem com o resultado da pergunta anterior.
 - [x] Agente: menu inicial (Atualizar resumos/quizzes/revisoes x Listar cursos em andamento); atualizar lista so cursos com aulas concluidas sem material gerado e permite gerar de todos ou de um curso. So prompt + `list_courses`/`generate_pending` existentes.
 - [ ] Re-colar o prompt no OpenClaw (mudou o menu inicial e o quiz com feedback por pergunta).
+
+- [x] Agente, "Atualizar": `list_courses` kind generate agora devolve `pendingLessons` (so aulas concluidas com algo por gerar + o que falta); prompt proibe listar aulas ja resolvidas ou usar list_lessons nesse passo. Re-colar o prompt no OpenClaw.

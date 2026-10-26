@@ -5,7 +5,7 @@ import { DEFAULT_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
 import { generateAiContent, listLessonAiItems } from "@/server/services/ai/ai-content-service";
 import { askLessonChat } from "@/server/services/ai/chat-service";
 import { checkCourseQuizAnswer, countPendingQuizByCourse, startCourseDeck, startCourseQuiz, submitCourseQuiz } from "@/server/services/course-quiz-service";
-import { countPendingMaterials, countPendingGenerationByCourse, generatePendingMaterials } from "@/server/services/material-queue-service";
+import { countPendingMaterials, pendingGenerationByCourse, generatePendingMaterials } from "@/server/services/material-queue-service";
 import { isFeatureEnabled } from "@/server/services/feature-service";
 import { findReviewCard, getReviewQueue, reviewCard, type ReviewCard } from "@/server/services/review-service";
 import { getStudentCourse, getStudentDashboard } from "@/server/services/student-service";
@@ -50,7 +50,7 @@ const ask = lessonRef.extend({ question: z.string().min(3).max(2000) });
 // Quantidade pendente por curso para o menu de cursos do agente (so aulas concluidas entram).
 async function pendingCounts(kind: "quiz" | "review" | "material" | "generate", courses: Array<{ id: string; progress: { completedLessons: number } }>) {
   if (kind === "quiz") return countPendingQuizByCourse();
-  if (kind === "generate") return countPendingGenerationByCourse();
+  if (kind === "generate") return new Map(Array.from(await pendingGenerationByCourse(), ([course, lessons]) => [course, lessons.length]));
   if (kind === "material") return new Map(courses.map((course) => [course.id, course.progress.completedLessons]));
 
   const queue = await getReviewQueue();
@@ -111,7 +111,9 @@ export const AGENT_TOOLS: AgentTool[] = [
       if (!args.scope || !args.kind) return ok({ courses: available.filter((course) => args.includeFinished || course.progress.percentage < 100).map((course) => shape(course)) });
 
       const counts = await pendingCounts(args.kind, available);
-      const list = available.map((course) => shape(course, counts.get(course.id) ?? 0));
+      // Em "generate" cada curso traz SÓ as aulas concluídas com algo por gerar (e o que falta), nunca todas as aulas.
+      const lessonsByCourse = args.kind === "generate" ? await pendingGenerationByCourse() : new Map<string, Array<{ title: string; missing: string[] }>>();
+      const list = available.map((course) => ({ ...shape(course, counts.get(course.id) ?? 0), ...(args.kind === "generate" ? { pendingLessons: (lessonsByCourse.get(course.id) ?? []).slice(0, 20) } : {}) }));
 
       return ok({ scope: args.scope, courses: args.scope === "all" ? list : list.filter((course) => (course.pending ?? 0) > 0) });
     },

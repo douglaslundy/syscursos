@@ -11,6 +11,7 @@ const svc = vi.hoisted(() => ({
   review: vi.fn(),
   generate: vi.fn(),
   chat: vi.fn(),
+  pendingGen: vi.fn(),
 }));
 
 vi.mock("@/server/services/student-service", () => ({ getStudentDashboard: svc.dashboard, getStudentCourse: vi.fn() }));
@@ -18,6 +19,7 @@ vi.mock("@/server/services/course-quiz-service", () => ({ startCourseQuiz: svc.s
 vi.mock("@/server/services/review-service", () => ({ getReviewQueue: svc.queue, findReviewCard: svc.findCard, reviewCard: svc.review }));
 vi.mock("@/server/services/ai/ai-content-service", () => ({ generateAiContent: svc.generate, listLessonAiItems: vi.fn() }));
 vi.mock("@/server/services/ai/chat-service", () => ({ askLessonChat: svc.chat }));
+vi.mock("@/server/services/material-queue-service", () => ({ pendingGenerationByCourse: svc.pendingGen, countPendingMaterials: vi.fn(), generatePendingMaterials: vi.fn() }));
 vi.mock("@/server/services/transcript-service", () => ({ findTranscribableLesson: vi.fn(), generateLessonTranscript: vi.fn() }));
 
 import { AGENT_TOOLS, callAgentTool } from "@/server/agent/agent-tools";
@@ -52,6 +54,18 @@ describe("agent tools", () => {
 
     expect(await callAgentTool("list_courses", { scope: "pending", kind: "review" })).toMatchObject({ data: { courses: [{ courseId: "b", pending: 2 }, { courseId: "d", pending: 1 }] } });
     expect(await callAgentTool("list_courses", { scope: "all", kind: "review" })).toMatchObject({ data: { courses: [{ courseId: "a", pending: 0 }, { courseId: "b" }, { courseId: "d" }] } });
+  });
+
+  it("list_courses generate lista só as aulas pendentes de cada curso, com o que falta", async () => {
+    const card = (id: string) => ({ id, title: `Curso ${id}`, enrollmentStatus: "AVAILABLE", progress: { completedLessons: 5, totalLessons: 10, percentage: 50 } });
+
+    svc.dashboard.mockResolvedValue({ courses: [card("a"), card("b")] });
+    svc.pendingGen.mockResolvedValue(new Map([["a", [{ title: "Aula 3", missing: ["quiz", "resumo"] }]]]));
+
+    const result = await callAgentTool("list_courses", { scope: "pending", kind: "generate" });
+
+    expect(result).toMatchObject({ data: { courses: [{ courseId: "a", pending: 1, pendingLessons: [{ title: "Aula 3", missing: ["quiz", "resumo"] }] }] } });
+    expect((result as { data: { courses: unknown[] } }).data.courses).toHaveLength(1);
   });
 
   it("start_session quiz de múltipla escolha esconde o gabarito e usa só pendentes", async () => {
