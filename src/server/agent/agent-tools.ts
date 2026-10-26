@@ -144,7 +144,8 @@ export const AGENT_TOOLS: AgentTool[] = [
     run: async (args: z.infer<typeof checkAnswer>) => {
       const reveal = await checkCourseQuizAnswer(args);
 
-      return reveal ? ok({ correct: reveal.correct, correctLetter: LETTERS[reveal.answer], explanation: reveal.explanation }) : fail("not_found");
+      // Sem gabarito = a pergunta da sessão não existe mais (quiz regenerado depois do start_session): sessão desatualizada.
+      return reveal ? ok({ correct: reveal.correct, correctLetter: LETTERS[reveal.answer], explanation: reveal.explanation }) : fail("stale_session");
     },
   },
   {
@@ -162,7 +163,7 @@ export const AGENT_TOOLS: AgentTool[] = [
     run: async (args: z.infer<typeof submitQuiz>) => {
       const result = await submitCourseQuiz(args);
 
-      if (!result.ok) return fail(result.error);
+      if (!result.ok) return fail(result.error === "invalid" ? "stale_session" : result.error);
 
       return ok({
         score: result.score,

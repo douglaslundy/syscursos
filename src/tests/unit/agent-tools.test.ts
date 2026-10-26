@@ -135,7 +135,7 @@ describe("agent tools", () => {
     expect(svc.check).toHaveBeenCalledWith({ ref, choice: 0 });
 
     svc.check.mockResolvedValue(null);
-    expect(await callAgentTool("check_answer", { ref, choice: 0 })).toEqual({ ok: false, error: "not_found" });
+    expect(await callAgentTool("check_answer", { ref, choice: 0 })).toEqual({ ok: false, error: "stale_session" });
   });
 
   it("answer_card compara a resposta digitada e sugere a nota", async () => {
