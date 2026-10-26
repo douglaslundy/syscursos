@@ -134,7 +134,9 @@ export async function startCourseQuiz(courseId: string | null, count: number, op
 
   if (!drawn.ok) return drawn;
 
-  return { ok: true, quiz: { questions: drawn.picked.map((item) => item.question) }, refs: drawn.picked.map(({ courseId: course, lessonId, key }) => ({ courseId: course, lessonId, key })) };
+  const titles = new Map(drawn.courses.map((course) => [course.id, course.title]));
+
+  return { ok: true, quiz: { questions: drawn.picked.map((item) => ({ ...item.question, source: `${titles.get(item.courseId) ?? ""} - ${item.lessonTitle}` })) }, refs: drawn.picked.map(({ courseId: course, lessonId, key }) => ({ courseId: course, lessonId, key })) };
 }
 
 // Mesmas perguntas em formato de baralho (frente = pergunta, verso = resposta); a nota de cada cartao agenda a revisao.

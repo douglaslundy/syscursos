@@ -24,6 +24,8 @@ type LessonStudyToolsProps = {
   techniques: SummaryTechniqueId[];
   initialItems: AiItem[];
   quizAttempts: Array<{ score: number; total: number; createdAt: string }>;
+  // "Curso - Aula" mostrado na frente de cada pergunta do quiz.
+  sourceLabel?: string;
 };
 
 type Panel = "summary" | "flashcards" | "mindmap" | "quiz" | null;
@@ -195,7 +197,7 @@ function MindMap({ content }: { content: string }) {
   );
 }
 
-export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, techniques, initialItems, quizAttempts }: LessonStudyToolsProps) {
+export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, techniques, initialItems, quizAttempts, sourceLabel }: LessonStudyToolsProps) {
   const [items, setItems] = useState(initialItems);
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -237,7 +239,8 @@ export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, tech
   const summary = selected ? find("SUMMARY", selected) : undefined;
   const mindmap = selected ? find("MINDMAP", selected) : undefined;
   const quizItem = find("QUIZ");
-  const quiz = quizItem ? parseQuiz(quizItem.content) : null;
+  const parsedQuiz = quizItem ? parseQuiz(quizItem.content) : null;
+  const quiz = parsedQuiz && sourceLabel ? { questions: parsedQuiz.questions.map((question) => ({ ...question, source: sourceLabel })) } : parsedQuiz;
   const flashcards = find("FLASHCARDS");
   const cards = flashcards ? parseFlashcards(flashcards.content) : null;
   const label = (id: string) => SUMMARY_TECHNIQUES.find((item) => item.id === id)?.label ?? id;

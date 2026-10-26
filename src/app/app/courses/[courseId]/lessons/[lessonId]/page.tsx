@@ -187,6 +187,7 @@ export default async function StudentLessonPage(props: { params: Promise<Student
           initialItems={aiItems}
           lessonId={lessonId}
           quizAttempts={quizAttempts}
+          sourceLabel={`${data.lesson.module.course.title} - ${data.lesson.title}`}
           techniques={ai.techniques}
         />
       ) : null}

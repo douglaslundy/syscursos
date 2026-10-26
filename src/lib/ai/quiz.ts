@@ -1,5 +1,6 @@
+// source: "Curso - Aula" de onde a questao saiu; so para exibir (nao e gravado no quiz).
 // context: contexto curto (ate ~5 linhas) que antecede o enunciado, para a pergunta fazer sentido sem ter lido o resumo. Opcional (quizzes antigos nao tem).
-export type QuizQuestion = { q: string; options: string[]; correct: number; explanation: string; context?: string };
+export type QuizQuestion = { q: string; options: string[]; correct: number; explanation: string; context?: string; source?: string };
 export type Quiz = { questions: QuizQuestion[] };
 
 const OPTIONS = 4;

@@ -33,7 +33,7 @@ export default async function ExternalLessonPage(props: { params: Promise<{ note
         </Link>
         <DeleteLessonButton lessonId={lesson.id} notebookId={notebookId} />
       </div>
-      <LessonStudyTools aiEnabled={ai.enabled} courseId="" external initialItems={items} lessonId={lesson.id} quizAttempts={[]} techniques={ai.techniques} />
+      <LessonStudyTools aiEnabled={ai.enabled} courseId="" external initialItems={items} lessonId={lesson.id} quizAttempts={[]} sourceLabel={`${lesson.notebook.title} - ${lesson.title}`} techniques={ai.techniques} />
       {lesson.summary ? (
         <div className="mt-6 rounded-md border bg-card p-5">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">Resumo gravado</h2>

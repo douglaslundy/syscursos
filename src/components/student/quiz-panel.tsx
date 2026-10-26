@@ -141,6 +141,10 @@ export function QuizPanel({ quiz, submit: submitAnswers, check, passScore, attem
       ) : (
         <>
           <div>
+            <p className="text-sm font-semibold text-copy-primary">
+              {current + 1}/{total}
+              {question.source ? ` - ${question.source}` : ""}
+            </p>
             <p className="text-xs text-copy-muted">
               Pergunta {current + 1} de {total} - {answered} respondidas. Dica: as teclas 1 a 4 respondem.
               {attempts.length > 0 ? ` Melhor nota: ${Math.round(best * 100)}%.` : ""}
