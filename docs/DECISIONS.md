@@ -1741,3 +1741,11 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 - Notas do baralho sao as 4 do SM-2 (again/hard/good/easy = Errei/Dificil/Bom/Facil); nao existem "muito facil/muito dificil".
 - `startCourseQuiz/startCourseDeck` ganharam `{ onlyDue }` (so vencidos/novos; erro `none_pending`). Sem ele (scope "all") o sorteio ja prioriza vencidos e completa com os ja respondidos.
 - Token da gateway unico: revogar = trocar a variavel (e atualizar no OpenClaw).
+
+## Cadernos de cursos externos (2026-10-26)
+- Modelos proprios (`ExternalNotebook`, `ExternalLesson`, `ExternalAiContent`, `ExternalCardReview`) em vez de reaproveitar `Course/Lesson`: `LessonAiContent`, `FlashcardReview` e `QuizAttempt` tem FK para `Lesson`, e curso externo nao tem matricula, video nem cronograma. O material de IA e por aluno (nao compartilhado) porque o texto e do proprio aluno.
+- Fonte da IA: transcricao; sem ela, o resumo. Ao mudar o texto-fonte, material gerado e cartoes da aula sao apagados (ficariam desatualizados).
+- Reuso: `callAndRecord` (extraido de `runGenerate`) aplica provedor ativo, limite de 5 chamadas/min por aluno e registro em `AiUsage` (courseId nulo); `LessonStudyTools` e `ReviewSession` ganharam a prop `external`. PDF nao existe para aula externa.
+- Autorizacao no servidor: toda aula e lida via `notebook.studentId = aluno logado`; entradas validadas com zod (titulo 2-150/200, texto ate 150 mil caracteres, 50 cadernos por aluno, 300 aulas por caderno).
+- Feature flag: nenhuma nova; as rotas ficam sob `/app/notebooks` e herdam `requireFeature("notebooks")`.
+- Quiz externo agenda as questoes na revisao externa, mas nao guarda tentativas (sem historico de notas). Revisao externa e uma fila separada de `/app/review`.

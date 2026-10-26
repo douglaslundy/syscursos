@@ -95,13 +95,13 @@ model Organization {
 }
 
 model StudentProfile {
-  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId                String              @unique @map("user_id") @db.Uuid
-  document              String?             @unique @db.VarChar(32)
-  phone                 String?             @db.VarChar(32)
-  createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId                String               @unique @map("user_id") @db.Uuid
+  document              String?              @unique @db.VarChar(32)
+  phone                 String?              @db.VarChar(32)
+  createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user                  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   enrollments           Enrollment[]
   notes                 LessonNote[]
   progress              LessonProgress[]
@@ -118,23 +118,25 @@ model StudentProfile {
   certificates          Certificate[]
   questions             LessonQuestion[]
   playlists             Playlist[]
-  weeklyGoalMinutes     Int                 @default(0) @map("weekly_goal_minutes")
+  externalNotebooks     ExternalNotebook[]
+  externalCardReviews   ExternalCardReview[]
+  weeklyGoalMinutes     Int                  @default(0) @map("weekly_goal_minutes")
   // WhatsApp vinculado ao agente (OpenClaw). O codigo de vinculo e guardado so como hash e vale por poucos minutos.
-  whatsappPhone         String?             @unique @map("whatsapp_phone") @db.VarChar(20)
-  whatsappCodeHash      String?             @unique @map("whatsapp_code_hash") @db.VarChar(64)
-  whatsappCodeExpiresAt DateTime?           @map("whatsapp_code_expires_at") @db.Timestamptz(6)
+  whatsappPhone         String?              @unique @map("whatsapp_phone") @db.VarChar(20)
+  whatsappCodeHash      String?              @unique @map("whatsapp_code_hash") @db.VarChar(64)
+  whatsappCodeExpiresAt DateTime?            @map("whatsapp_code_expires_at") @db.Timestamptz(6)
   // Lembretes de estudo entregues pelo agente do WhatsApp: ate 3 horarios por dia (HH:MM, Brasilia). reminderSlots e o resultado final.
-  reminderMode          String              @default("off") @map("reminder_mode") @db.VarChar(10)
-  reminderCount         Int                 @default(1) @map("reminder_count")
-  reminderStart         String              @default("08:00") @map("reminder_start") @db.VarChar(5)
-  reminderIntervalMin   Int                 @default(120) @map("reminder_interval_min")
-  reminderSlots         String[]            @default([]) @map("reminder_slots")
-  reminderLastSent      String?             @map("reminder_last_sent") @db.VarChar(16)
-  playbackRate          Float               @default(1) @map("playback_rate")
-  studyWeekdays         Int[]               @default([1, 2, 3, 4, 5]) @map("study_weekdays")
-  studyStartMinute      Int                 @default(1140) @map("study_start_minute")
-  studyEndMinute        Int                 @default(1260) @map("study_end_minute")
-  producers             ProducerStudent[]   @relation("ProducerStudentStudent")
+  reminderMode          String               @default("off") @map("reminder_mode") @db.VarChar(10)
+  reminderCount         Int                  @default(1) @map("reminder_count")
+  reminderStart         String               @default("08:00") @map("reminder_start") @db.VarChar(5)
+  reminderIntervalMin   Int                  @default(120) @map("reminder_interval_min")
+  reminderSlots         String[]             @default([]) @map("reminder_slots")
+  reminderLastSent      String?              @map("reminder_last_sent") @db.VarChar(16)
+  playbackRate          Float                @default(1) @map("playback_rate")
+  studyWeekdays         Int[]                @default([1, 2, 3, 4, 5]) @map("study_weekdays")
+  studyStartMinute      Int                  @default(1140) @map("study_start_minute")
+  studyEndMinute        Int                  @default(1260) @map("study_end_minute")
+  producers             ProducerStudent[]    @relation("ProducerStudentStudent")
 
   @@map("student_profiles")
 }
@@ -609,4 +611,70 @@ model RateLimitEvent {
 
   @@index([key, createdAt])
   @@map("rate_limit_events")
+}
+
+// --- Cadernos externos: cursos que o aluno estuda fora da plataforma (sem video, sem cronograma) ---
+
+model ExternalNotebook {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId String           @map("student_id") @db.Uuid
+  title     String           @db.VarChar(150)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  student   StudentProfile   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lessons   ExternalLesson[]
+
+  @@index([studentId])
+  @@map("external_notebooks")
+}
+
+// Texto gravado pelo aluno: transcricao e/ou resumo (ao menos um). E a fonte da IA.
+model ExternalLesson {
+  id         String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  notebookId String               @map("notebook_id") @db.Uuid
+  title      String               @db.VarChar(200)
+  transcript String?              @db.Text
+  summary    String?              @db.Text
+  createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  notebook   ExternalNotebook     @relation(fields: [notebookId], references: [id], onDelete: Cascade)
+  aiContents ExternalAiContent[]
+  reviews    ExternalCardReview[]
+
+  @@index([notebookId])
+  @@map("external_lessons")
+}
+
+model ExternalAiContent {
+  id        String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId  String         @map("lesson_id") @db.Uuid
+  kind      AiContentKind
+  technique String         @default("") @db.VarChar(32)
+  content   String         @db.Text
+  provider  String         @db.VarChar(20)
+  model     String         @db.VarChar(60)
+  createdAt DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  lesson    ExternalLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, kind, technique])
+  @@map("external_ai_contents")
+}
+
+model ExternalCardReview {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  studentId      String         @map("student_id") @db.Uuid
+  lessonId       String         @map("lesson_id") @db.Uuid
+  cardKey        String         @map("card_key") @db.VarChar(64)
+  ease           Float          @default(2.5)
+  intervalDays   Int            @default(0) @map("interval_days")
+  reps           Int            @default(0)
+  lapses         Int            @default(0)
+  dueAt          DateTime       @default(now()) @map("due_at") @db.Timestamptz(6)
+  lastReviewedAt DateTime?      @map("last_reviewed_at") @db.Timestamptz(6)
+  student        StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  lesson         ExternalLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, lessonId, cardKey])
+  @@index([studentId, dueAt])
+  @@map("external_card_reviews")
 }

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { buttonClass, primaryClass } from "@/components/student/study-modal";
 import type { ReviewGrade } from "@/lib/study/srs";
+import { reviewExternalCardAction } from "@/server/actions/external-notebook-actions";
 import { reviewCardAction } from "@/server/actions/study-actions";
 import type { ReviewCard } from "@/server/services/review-service";
 
@@ -15,7 +16,8 @@ const grades: Array<{ grade: ReviewGrade; label: string; key: string }> = [
   { grade: "easy", label: "Facil", key: "4" },
 ];
 
-export function ReviewSession({ cards }: { cards: ReviewCard[] }) {
+// external: cartoes de cadernos externos (a nota vai para a agenda propria deles).
+export function ReviewSession({ cards, external }: { cards: ReviewCard[]; external?: boolean }) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [done, setDone] = useState(0);
@@ -25,7 +27,9 @@ export function ReviewSession({ cards }: { cards: ReviewCard[] }) {
     if (!current) return;
 
     // A proxima revisao e agendada no servidor; falha de rede nao trava a sessao.
-    void reviewCardAction({ courseId: current.courseId, lessonId: current.lessonId, cardKey: current.cardKey, grade: value }).catch(() => null);
+    const review = { lessonId: current.lessonId, cardKey: current.cardKey, grade: value };
+
+    void (external ? reviewExternalCardAction(review) : reviewCardAction({ courseId: current.courseId, ...review })).catch(() => null);
     setDone((count) => count + 1);
     setRevealed(false);
     setIndex((position) => position + 1);

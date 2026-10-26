@@ -953,3 +953,6 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [ ] Criar no OpenClaw o agendamento a cada 5 min que chama `due_reminders` (secao 9 do prompt); nao verificado que o OpenClaw tem agendador.
 
 - [x] Agente: escopo (pendente x tudo de novo) e a primeira pergunta; `list_courses` aceita `scope` + `kind` e, em pending, so lista cursos com pendencia (quiz, revisao, gerar, material). Nao verificado com o OpenClaw real.
+
+- [x] Cadernos de cursos externos (`/app/notebooks/external`): aluno cria caderno com o nome do curso e grava aulas (titulo + transcricao e/ou resumo); cada aula tem resumo IA, flashcards, mapa mental, quiz e revisao espacada (agenda propria). Fora do cronograma. Edita/exclui caderno e aula.
+- [ ] Aplicar a migration `20261026120000_external_notebooks` no banco (nao aplicada; so `prisma generate`/`validate` rodados). Nao verificado no navegador logado nem com chave de IA real.

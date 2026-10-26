@@ -3556,3 +3556,9 @@ Aplicar migration em ambiente homologado (nao producao) e validar fluxo completo
 - `material-queue-service.ts`: `countPendingMaterials` e `generatePendingMaterials` (lote de 3, para no primeiro erro global de IA).
 - Lembretes: `reminder-slots.ts` (puro, testado), `reminder-config-service.ts`, tool MCP `due_reminders` (marca enviado antes de devolver; descarta atraso maior que 90 min). Entrega depende de agendador no OpenClaw: a Vercel Hobby so roda cron diario.
 - Nao verificado: telas no navegador logado, `generate_pending` com chave de IA real, agendador do OpenClaw. Material ja visto antes da regra some das telas ate a aula ser concluida.
+
+## Cadernos de cursos externos (2026-10-26)
+
+- Novo: 4 tabelas + migration `20261026120000_external_notebooks` (nao aplicada), `external-notebook-service.ts`, `external-notebook-actions.ts`, `lib/external-notebook.ts`, formularios e paginas em `/app/notebooks/external`. Alterados: `ai-content-service.ts` (extrai `callAndRecord`), `lesson-study-tools.tsx`, `review-session.tsx` (prop `external`), `review-service.ts` (exporta `cardsOf`), pagina de cadernos (link).
+- Seguranca: dono do caderno checado em toda operacao; ids validados como uuid; limites de tamanho e quantidade; rate limit/AiUsage da IA reaproveitados.
+- Verificado: `prisma validate/generate`, `tsc`, 302 testes unitarios, eslint nos arquivos tocados. Nao verificado: telas no navegador (celular), migration no banco, geracao com IA real, `npm run build`.

@@ -11,10 +11,13 @@ import { parseQuiz } from "@/lib/ai/quiz";
 import { SUMMARY_TECHNIQUES, getTechnique, type SummaryTechniqueId } from "@/lib/ai/techniques";
 import { cardKey } from "@/lib/study/srs";
 import { generateAiContentAction } from "@/server/actions/ai-actions";
+import { generateExternalAiAction, reviewExternalCardAction, submitExternalQuizAction } from "@/server/actions/external-notebook-actions";
 import { reviewCardAction, submitQuizAction } from "@/server/actions/study-actions";
 import type { AiGenerateError, AiItem } from "@/server/services/ai/ai-content-service";
 
 type LessonStudyToolsProps = {
+  // Aula de caderno externo: usa as acoes do caderno e nao tem PDF (courseId nao se aplica).
+  external?: boolean;
   courseId: string;
   lessonId: string;
   aiEnabled: boolean;
@@ -58,7 +61,7 @@ function Markdown({ text }: { text: string }) {
   );
 }
 
-function Deck({ cards, courseId, lessonId }: { cards: Flashcard[]; courseId: string; lessonId: string }) {
+function Deck({ cards, courseId, lessonId, external }: { cards: Flashcard[]; courseId: string; lessonId: string; external?: boolean }) {
   const [queue, setQueue] = useState(cards);
   const [revealed, setRevealed] = useState(false);
   const [round, setRound] = useState(0);
@@ -66,7 +69,9 @@ function Deck({ cards, courseId, lessonId }: { cards: Flashcard[]; courseId: str
 
   function grade(result: "again" | "good" | "easy") {
     // A nota alimenta a repeticao espacada; falha de rede nao atrapalha o estudo da sessao.
-    void reviewCardAction({ courseId, lessonId, cardKey: cardKey(current.q), grade: result }).catch(() => null);
+    const review = { lessonId, cardKey: cardKey(current.q), grade: result };
+
+    void (external ? reviewExternalCardAction(review) : reviewCardAction({ courseId, ...review })).catch(() => null);
     setQueue((value) => gradeCard(value, result === "again" ? "again" : "good"));
     setRevealed(false);
     setRound((value) => value + 1);
@@ -190,7 +195,7 @@ function MindMap({ content }: { content: string }) {
   );
 }
 
-export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, initialItems, quizAttempts }: LessonStudyToolsProps) {
+export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, techniques, initialItems, quizAttempts }: LessonStudyToolsProps) {
   const [items, setItems] = useState(initialItems);
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -213,7 +218,8 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
   function generate(kind: AiItem["kind"], technique = "") {
     setError(null);
     startTransition(async () => {
-      const result = await generateAiContentAction({ courseId, lessonId, kind, technique: technique || undefined });
+      const request = { lessonId, kind, technique: technique || undefined };
+      const result = await (external ? generateExternalAiAction(request) : generateAiContentAction({ courseId, ...request }));
 
       if (!result.ok) {
         setError(errorText[result.error]);
@@ -308,9 +314,11 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
               <p className="mb-2 text-xs text-copy-muted">Tecnica: {label(selected)}</p>
               <Markdown text={summary.content} />
               <div className="mt-4 flex flex-wrap gap-2">
-                <a className={primaryClass} href={`${pdfBase}/summary?technique=${selected}`}>
-                  Baixar PDF
-                </a>
+                {external ? null : (
+                  <a className={primaryClass} href={`${pdfBase}/summary?technique=${selected}`}>
+                    Baixar PDF
+                  </a>
+                )}
                 <button
                   className={buttonClass}
                   onClick={() => {
@@ -339,12 +347,14 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
           {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
           {cards ? (
             <>
-              <Deck cards={cards} courseId={courseId} lessonId={lessonId} />
-              <div className="mt-4">
-                <a className={buttonClass} href={`${pdfBase}/flashcards`}>
-                  Baixar PDF
-                </a>
-              </div>
+              <Deck cards={cards} courseId={courseId} external={external} lessonId={lessonId} />
+              {external ? null : (
+                <div className="mt-4">
+                  <a className={buttonClass} href={`${pdfBase}/flashcards`}>
+                    Baixar PDF
+                  </a>
+                </div>
+              )}
             </>
           ) : !pending ? (
             <button className={primaryClass} disabled={!aiEnabled} onClick={() => generate("FLASHCARDS")} type="button">
@@ -359,11 +369,11 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
           {pending ? <p className="text-sm text-copy-secondary">Gerando o quiz... pode levar alguns segundos.</p> : null}
           {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
           {quiz ? (
-            <QuizPanel attempts={quizAttempts} quiz={quiz} submit={(answers) => submitQuizAction({ courseId, lessonId, answers })} />
+            <QuizPanel attempts={quizAttempts} quiz={quiz} submit={(answers) => (external ? submitExternalQuizAction({ lessonId, answers }) : submitQuizAction({ courseId, lessonId, answers }))} />
           ) : !pending ? (
             <>
               <p className="mb-3 text-sm text-copy-secondary">
-                O quiz e gerado uma unica vez e fica salvo para todos os alunos da aula.
+                O quiz e gerado uma unica vez e fica salvo.
               </p>
               <button className={primaryClass} disabled={!aiEnabled} onClick={() => generate("QUIZ")} type="button">
                 Gerar quiz
@@ -403,11 +413,13 @@ export function LessonStudyTools({ courseId, lessonId, aiEnabled, techniques, in
           {mindmap && selected ? (
             <>
               <MindMap content={mindmap.content} />
-              <div className="mt-4">
-                <a className={primaryClass} href={`${pdfBase}/mindmap?technique=${selected}`}>
-                  Baixar PDF
-                </a>
-              </div>
+              {external ? null : (
+                <div className="mt-4">
+                  <a className={primaryClass} href={`${pdfBase}/mindmap?technique=${selected}`}>
+                    Baixar PDF
+                  </a>
+                </div>
+              )}
             </>
           ) : !pending && !error ? (
             <p className="text-sm text-copy-secondary">

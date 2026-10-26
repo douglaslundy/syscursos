@@ -11,7 +11,7 @@ import { callProvider } from "@/server/services/ai/providers";
 import { findTranscribableLesson } from "@/server/services/transcript-service";
 
 // Limite do texto enviado a IA (cabe no contexto dos dois provedores).
-const MAX_PROMPT_CHARS = 300_000;
+export const MAX_PROMPT_CHARS = 300_000;
 
 // Tipos guardados por aula em LessonAiContent (EXAM e CHAT nao ficam aqui).
 export type LessonAiKind = AiKind & AiContentKind;
@@ -32,7 +32,7 @@ export type AiGenerateError =
   | "failed";
 export type AiGenerateResult = { ok: true; item: AiItem; cached: boolean } | { ok: false; error: AiGenerateError };
 
-const toItem = (row: { kind: LessonAiKind; technique: string; content: string; provider: string; createdAt: Date }): AiItem => ({
+export const toItem = (row: { kind: LessonAiKind; technique: string; content: string; provider: string; createdAt: Date }): AiItem => ({
   kind: row.kind,
   technique: row.technique,
   content: row.content,
@@ -58,7 +58,7 @@ export async function deleteLessonAiItems(lessonId: string) {
 }
 
 // Tipos sem tecnica de resumo: um unico conteudo por aula.
-const TECHNIQUELESS = new Set<LessonAiKind>(["FLASHCARDS", "QUIZ"]);
+export const TECHNIQUELESS = new Set<LessonAiKind>(["FLASHCARDS", "QUIZ"]);
 
 // Quem pede varias geracoes seguidas (ou falhando) gasta tokens: limite por aluno, global (banco).
 const RATE_WINDOW_MS = 60_000;
@@ -121,11 +121,6 @@ async function runGenerate(input: {
 
   if (input.kind === "MINDMAP" && !summary) return { ok: false, error: "no_summary" };
 
-  const credentials = await getActiveAiCredentials();
-
-  if (!credentials) return { ok: false, error: "no_provider" };
-  if (!(await allowAiCall(found.studentId))) return { ok: false, error: "rate_limited" };
-
   const prompt = buildPrompt({
     kind: input.kind,
     technique: isTechniqueId(technique) ? technique : undefined,
@@ -133,7 +128,49 @@ async function runGenerate(input: {
     transcript: found.lesson.transcript.slice(0, MAX_PROMPT_CHARS),
     summary: summary?.content,
   });
-  const result = await callProvider(credentials.provider, credentials.key, prompt);
+  const generated = await callAndRecord({ kind: input.kind, prompt, studentId: found.studentId, courseId: input.courseId });
+
+  if (!generated.ok) return generated;
+
+  const { content, provider, model } = generated;
+
+  try {
+    const created = await prisma.lessonAiContent.create({
+      data: {
+        lessonId: input.lessonId,
+        kind: input.kind,
+        technique,
+        content,
+        provider,
+        model,
+        createdById: found.studentId,
+      },
+    });
+    return { ok: true, item: toItem({ ...created, kind: input.kind }), cached: false };
+  } catch (error) {
+    // Outro aluno gerou o mesmo conteudo ao mesmo tempo: usa o que ficou salvo.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const saved = await prisma.lessonAiContent.findUnique({ where });
+      if (saved) return { ok: true, item: toItem({ ...saved, kind: input.kind }), cached: true };
+    }
+    throw error;
+  }
+}
+
+// Chama a IA com os limites de uso: provedor ativo, limite por aluno, registro em AiUsage e conteudo ja validado.
+// Serve a aulas do curso e a aulas de cadernos externos (courseId nulo).
+export async function callAndRecord(input: {
+  kind: LessonAiKind;
+  prompt: ReturnType<typeof buildPrompt>;
+  studentId: string;
+  courseId: string | null;
+}): Promise<{ ok: true; content: string; provider: string; model: string } | { ok: false; error: AiGenerateError }> {
+  const credentials = await getActiveAiCredentials();
+
+  if (!credentials) return { ok: false, error: "no_provider" };
+  if (!(await allowAiCall(input.studentId))) return { ok: false, error: "rate_limited" };
+
+  const result = await callProvider(credentials.provider, credentials.key, input.prompt);
 
   if (!result.ok) {
     return { ok: false, error: result.reason === "invalid_key" || result.reason === "quota" ? result.reason : "failed" };
@@ -147,36 +184,14 @@ async function runGenerate(input: {
       kind: input.kind,
       inputTokens: result.inputTokens,
       outputTokens: result.outputTokens,
-      studentId: found.studentId,
+      studentId: input.studentId,
       courseId: input.courseId,
     },
   });
 
   const content = normalize(input.kind, result.text);
 
-  if (!content) return { ok: false, error: "failed" };
-
-  try {
-    const created = await prisma.lessonAiContent.create({
-      data: {
-        lessonId: input.lessonId,
-        kind: input.kind,
-        technique,
-        content,
-        provider: credentials.provider,
-        model: result.model,
-        createdById: found.studentId,
-      },
-    });
-    return { ok: true, item: toItem({ ...created, kind: input.kind }), cached: false };
-  } catch (error) {
-    // Outro aluno gerou o mesmo conteudo ao mesmo tempo: usa o que ficou salvo.
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      const saved = await prisma.lessonAiContent.findUnique({ where });
-      if (saved) return { ok: true, item: toItem({ ...saved, kind: input.kind }), cached: true };
-    }
-    throw error;
-  }
+  return content ? { ok: true, content, provider: credentials.provider, model: result.model } : { ok: false, error: "failed" };
 }
 
 // Resumo fica como markdown; cartoes e mapa mental viram JSON ja validado.

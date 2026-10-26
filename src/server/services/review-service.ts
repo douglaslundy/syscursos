@@ -15,7 +15,7 @@ const MAX_QUEUE = 40;
 type LessonCards = { lessonId: string; courseId: string; courseTitle: string; moduleTitle: string; lessonTitle: string; cards: Map<string, { q: string; a: string }> };
 
 // Cartoes de uma aula indexados pela chave de revisao: flashcards da IA e questoes de quiz (resposta correta + explicacao).
-function cardsOf(rows: Array<{ kind: string; content: string }>) {
+export function cardsOf(rows: Array<{ kind: string; content: string }>) {
   const cards = new Map<string, { q: string; a: string }>();
 
   for (const row of rows) {

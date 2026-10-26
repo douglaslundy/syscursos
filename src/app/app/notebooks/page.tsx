@@ -29,6 +29,10 @@ export default async function NotebooksPage(props: { searchParams: Promise<Noteb
         </p>
       </div>
 
+      <Link className="mb-6 inline-flex min-h-11 items-center rounded-md border px-4 text-sm font-medium transition hover:bg-card" href="/app/notebooks/external">
+        Cadernos de cursos externos
+      </Link>
+
       <form className="mb-6 grid gap-3 rounded-md border bg-card p-4 shadow-sm md:grid-cols-[1fr_1fr_auto]">
         <label className="grid gap-2 text-sm font-medium">
           Curso
