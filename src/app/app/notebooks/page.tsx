@@ -33,7 +33,7 @@ export default async function NotebooksPage(props: { searchParams: Promise<Noteb
         Cadernos de cursos externos
       </Link>
 
-      <form className="mb-6 grid gap-3 rounded-md border bg-card p-4 shadow-sm md:grid-cols-[1fr_1fr_auto]">
+      <form className="mb-6 grid gap-3 rounded-md border bg-card p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
         <label className="grid gap-2 text-sm font-medium">
           Curso
           <select

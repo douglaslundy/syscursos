@@ -293,7 +293,7 @@ export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, tech
                         {done ? " (pronto)" : ""}
                       </button>
                       <span
-                        className="pointer-events-none invisible absolute left-0 top-full z-10 mt-1 w-64 rounded-md border border-stroke-subtle bg-surface-elevated p-3 text-xs leading-5 text-copy-secondary opacity-0 shadow-lg transition group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100"
+                        className="pointer-events-none absolute left-0 top-full z-10 mt-1 hidden w-64 max-w-[calc(100vw-3rem)] rounded-md border border-stroke-subtle bg-surface-elevated p-3 text-xs leading-5 text-copy-secondary shadow-lg group-focus-within:block group-hover:block"
                         id={`tip-${id}`}
                         role="tooltip"
                       >

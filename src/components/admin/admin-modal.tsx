@@ -14,7 +14,7 @@ export function AdminModal({ title, description, closeHref, children }: AdminMod
       <div className="mx-auto flex min-h-full max-w-5xl items-center justify-center">
         <section
           aria-labelledby="admin-modal-title"
-          className="w-full rounded-md border border-stroke-subtle bg-surface p-4 shadow-xl md:p-6"
+          className="w-full min-w-0 rounded-md border border-stroke-subtle bg-surface p-4 shadow-xl md:p-6"
           role="dialog"
         >
           <div className="mb-5 flex items-start justify-between gap-4">

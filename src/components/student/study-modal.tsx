@@ -24,7 +24,7 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
         <section
           aria-label={title}
           aria-modal="true"
-          className="w-full rounded-md border border-stroke-subtle bg-surface p-4 shadow-xl md:p-6"
+          className="w-full min-w-0 rounded-md border border-stroke-subtle bg-surface p-4 shadow-xl md:p-6"
           role="dialog"
         >
           <div className="mb-4 flex items-start justify-between gap-4">

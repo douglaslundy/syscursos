@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "SysCursos", statusBarStyle: "black-translucent" },
 };
 
-export const viewport: Viewport = { themeColor: "#FF4D00" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#FF4D00" };
 
 type RootLayoutProps = Readonly<{
   children: React.ReactNode;

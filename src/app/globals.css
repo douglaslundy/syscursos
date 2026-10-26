@@ -79,14 +79,51 @@
     @apply border-border;
   }
 
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   body {
     @apply min-h-screen bg-background text-foreground antialiased;
+    overflow-wrap: break-word;
+  }
+
+  img,
+  video,
+  iframe,
+  svg,
+  canvas {
+    max-width: 100%;
+  }
+
+  img,
+  video {
+    height: auto;
+  }
+
+  pre,
+  code {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  table {
+    max-width: 100%;
   }
 
   input:not([type="hidden"]),
   select,
   textarea {
     @apply border-stroke-subtle bg-surface-elevated text-copy-primary placeholder:text-copy-muted transition-colors duration-200 focus:border-brand-primary focus-visible:border-brand-primary focus-visible:ring-brand-primary;
+  }
+
+  input:not([type="checkbox"], [type="radio"]),
+  select,
+  textarea {
+    max-width: 100%;
+    min-width: 0;
   }
 
   button,
@@ -120,4 +157,9 @@
 .grid > :is(input, select, textarea) {
   min-width: 0;
   max-width: 100%;
+}
+
+/* Conteudo principal pode encolher abaixo do conteudo (evita estourar a viewport no celular). */
+main {
+  min-width: 0;
 }

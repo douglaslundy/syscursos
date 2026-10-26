@@ -60,7 +60,7 @@ export function LessonTrailSidebar({
     <aside
       className={
         open
-          ? "w-[360px] rounded-md border border-stroke-subtle bg-surface p-5 shadow-sm"
+          ? "w-full lg:w-[360px] rounded-md border border-stroke-subtle bg-surface p-5 shadow-sm"
           : "w-11 rounded-md border border-stroke-subtle bg-surface p-2 shadow-sm"
       }
     >

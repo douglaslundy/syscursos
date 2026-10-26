@@ -1749,3 +1749,4 @@ O arquivo `POLICIA RODOVIARIA FEDERAL GRAN CURSOS.txt` contém 25 módulos e 1.2
 - Autorizacao no servidor: toda aula e lida via `notebook.studentId = aluno logado`; entradas validadas com zod (titulo 2-150/200, texto ate 150 mil caracteres, 50 cadernos por aluno, 300 aulas por caderno).
 - Feature flag: nenhuma nova; as rotas ficam sob `/app/notebooks` e herdam `requireFeature("notebooks")`.
 - Quiz externo agenda as questoes na revisao externa, mas nao guarda tentativas (sem historico de notas). Revisao externa e uma fila separada de `/app/review`.
+- Overflow horizontal no celular: html/body com overflow-x clip, viewport explicito (device-width, sem travar zoom), min-width:0 em main/inputs, max-width em midia/pre; largura fixa da trilha de aulas (360px) so em lg; tooltip de tecnicas fora do layout quando oculto; grid de cadernos com minmax(0,1fr).
