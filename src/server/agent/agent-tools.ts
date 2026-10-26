@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { QuizQuestion } from "@/lib/ai/quiz";
+
 import { matchAnswer, suggestGrade } from "@/lib/study/answer-match";
 import { DEFAULT_QUIZ_QUESTIONS } from "@/lib/study/quiz-pick";
 import { generateAiContent, listLessonAiItems } from "@/server/services/ai/ai-content-service";
@@ -25,8 +27,12 @@ const fail = (error: string): AgentToolResult => ({ ok: false, error });
 const uuid = { type: "string", format: "uuid" };
 const LETTERS = ["A", "B", "C", "D"];
 
+// Texto pronto da pergunta para o WhatsApp: "N/total - Curso - Aula", contexto em itálico, enunciado e alternativas. O agente só repassa.
+const questionText = (item: QuizQuestion, n: number, total: number) =>
+  [`*Pergunta ${n}/${total}*${item.source ? ` — ${item.source}` : ""}`, item.context ? `_${item.context}_` : null, `${item.q}\n${item.options.map((option, index) => `${LETTERS[index]}) ${option}`).join("\n")}`].filter(Boolean).join("\n\n");
+
 // Cartão para o agente: só a frente. O verso fica no servidor (answer_card) para o agente não vazar a resposta antes de o aluno responder.
-const frontOf = (card: ReviewCard) => ({ courseId: card.courseId, courseTitle: card.courseTitle, lessonId: card.lessonId, lessonTitle: card.lessonTitle, cardKey: card.cardKey, q: card.q, isNew: card.isNew });
+const frontOf = (card: ReviewCard, index: number, all: ReviewCard[]) => ({ display: `*Cartão ${index + 1}/${all.length}* — ${card.courseTitle} - ${card.lessonTitle}\n\n${card.q}`, courseId: card.courseId, courseTitle: card.courseTitle, lessonId: card.lessonId, lessonTitle: card.lessonTitle, cardKey: card.cardKey, q: card.q, isNew: card.isNew });
 
 const listCourses = z.object({ includeFinished: z.boolean().optional(), scope: z.enum(["pending", "all"]).optional(), kind: z.enum(["quiz", "review", "material", "generate"]).optional() });
 const startSession = z.object({
@@ -71,7 +77,7 @@ async function runStartSession(args: z.infer<typeof startSession>): Promise<Agen
 
     if (!result.ok) return fail(result.error);
 
-    return ok({ format: "choice", questions: result.quiz.questions.map((item, index) => ({ n: index + 1, q: item.q, source: item.source, ...(item.context ? { context: item.context } : {}), options: item.options })), refs: result.refs });
+    return ok({ format: "choice", questions: result.quiz.questions.map((item, index, all) => ({ n: index + 1, display: questionText(item, index + 1, all.length), q: item.q, source: item.source, ...(item.context ? { context: item.context } : {}), options: item.options })), refs: result.refs });
   }
 
   // Revisão pendente em baralho: fila do SRS (flashcards da IA + cartões de quiz vencidos + novos do dia).
@@ -79,12 +85,12 @@ async function runStartSession(args: z.infer<typeof startSession>): Promise<Agen
     const queue = await getReviewQueue();
     const cards = [...queue.due, ...queue.fresh].filter((card) => !courseId || card.courseId === courseId).slice(0, limit);
 
-    return cards.length === 0 ? fail("none_pending") : ok({ format: "deck", cards: cards.map(frontOf), dueTotal: queue.dueTotal });
+    return cards.length === 0 ? fail("none_pending") : ok({ format: "deck", cards: cards.map((card, index, all) => frontOf(card, index, all)), dueTotal: queue.dueTotal });
   }
 
   const result = await startCourseDeck(courseId, limit, options);
 
-  return result.ok ? ok({ format: "deck", cards: result.cards.map(frontOf) }) : fail(result.error);
+  return result.ok ? ok({ format: "deck", cards: result.cards.map((card, index, all) => frontOf(card, index, all)) }) : fail(result.error);
 }
 
 const KIND = { summary: "SUMMARY", mindmap: "MINDMAP", flashcards: "FLASHCARDS", quiz: "QUIZ" } as const;
@@ -121,7 +127,7 @@ export const AGENT_TOOLS: AgentTool[] = [
   {
     name: "start_session",
     description:
-      "Inicia uma sessão de estudo e devolve as perguntas SEM o gabarito. kind: quiz ou review. format: choice = múltipla escolha (corrigir depois com submit_quiz); deck = baralho (pergunta aberta; usar answer_card e rate_card). scope: pending = só o que está pendente/vencido/novo; all = inclui o que já foi respondido mesmo fora do prazo. Sem courseId = todos os cursos em andamento (geral). Erro none_pending = nada pendente; ofereça scope all.",
+      "Inicia uma sessão de estudo e devolve as perguntas SEM o gabarito. Cada pergunta/cartão traz `display`: o texto JÁ PRONTO para o aluno (número/total, curso - aula, contexto e alternativas) — envie `display` exatamente como veio, sem cortar o curso/aula nem o contexto. kind: quiz ou review. format: choice = múltipla escolha (corrigir depois com submit_quiz); deck = baralho (pergunta aberta; usar answer_card e rate_card). scope: pending = só o que está pendente/vencido/novo; all = inclui o que já foi respondido mesmo fora do prazo. Sem courseId = todos os cursos em andamento (geral). Erro none_pending = nada pendente; ofereça scope all.",
     inputSchema: {
       type: "object",
       properties: {
@@ -138,14 +144,14 @@ export const AGENT_TOOLS: AgentTool[] = [
   },
   {
     name: "check_answer",
-    description: "Quiz de múltipla escolha: confere UMA resposta logo depois que o aluno responde. Envie o ref da pergunta (de start_session) e choice (0-3 = A-D). Devolve correct, correctLetter e explanation para mostrar junto da próxima pergunta. Não grava nada: no fim, envie tudo com submit_quiz.",
+    description: "Quiz de múltipla escolha: confere UMA resposta logo depois que o aluno responde. Envie o ref da pergunta (de start_session) e choice (0-3 = A-D). Devolve `display` (✅/❌ + letra correta + explicação, já pronto) para mostrar exatamente como veio no INÍCIO da mensagem da próxima pergunta; também devolve correct, correctLetter e explanation. Não grava nada: no fim, envie tudo com submit_quiz.",
     inputSchema: { type: "object", properties: { ref: { type: "object", properties: { courseId: uuid, lessonId: uuid, key: { type: "string" } }, required: ["courseId", "lessonId", "key"] }, choice: { type: "integer", minimum: 0, maximum: 3 } }, required: ["ref", "choice"] },
     schema: checkAnswer,
     run: async (args: z.infer<typeof checkAnswer>) => {
       const reveal = await checkCourseQuizAnswer(args);
 
       // Sem gabarito = a pergunta da sessão não existe mais (quiz regenerado depois do start_session): sessão desatualizada.
-      return reveal ? ok({ correct: reveal.correct, correctLetter: LETTERS[reveal.answer], explanation: reveal.explanation }) : fail("stale_session");
+      return reveal ? ok({ display: reveal.correct ? `✅ *Correta!* ${reveal.explanation}` : `❌ *Incorreta.* A correta é *${LETTERS[reveal.answer]})*. ${reveal.explanation}`, correct: reveal.correct, correctLetter: LETTERS[reveal.answer], explanation: reveal.explanation }) : fail("stale_session");
     },
   },
   {

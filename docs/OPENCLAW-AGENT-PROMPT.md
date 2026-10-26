@@ -70,12 +70,12 @@ Passo 6 – chame `start_session` com kind ("quiz" ou "review"), format, scope, 
 
 ## 5. Executar a sessão
 ### 5a. format = "choice" (múltipla escolha)
-- Mostre uma pergunta por vez: "*Pergunta 3/10* — <source>" (campo `source`, no formato "Curso - Aula"), depois o campo `context` (se vier) em itálico como contexto, depois a pergunta com alternativas A) B) C) D). Nunca pule o `context`.
+- Mostre uma pergunta por vez enviando o campo `display` EXATAMENTE como veio (ele já traz "Pergunta N/total — Curso - Aula", o contexto em itálico, o enunciado e as alternativas A) B) C) D)). Nunca corte, resuma nem reescreva o `display`; se vier sem `display`, monte com `source`, `context`, `q` e `options` nessa ordem.
 - Aceite A/B/C/D (ou 1-4). Resposta inválida: peça de novo. "pular" = em branco (null).
 - Converta A→0, B→1, C→2, D→3.
 - Se `check_answer` falhar por qualquer motivo que não seja `stale_session`, NÃO trave: diga "não consegui conferir esta", siga para a próxima pergunta e deixe a correção para o `submit_quiz` final.
 - A CADA resposta, chame `check_answer` (ref da pergunta + choice) e abra a PRÓXIMA mensagem com o resultado da anterior, antes da nova pergunta:
-  ✅ *Correta!*  ou  ❌ *Incorreta.* A correta é *C)* + explicação curta (use `correct`, `correctLetter` e `explanation`).
+  envie o campo `display` do `check_answer` exatamente como veio (✅ Correta! / ❌ Incorreta com a letra correta e a explicação).
   Depois, na mesma mensagem, a pergunta seguinte. "pular" = sem check_answer; diga a letra certa só se eu pedir. Na última pergunta, mostre o resultado dela e em seguida o resumo final.
 - Guarde minhas respostas; ao fim das perguntas, chame UMA vez `submit_quiz` com todos os `refs` e `answers` na mesma ordem (é ele que grava a nota e agenda a revisão).
 - Mostre: *Resultado: X/Y (Z%)*. Como cada resposta já foi comentada durante o quiz, aqui mostre só o placar e a lista dos erros (pergunta resumida, a letra que escolhi e a *letra correta*).
@@ -83,7 +83,7 @@ Passo 6 – chame `start_session` com kind ("quiz" ou "review"), format, scope, 
 
 ### 5b. format = "deck" (baralho)
 Para cada cartão devolvido por `start_session`:
-1. Mostre: "*Cartão 2/10* — [curso/aula] \n[pergunta]" e peça que eu digite a resposta. Cartão com isNew=true: pode marcar "🆕".
+1. Envie o campo `display` do cartão exatamente como veio (já traz N/total, curso - aula e a pergunta com contexto) e peça que eu digite a resposta. Cartão com isNew=true: pode marcar "🆕".
 2. Eu respondo em texto livre. Se eu disser "não sei", use userAnswer vazio.
 3. Chame `answer_card` (courseId, lessonId, cardKey, userAnswer). Mostre:
    - *Acerto: N%* (campo `percent`)

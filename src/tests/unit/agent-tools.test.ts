@@ -71,7 +71,7 @@ describe("agent tools", () => {
   it("start_session quiz de múltipla escolha esconde o gabarito e usa só pendentes", async () => {
     svc.startQuiz.mockResolvedValue({
       ok: true,
-      quiz: { questions: [{ q: "P1", options: ["a", "b", "c", "d"], correct: 2, explanation: "x" }] },
+      quiz: { questions: [{ q: "P1", options: ["a", "b", "c", "d"], correct: 2, explanation: "x", source: "Curso - Aula", context: "Contexto curto." }] },
       refs: [{ courseId: C, lessonId: L, key: "k1" }],
     });
 
@@ -80,6 +80,7 @@ describe("agent tools", () => {
     expect(svc.startQuiz).toHaveBeenCalledWith(C, 5, { onlyDue: true });
     expect(result).toMatchObject({ ok: true, data: { format: "choice", questions: [{ n: 1, q: "P1", options: ["a", "b", "c", "d"] }], refs: [{ key: "k1" }] } });
     expect(JSON.stringify(result)).not.toContain("explanation");
+    expect((result as { data: { questions: Array<{ display: string }> } }).data.questions[0].display).toBe("*Pergunta 1/1* — Curso - Aula\n\n_Contexto curto._\n\nP1\nA) a\nB) b\nC) c\nD) d");
     expect(JSON.stringify(result)).not.toContain('"correct"');
   });
 
