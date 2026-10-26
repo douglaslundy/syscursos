@@ -247,7 +247,7 @@ export const AGENT_TOOLS: AgentTool[] = [
   },
   {
     name: "generate_pending",
-    description: "Gera o material pendente de UM curso, só de aulas concluídas, até 3 aulas por chamada (gasta IA). Devolve generated, failed e remaining; repita enquanto remaining > 0 e o aluno quiser. Antes, confirme o gasto de IA com o aluno.",
+    description: "Gera o material pendente de UM curso, só de aulas concluídas, em paralelo, quantas couberem em ~35 s por chamada (gasta IA). Devolve generated, failed, remaining e, se parou por limite global de IA, stoppedBy. Chame de novo SEM perguntar nada enquanto remaining > 0 e não houver stoppedBy. Antes da primeira chamada, confirme o gasto de IA com o aluno.",
     inputSchema: { type: "object", properties: { courseId: uuid, kind: { type: "string", enum: ["quiz", "summary", "mindmap", "flashcards"] }, technique: { type: "string" } }, required: ["courseId", "kind"] },
     schema: pendingArgs,
     run: async (args: z.infer<typeof pendingArgs>) => {

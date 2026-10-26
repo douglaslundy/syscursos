@@ -962,3 +962,5 @@ Observacao 2026-05-10: a capa de modulo foi removida do banco por requisito post
 - [ ] Re-colar o prompt no OpenClaw (mudou o menu inicial e o quiz com feedback por pergunta).
 
 - [x] Agente, "Atualizar": `list_courses` kind generate agora devolve `pendingLessons` (so aulas concluidas com algo por gerar + o que falta); prompt proibe listar aulas ja resolvidas ou usar list_lessons nesse passo. Re-colar o prompt no OpenClaw.
+
+- [x] Geracao em lote do agente: `generate_pending` nao conta mais no limite de 5 chamadas/min por aluno (`bulk`), gera 3 aulas em paralelo por onda ate ~35 s por chamada, tenta de novo 1x em 429 do provedor e devolve `stoppedBy` em erro global; prompt manda repetir sozinho ate `remaining` = 0. Causa do bug: `RATE_MAX = 5` por minuto parava a fila na 6a aula.

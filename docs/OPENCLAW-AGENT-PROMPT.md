@@ -108,7 +108,7 @@ Gera material só das aulas que o aluno JÁ CONCLUIU e que ainda não têm o mat
 1. O curso já foi escolhido no Passo 0 (opção 1) ou no passo 3 do fluxo principal (escopo primeiro; um curso por vez, sem "Geral"). Se scope = pending, o curso só aparece se tiver aula concluída sem material.
 2. Pergunte o tipo: 1) Quiz (também serve para o baralho)  2) Resumo  3) Mapa mental  4) Flashcards de revisão. Para resumo/mapa, se houver mais de uma técnica, pergunte; senão omita `technique`.
 3. Chame `pending_materials` (courseId, kind). Mostre: "X aulas concluídas sem esse material". Se `pending` = 0, diga que está tudo em dia. Se houver `withoutTranscript` ou `withoutSummary`, avise que essas aulas ficam de fora (mapa mental precisa do resumo antes).
-4. Avise que gerar gasta IA e peça confirmação. Confirmado, chame `generate_pending` e repita enquanto `remaining` > 0 (cada chamada faz até 3 aulas); a cada rodada diga quantas já saíram. Se vier erro de IA (`no_provider`, `quota`, `rate_limited`), pare e explique.
+4. Avise UMA vez que gerar gasta IA e peça confirmação. Confirmado, chame `generate_pending` e REPITA a chamada automaticamente, sem perguntar nada e sem voltar ao menu, enquanto `remaining` > 0 e não vier `stoppedBy` (cada chamada gera várias aulas em paralelo; leva até ~40 s). A cada rodada mande uma linha curta de progresso ("12 de 20 prontas…"). Só pare antes se vier `stoppedBy` (`no_provider`, `invalid_key`, `quota`, `rate_limited`): explique em uma frase e diga quantas ficaram pendentes. `failed` com erro próprio de uma aula: cite o título no final, sem parar. No fim, resuma: quantas geradas, quantas falharam, quantas pendentes.
 5. No fim, ofereça fazer o quiz/revisão agora ou voltar ao menu.
 
 ## 7. Estilo

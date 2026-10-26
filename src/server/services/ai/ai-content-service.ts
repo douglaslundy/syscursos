@@ -81,6 +81,8 @@ export function generateAiContent(input: {
   lessonId: string;
   kind: LessonAiKind;
   technique?: string;
+  // Geracao em lote pedida pelo aluno (fila de pendentes): nao conta no limite de chamadas por minuto.
+  bulk?: boolean;
 }): Promise<AiGenerateResult> {
   const key = `${input.lessonId}:${input.kind}:${input.technique ?? ""}`;
   const pending = inFlight.get(key) ?? runGenerate(input).finally(() => inFlight.delete(key));
@@ -94,6 +96,7 @@ async function runGenerate(input: {
   lessonId: string;
   kind: LessonAiKind;
   technique?: string;
+  bulk?: boolean;
 }): Promise<AiGenerateResult> {
   const found = await findTranscribableLesson(input.courseId, input.lessonId);
 
@@ -128,7 +131,7 @@ async function runGenerate(input: {
     transcript: found.lesson.transcript.slice(0, MAX_PROMPT_CHARS),
     summary: summary?.content,
   });
-  const generated = await callAndRecord({ kind: input.kind, prompt, studentId: found.studentId, courseId: input.courseId });
+  const generated = await callAndRecord({ kind: input.kind, prompt, studentId: found.studentId, courseId: input.courseId, bulk: input.bulk });
 
   if (!generated.ok) return generated;
 
@@ -164,11 +167,12 @@ export async function callAndRecord(input: {
   prompt: ReturnType<typeof buildPrompt>;
   studentId: string;
   courseId: string | null;
+  bulk?: boolean;
 }): Promise<{ ok: true; content: string; provider: string; model: string } | { ok: false; error: AiGenerateError }> {
   const credentials = await getActiveAiCredentials();
 
   if (!credentials) return { ok: false, error: "no_provider" };
-  if (!(await allowAiCall(input.studentId))) return { ok: false, error: "rate_limited" };
+  if (!input.bulk && !(await allowAiCall(input.studentId))) return { ok: false, error: "rate_limited" };
 
   const result = await callProvider(credentials.provider, credentials.key, input.prompt);
 

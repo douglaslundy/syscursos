@@ -8,7 +8,12 @@ import { listAvailableCourses } from "@/server/services/study-access";
 export type MaterialKind = "quiz" | "summary" | "mindmap" | "flashcards";
 
 const KIND: Record<MaterialKind, LessonAiKind> = { quiz: "QUIZ", summary: "SUMMARY", mindmap: "MINDMAP", flashcards: "FLASHCARDS" };
-const BATCH = 3;
+// Cada chamada do agente gera varias aulas em paralelo, em ondas, ate o orcamento de tempo (a funcao da Vercel vive 60 s).
+const CONCURRENCY = 3;
+const TIME_BUDGET_MS = 35_000;
+const QUOTA_RETRY_MS = 4_000;
+const FATAL = ["no_provider", "invalid_key", "quota", "rate_limited"];
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Aulas CONCLUIDAS (e com transcricao) do curso que ainda nao tem o material pedido. Um curso por vez.
 async function pendingLessons(courseId: string, kind: MaterialKind, technique: string) {
@@ -49,8 +54,19 @@ export async function countPendingMaterials(courseId: string, kind: MaterialKind
   return found && { technique: tech || undefined, completedLessons: found.completed, pending: found.ready.length, withoutTranscript: found.withoutTranscript, withoutSummary: found.withoutSummary, lessons: found.ready.slice(0, 20).map((lesson) => lesson.title) };
 }
 
-// Gera ate BATCH aulas por chamada (cada geracao e uma chamada de IA); o agente repete ate acabar.
+// Gera uma aula; se o provedor devolver limite momentaneo (429), espera um pouco e tenta de novo uma vez.
+async function generateOne(courseId: string, lessonId: string, kind: MaterialKind, technique: string) {
+  const run = () => generateAiContent({ courseId, lessonId, kind: KIND[kind], technique: technique || undefined, bulk: true });
+  const first = await run();
+
+  if (first.ok || first.error !== "quota") return first;
+  await sleep(QUOTA_RETRY_MS);
+  return run();
+}
+
+// Gera o maximo de aulas que cabe no orcamento de tempo (ondas de CONCURRENCY em paralelo); o agente repete enquanto remaining > 0.
 export async function generatePendingMaterials(courseId: string, kind: MaterialKind, technique?: string) {
+  const started = Date.now();
   const tech = await resolveTechnique(kind, technique);
   const found = await pendingLessons(courseId, kind, tech);
 
@@ -58,19 +74,26 @@ export async function generatePendingMaterials(courseId: string, kind: MaterialK
 
   const generated: string[] = [];
   const failed: Array<{ title: string; error: string }> = [];
+  let stoppedBy: string | undefined;
+  let next = 0;
 
-  for (const lesson of found.ready.slice(0, BATCH)) {
-    const result = await generateAiContent({ courseId, lessonId: lesson.lessonId, kind: KIND[kind], technique: tech || undefined });
+  while (next < found.ready.length && !stoppedBy && Date.now() - started < TIME_BUDGET_MS) {
+    const wave = found.ready.slice(next, next + CONCURRENCY);
 
-    if (result.ok) generated.push(lesson.title);
-    else {
-      failed.push({ title: lesson.title, error: result.error });
-      // Erro que vale para todas as aulas: para aqui em vez de repetir a falha.
-      if (["no_provider", "invalid_key", "quota", "rate_limited"].includes(result.error)) break;
-    }
+    next += wave.length;
+
+    const results = await Promise.all(wave.map((lesson) => generateOne(courseId, lesson.lessonId, kind, tech)));
+
+    results.forEach((result, index) => {
+      if (result.ok) generated.push(wave[index].title);
+      // Erro que vale para todas as aulas: para aqui (a aula continua em remaining) em vez de repetir a falha.
+      else if (FATAL.includes(result.error)) stoppedBy = result.error;
+      else failed.push({ title: wave[index].title, error: result.error });
+    });
   }
 
-  return { generated, failed, remaining: Math.max(0, found.ready.length - generated.length - failed.length) };
+  // Aulas que falharam por erro proprio (nao global) nao voltam sozinhas: contam como tratadas nesta chamada.
+  return { generated, failed, remaining: Math.max(0, found.ready.length - generated.length - failed.length), ...(stoppedBy ? { stoppedBy } : {}) };
 }
 
 const GENERATED_LABEL: Record<string, string> = { QUIZ: "quiz", SUMMARY: "resumo", FLASHCARDS: "flashcards" };
