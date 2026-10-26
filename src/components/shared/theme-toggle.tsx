@@ -19,7 +19,7 @@ export function ThemeToggle() {
   return (
     <button
       aria-label={`Ativar tema ${nextTheme === "light" ? "claro" : "escuro"}`}
-      className="fixed bottom-4 right-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-stroke-subtle bg-surface-elevated text-copy-secondary shadow-md transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
+      className="fixed bottom-24 right-4 md:bottom-4 z-50 inline-flex h-11 w-11 items-center justify-center rounded-full border border-stroke-subtle bg-surface-elevated text-copy-secondary shadow-md transition hover:border-stroke-strong hover:bg-surface-hover hover:text-copy-primary"
       onClick={() => {
         applyTheme(nextTheme);
         setTheme(nextTheme);

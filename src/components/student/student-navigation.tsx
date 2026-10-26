@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, BarChart3, Bell, Brain, CalendarDays, FileText, HelpCircle, Home, ListVideo, MoreHorizontal, Search, Star, User } from "lucide-react";
+import { AlarmClock, BarChart3, Bell, Brain, CalendarDays, FileText, HelpCircle, Home, ListVideo, Search, Star, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -81,9 +81,6 @@ const navigationItems = [
   },
 ] as const;
 
-// Celular: 4 atalhos + "Mais" (que lista o resto), para a barra inferior nao ficar apertada.
-const bottomHrefs = ["/app", "/app/search", "/app/review", "/app/progress"];
-const bottomItems = navigationItems.filter((item) => bottomHrefs.includes(item.href));
 const visible = (items: readonly (typeof navigationItems)[number][], hidden: string[]) => items.filter((item) => !hidden.includes(item.href));
 
 export function StudentDesktopNavigation({ unread = 0, hidden = [] }: { unread?: number; hidden?: string[] }) {
@@ -126,8 +123,8 @@ export function StudentBottomNavigation({ unread = 0, hidden = [] }: { unread?: 
       aria-label="Navegacao principal"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-stroke-subtle bg-surface-elevated/95 px-3 py-2 shadow-[0_-8px_24px_rgba(0,0,0,0.24)] backdrop-blur md:hidden"
     >
-      <div className="mx-auto grid max-w-sm grid-cols-5 gap-2">
-        {visible(bottomItems, hidden).map((item) => {
+      <div className="flex gap-2 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {visible(navigationItems, hidden).map((item) => {
           const Icon = item.icon;
           const isActive = item.match(pathname);
 
@@ -135,7 +132,7 @@ export function StudentBottomNavigation({ unread = 0, hidden = [] }: { unread?: 
             <Link
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex min-h-12 flex-col items-center justify-center rounded-md text-xs font-medium text-copy-secondary transition duration-200 hover:bg-surface-hover hover:text-copy-primary",
+                "relative flex min-h-12 w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-md text-xs font-medium text-copy-secondary transition duration-200 hover:bg-surface-hover hover:text-copy-primary",
                 isActive && "bg-brand-primary text-copy-primary",
               )}
               href={item.href}
@@ -143,21 +140,12 @@ export function StudentBottomNavigation({ unread = 0, hidden = [] }: { unread?: 
             >
               <Icon aria-hidden="true" className="mb-1 h-4 w-4" />
               {item.label}
+              {item.href === "/app/notifications" && unread > 0 ? (
+                <span className="absolute right-3 top-1 h-2 w-2 rounded-full bg-brand-primary" />
+              ) : null}
             </Link>
           );
         })}
-        <Link
-          aria-current={pathname.startsWith("/app/more") ? "page" : undefined}
-          className={cn(
-            "relative flex min-h-12 flex-col items-center justify-center rounded-md text-xs font-medium text-copy-secondary transition duration-200 hover:bg-surface-hover hover:text-copy-primary",
-            pathname.startsWith("/app/more") && "bg-brand-primary text-copy-primary",
-          )}
-          href="/app/more"
-        >
-          <MoreHorizontal aria-hidden="true" className="mb-1 h-4 w-4" />
-          Mais
-          {unread > 0 ? <span className="absolute right-3 top-1 h-2 w-2 rounded-full bg-brand-primary" /> : null}
-        </Link>
       </div>
     </nav>
   );
