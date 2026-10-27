@@ -12,6 +12,31 @@ export const maxDuration = 60;
 const querySchema = z.object({ courseId: z.string().uuid(), lessonId: z.string().uuid() });
 const PASS_THROUGH = ["content-type", "content-range", "content-length"] as const;
 
+const RETRY_DELAYS_MS = [400, 1200];
+
+// O Google responde 403 em HTML ("Sorry...") quando recebe rajadas de pedidos; 429 e 5xx tambem passam. Tenta de novo com
+// pausa curta. 403 em JSON (cota de download do arquivo) nao melhora tentando, entao segue direto para o fallback.
+function isTransient(response: Response) {
+  return response.status === 429 || response.status >= 500 || (response.status === 403 && (response.headers.get("content-type") ?? "").includes("text/html"));
+}
+
+async function fetchDriveRange(fileId: string, key: string, range: { start: number; end: number }, signal: AbortSignal) {
+  const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true&key=${encodeURIComponent(key)}`;
+
+  for (let attempt = 0; ; attempt += 1) {
+    const response = await fetch(url, { headers: { range: `bytes=${range.start}-${range.end}` }, signal }).catch((error: unknown) => {
+      // Cliente que sai no meio do video aborta o fetch: nao e erro do servidor.
+      if (!signal.aborted) console.error("Drive video request failed.", error instanceof Error ? error.name : typeof error);
+      return null;
+    });
+
+    if (signal.aborted || attempt >= RETRY_DELAYS_MS.length || (response && !isTransient(response))) return response;
+
+    await response?.body?.cancel();
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt]));
+  }
+}
+
 // Entrega o video de uma aula do Drive ao player proprio, lendo pela Drive API com a chave do admin. O aluno nunca ve a
 // chave nem o link do Drive; so passa quem tem matricula valida no curso. Serve em faixas (Range) para tocar e pular.
 export async function GET(request: Request, context: { params: Promise<{ lessonId: string }> }) {
@@ -46,14 +71,7 @@ export async function GET(request: Request, context: { params: Promise<{ lessonI
     return new Response(null, { status: 416 });
   }
 
-  const upstream = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true&key=${encodeURIComponent(key)}`,
-    { headers: { range: `bytes=${range.start}-${range.end}` }, signal: request.signal },
-  ).catch((error: unknown) => {
-    // Cliente que sai no meio do video aborta o fetch: nao e erro do servidor.
-    if (!request.signal.aborted) console.error("Drive video request failed.", error instanceof Error ? error.name : typeof error);
-    return null;
-  });
+  const upstream = await fetchDriveRange(fileId, key, range, request.signal);
 
   if (!upstream) {
     return NextResponse.json({ error: "network" }, { status: 502 });
