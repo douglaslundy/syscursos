@@ -11,6 +11,7 @@ import { nextChunk } from "@/lib/transcription/chunks";
 import { type TranscriptDraft, clearDraft, loadDraft, saveDraft } from "@/lib/transcription/draft";
 import { clock, joinSegments } from "@/lib/transcription/format";
 import { setTranscribing } from "@/lib/transcription/guard";
+import { loadWhisperWorker } from "@/lib/transcription/whisper-client";
 import { encodeWav } from "@/lib/transcription/wav";
 import { useBusyGuard, useDraftAutosave, useVideoEnded } from "@/components/student/use-transcriber-effects";
 import { saveRecordedTranscriptAction } from "@/server/actions/transcript-actions";
@@ -18,7 +19,6 @@ import { formatDateTimeBr } from "@/lib/format-date";
 
 const SEGMENT_SECONDS = 60;
 const MIN_SAMPLES = SAMPLE_RATE / 2;
-const NO_GPU_KEY = "syscursos:whisper-no-gpu";
 const ENDED_GRACE_MS = 2500;
 
 type Method = "browser" | "gemini" | "openai";
@@ -69,7 +69,6 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
   const elapsedRef = useRef(0);
   const seqRef = useRef(0);
   const phaseRef = useRef<Phase>("idle");
-  const cachedRef = useRef(false);
   const silentRef = useRef(0);
   const monitorRef = useRef<{ context: AudioContext; analyser: AnalyserNode } | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -128,45 +127,9 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
   );
 
   function loadWorker() {
-    return new Promise<Worker>((resolve, reject) => {
-      const worker = new Worker("/whisper-worker.js", { type: "module" });
-      worker.onmessage = (event: MessageEvent<{ type: string; percent?: number; id?: number; text?: string; message?: string; cached?: boolean }>) => {
-        const data = event.data;
-
-        if (data.type === "cache") {
-          cachedRef.current = data.cached === true;
-          setMessage(
-            cachedRef.current
-              ? "Carregando o modelo de transcricao ja salvo neste navegador..."
-              : "Baixando o modelo de transcricao (so na primeira vez; depois fica salvo neste navegador)...",
-          );
-        } else if (data.type === "gpu_failed") {
-          try {
-            window.localStorage.setItem(NO_GPU_KEY, "1");
-          } catch {
-            // sem armazenamento: so perde a lembranca
-          }
-        } else if (data.type === "progress") {
-          // O transformers.js reemite o progresso ao ler do cache: so mostra percentual quando de fato baixa.
-          if (!cachedRef.current) setMessage(`Baixando o modelo de transcricao: ${data.percent}%`);
-        } else if (data.type === "ready") resolve(worker);
-        else if (data.type === "result" && data.id !== undefined) pendingRef.current.get(data.id)?.(data.text ?? "");
-        else if (data.type === "error") {
-          if (data.id !== undefined) pendingRef.current.get(data.id)?.("");
-          else reject(new Error(data.message));
-        }
-      };
-      worker.onerror = () => reject(new Error("worker"));
-
-      let skipGpu = false;
-
-      try {
-        skipGpu = window.localStorage.getItem(NO_GPU_KEY) === "1";
-      } catch {
-        // sem armazenamento: tenta a GPU
-      }
-
-      worker.postMessage({ type: "load", skipGpu });
+    return loadWhisperWorker({
+      onStatus: setMessage,
+      onResult: (id, text) => pendingRef.current.get(id)?.(text),
     });
   }
 
@@ -460,7 +423,6 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
     failedRef.current = 0;
     queueRef.current = Promise.resolve();
     elapsedRef.current = 0;
-    cachedRef.current = false;
     setDone(0);
     setTotal(0);
     setElapsed(0);

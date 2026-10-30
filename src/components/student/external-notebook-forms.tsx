@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { ExternalTranscriber } from "@/components/student/external-transcriber";
+import { clearFieldDrafts, useFieldDraft } from "@/components/student/use-field-draft";
 import { buttonClass, primaryClass } from "@/components/student/study-modal";
 import { MAX_EXTERNAL_TEXT } from "@/lib/external-notebook";
 import {
@@ -124,6 +126,14 @@ export function ExternalLessonForm({ notebookId, lesson }: LessonFormProps) {
   const [summary, setSummary] = useState(lesson?.summary ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Aula nova e cada aula editada tem rascunho proprio no navegador, ate a aula ser salva.
+  const draftKey = `external:${notebookId}:${lesson?.id ?? "new"}`;
+  const draftKeys = ["title", "transcript", "summary"].map((field) => `${draftKey}:${field}`);
+  const restored = [
+    useFieldDraft(draftKeys[0], title, setTitle),
+    useFieldDraft(draftKeys[1], transcript, setTranscript),
+    useFieldDraft(draftKeys[2], summary, setSummary),
+  ].some(Boolean);
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -134,6 +144,7 @@ export function ExternalLessonForm({ notebookId, lesson }: LessonFormProps) {
 
       if (!result.ok) return setError(messageOf(result));
 
+      clearFieldDrafts([...draftKeys, `${draftKey}:recording`]);
       router.push(`${BASE}/${notebookId}/lessons/${"id" in result ? result.id : lesson?.id}`);
       router.refresh();
     });
@@ -145,6 +156,9 @@ export function ExternalLessonForm({ notebookId, lesson }: LessonFormProps) {
         Titulo da aula
         <input className={`${fieldClass} min-h-11`} maxLength={200} onChange={(event) => setTitle(event.target.value)} required value={title} />
       </label>
+      {restored ? <p className="text-xs text-brand-primary">Rascunho recuperado deste navegador: esta aula ainda nao foi salva.</p> : null}
+      <ExternalTranscriber draftKey={`${draftKey}:recording`} onText={(text) => setTranscript((current) => (current.trim() ? `${current.trimEnd()}
+${text}` : text))} />
       <label className="grid gap-2 text-sm font-medium">
         Transcricao
         <textarea className={`${fieldClass} min-h-48`} maxLength={MAX_EXTERNAL_TEXT} onChange={(event) => setTranscript(event.target.value)} value={transcript} />
