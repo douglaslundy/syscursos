@@ -5,6 +5,7 @@ import { z } from "zod";
 import { DeleteLessonButton } from "@/components/student/external-notebook-forms";
 import { LessonStudyTools } from "@/components/student/lesson-study-tools";
 import { MarkdownContent } from "@/components/student/markdown-content";
+import { parseTranscriptLines } from "@/lib/study/transcript-lines";
 import { getAiAvailability } from "@/server/services/ai/ai-content-service";
 import { getExternalLesson } from "@/server/services/external-notebook-service";
 
@@ -45,7 +46,14 @@ export default async function ExternalLessonPage(props: { params: Promise<{ note
       {lesson.transcript ? (
         <div className="mt-6 rounded-md border bg-card p-5">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground">Transcricao</h2>
-          <p className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{lesson.transcript}</p>
+          <div className="max-h-[60vh] space-y-4 overflow-y-auto break-words text-sm leading-6 text-muted-foreground">
+            {parseTranscriptLines(lesson.transcript).map((line) => (
+              <p key={line.index}>
+                {line.clock ? <span className="mr-2 text-xs font-medium text-red-500">{line.clock}</span> : null}
+                {line.text}
+              </p>
+            ))}
+          </div>
         </div>
       ) : null}
     </section>

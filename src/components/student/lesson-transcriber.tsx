@@ -11,7 +11,7 @@ import { nextChunk } from "@/lib/transcription/chunks";
 import { type TranscriptDraft, clearDraft, loadDraft, saveDraft } from "@/lib/transcription/draft";
 import { clock, joinSegments } from "@/lib/transcription/format";
 import { setTranscribing } from "@/lib/transcription/guard";
-import { loadWhisperWorker } from "@/lib/transcription/whisper-client";
+import { type Segment, loadWhisperWorker } from "@/lib/transcription/whisper-client";
 import { encodeWav } from "@/lib/transcription/wav";
 import { useBusyGuard, useDraftAutosave, useVideoEnded } from "@/components/student/use-transcriber-effects";
 import { saveRecordedTranscriptAction } from "@/server/actions/transcript-actions";
@@ -61,10 +61,11 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
   const rotateRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
-  const partsRef = useRef<Array<Part | undefined>>([]);
+  // Frases de cada trecho de 1 minuto, na ordem da gravacao (indice = numero do trecho).
+  const partsRef = useRef<Part[][]>([]);
   const failedRef = useRef(0);
   const nextIdRef = useRef(0);
-  const pendingRef = useRef(new Map<number, (text: string) => void>());
+  const pendingRef = useRef(new Map<number, (segments: Segment[]) => void>());
   const stoppingRef = useRef(false);
   const elapsedRef = useRef(0);
   const seqRef = useRef(0);
@@ -129,16 +130,16 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
   function loadWorker() {
     return loadWhisperWorker({
       onStatus: setMessage,
-      onResult: (id, text) => pendingRef.current.get(id)?.(text),
+      onResult: (id, segments) => pendingRef.current.get(id)?.(segments),
     });
   }
 
   function runWhisper(pcm: Float32Array) {
-    return new Promise<string>((resolve) => {
+    return new Promise<Segment[]>((resolve) => {
       const id = nextIdRef.current++;
-      pendingRef.current.set(id, (text) => {
+      pendingRef.current.set(id, (segments) => {
         pendingRef.current.delete(id);
-        resolve(text);
+        resolve(segments);
       });
       workerRef.current?.postMessage({ type: "run", id, audio: pcm }, [pcm.buffer]);
     });
@@ -165,19 +166,21 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
   function enqueue(seq: number, start: number, blob: Blob) {
     setTotal((value) => value + 1);
     queueRef.current = queueRef.current.then(async () => {
-      let text: string;
+      let parts: Part[];
 
       try {
         const pcm = await decodeToPcm(blob);
 
-        text = pcm.length < MIN_SAMPLES ? "" : method === "browser" ? await runWhisper(pcm) : await runGemini(pcm);
+        if (pcm.length < MIN_SAMPLES) parts = [];
+        else if (method === "browser") parts = (await runWhisper(pcm)).map((segment) => ({ start: start + segment.start, text: segment.text }));
+        else parts = [{ start, text: await runGemini(pcm) }];
       } catch {
         failedRef.current += 1;
-        text = "[trecho nao transcrito]";
+        parts = [{ start, text: "[trecho nao transcrito]" }];
       }
 
-      partsRef.current[seq] = { start, text };
-      saveDraft(lessonId, joinSegments(partsRef.current.filter((part): part is Part => part !== undefined)));
+      partsRef.current[seq] = parts;
+      saveDraft(lessonId, joinSegments(partsRef.current.flat()));
       setDone((value) => value + 1);
     });
   }
@@ -282,7 +285,7 @@ export function LessonTranscriber({ courseId, lessonId, method, durationSeconds,
     void monitorRef.current?.context.close();
     monitorRef.current = null;
 
-    const text = joinSegments(partsRef.current.filter((part): part is Part => part !== undefined));
+    const text = joinSegments(partsRef.current.flat());
 
     if (!text) {
       changePhase("error");

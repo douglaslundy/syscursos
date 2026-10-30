@@ -9,8 +9,8 @@ describe("transcription helpers", () => {
     expect(clock(3725)).toBe("1:02:05");
   });
 
-  it("joins one line per non-empty segment with its start time", () => {
-    expect(joinSegments([{ start: 0, text: "ola" }, { start: 60, text: "" }, { start: 125, text: "tchau" }])).toBe("[00:00] ola\n[02:05] tchau");
+  it("joins one paragraph per non-empty segment with its start time, separated by a blank line", () => {
+    expect(joinSegments([{ start: 0, text: "ola" }, { start: 60, text: "" }, { start: 125, text: "tchau" }])).toBe("[00:00] ola\n\n[02:05] tchau");
   });
 
   it("encodes a 16-bit mono WAV", () => {

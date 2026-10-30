@@ -54,8 +54,14 @@ self.onmessage = async (event) => {
         task: "transcribe",
         chunk_length_s: 30,
         stride_length_s: 5,
+        return_timestamps: true,
       });
-      postMessage({ type: "result", id: message.id, text: String(output.text ?? "").trim() });
+      // Uma frase/trecho por item, com o segundo em que comeca dentro deste audio.
+      const segments = (output.chunks ?? [])
+        .map((chunk) => ({ start: Math.max(0, Math.floor(chunk.timestamp?.[0] ?? 0)), text: String(chunk.text ?? "").trim() }))
+        .filter((segment) => segment.text);
+      const text = String(output.text ?? "").trim();
+      postMessage({ type: "result", id: message.id, segments: segments.length ? segments : text ? [{ start: 0, text }] : [] });
     }
   } catch (error) {
     postMessage({ type: "error", id: message.id, message: String(error && error.message ? error.message : error) });

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SAMPLE_RATE, decodeToPcm, supported } from "@/lib/transcription/browser";
 import { clearDraft, loadDraft, saveDraft } from "@/lib/transcription/draft";
 import { clock, joinSegments } from "@/lib/transcription/format";
-import { loadWhisperWorker } from "@/lib/transcription/whisper-client";
+import { type Segment, loadWhisperWorker } from "@/lib/transcription/whisper-client";
 import { buttonClass, primaryClass } from "@/components/student/study-modal";
 
 const SEGMENT_SECONDS = 60;
@@ -34,7 +34,7 @@ export function ExternalTranscriber({ draftKey, onText }: { draftKey: string; on
   const partsRef = useRef<Part[]>([]);
   const failedRef = useRef(0);
   const nextIdRef = useRef(0);
-  const pendingRef = useRef(new Map<number, (text: string) => void>());
+  const pendingRef = useRef(new Map<number, (segments: Segment[]) => void>());
   const stoppingRef = useRef(false);
   const elapsedRef = useRef(0);
 
@@ -69,12 +69,12 @@ export function ExternalTranscriber({ draftKey, onText }: { draftKey: string; on
   }, [phase]);
 
   function runWhisper(pcm: Float32Array) {
-    return new Promise<string>((resolve) => {
+    return new Promise<Segment[]>((resolve) => {
       const id = nextIdRef.current++;
 
-      pendingRef.current.set(id, (text) => {
+      pendingRef.current.set(id, (segments) => {
         pendingRef.current.delete(id);
-        resolve(text);
+        resolve(segments);
       });
       workerRef.current?.postMessage({ type: "run", id, audio: pcm }, [pcm.buffer]);
     });
@@ -82,18 +82,18 @@ export function ExternalTranscriber({ draftKey, onText }: { draftKey: string; on
 
   function enqueue(start: number, blob: Blob) {
     queueRef.current = queueRef.current.then(async () => {
-      let text: string;
+      let parts: Part[];
 
       try {
         const pcm = await decodeToPcm(blob);
 
-        text = pcm.length < MIN_SAMPLES ? "" : await runWhisper(pcm);
+        parts = pcm.length < MIN_SAMPLES ? [] : (await runWhisper(pcm)).map((segment) => ({ start: start + segment.start, text: segment.text }));
       } catch {
         failedRef.current += 1;
-        text = "[trecho nao transcrito]";
+        parts = [{ start, text: "[trecho nao transcrito]" }];
       }
 
-      partsRef.current.push({ start, text });
+      partsRef.current.push(...parts);
       // Cada trecho pronto ja vai para o rascunho: se a pagina fechar, o que foi transcrito pode ser recuperado.
       saveDraft(draftKey, joinSegments([...partsRef.current].sort((a, b) => a.start - b.start)));
     });
@@ -192,7 +192,7 @@ export function ExternalTranscriber({ draftKey, onText }: { draftKey: string; on
       setMessage("Preparando o modelo de transcricao...");
       workerRef.current = await loadWhisperWorker({
         onStatus: setMessage,
-        onResult: (id, text) => pendingRef.current.get(id)?.(text),
+        onResult: (id, segments) => pendingRef.current.get(id)?.(segments),
       });
       // Se o compartilhamento for encerrado pelo navegador, o que foi captado ate ali vira o texto.
       stream.getAudioTracks()[0].onended = () => void finish();

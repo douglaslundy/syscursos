@@ -39,21 +39,21 @@ export function TranscriptViewer({ text }: { text: string }) {
         value={query}
       />
       {query ? <p className="mt-1 text-xs text-copy-muted">{matches.length} trechos encontrados</p> : null}
-      <div className="mt-2 max-h-96 space-y-1 overflow-y-auto text-sm leading-6 text-copy-secondary">
+      <div className="mt-2 max-h-96 space-y-4 overflow-y-auto text-sm leading-6 text-copy-secondary">
         {visible.map((line) => (
           <p key={line.index}>
             {line.clock && line.seconds !== null ? (
               canSeek ? (
                 <button
                   aria-label={`Ir para ${line.clock} no video`}
-                  className="mr-2 rounded border border-stroke-subtle px-1.5 text-xs font-medium text-brand-primary hover:bg-surface-hover"
+                  className="mr-2 rounded border border-stroke-subtle px-1.5 text-xs font-medium text-red-500 hover:bg-surface-hover"
                   onClick={() => seekTo(line.seconds ?? 0)}
                   type="button"
                 >
                   {line.clock}
                 </button>
               ) : (
-                <span className="mr-2 text-xs font-medium text-copy-muted">{line.clock}</span>
+                <span className="mr-2 text-xs font-medium text-red-500">{line.clock}</span>
               )
             ) : null}
             {line.text}
