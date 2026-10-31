@@ -54,8 +54,11 @@ export default async function ProgressPage() {
         <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">Ultimos 14 dias (minutos)</h2>
         <div className="mt-4 flex h-36 items-end gap-1" role="img" aria-label="Minutos estudados por dia nos ultimos 14 dias">
           {summary.recent.map((item) => (
-            <div className="flex flex-1 flex-col items-center justify-end gap-1" key={item.day} title={`${item.day}: ${item.minutes} min`}>
-              <div className="w-full rounded-t bg-brand-primary" style={{ height: `${Math.max(2, (item.minutes / peak) * 100)}%`, opacity: item.minutes > 0 ? 1 : 0.25 }} />
+            <div className="flex h-full flex-1 flex-col items-center gap-1" key={item.day} title={`${item.day}: ${item.minutes} min`}>
+              {/* A altura em % precisa de um pai com altura definida: o wrapper flex-1 ocupa o espaco acima do dia. */}
+              <div className="flex min-h-0 w-full flex-1 items-end">
+                <div className="w-full rounded-t bg-brand-primary" style={{ height: `${Math.max(2, (item.minutes / peak) * 100)}%`, opacity: item.minutes > 0 ? 1 : 0.25 }} />
+              </div>
               <span className="text-[10px] text-copy-muted">{item.day.slice(8)}</span>
             </div>
           ))}
