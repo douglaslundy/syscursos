@@ -40,6 +40,7 @@ async function fetchDriveRange(fileId: string, key: string, range: { start: numb
 // Entrega o video de uma aula do Drive ao player proprio, lendo pela Drive API com a chave do admin. O aluno nunca ve a
 // chave nem o link do Drive; so passa quem tem matricula valida no curso. Serve em faixas (Range) para tocar e pular.
 export async function GET(request: Request, context: { params: Promise<{ lessonId: string }> }) {
+  const startedAt = Date.now();
   const { lessonId } = await context.params;
   const parsed = querySchema.safeParse({ courseId: new URL(request.url).searchParams.get("courseId"), lessonId });
 
@@ -71,6 +72,7 @@ export async function GET(request: Request, context: { params: Promise<{ lessonI
     return new Response(null, { status: 416 });
   }
 
+  const checkedAt = Date.now();
   const upstream = await fetchDriveRange(fileId, key, range, request.signal);
 
   if (!upstream) {
@@ -83,7 +85,12 @@ export async function GET(request: Request, context: { params: Promise<{ lessonI
     return NextResponse.json({ error: "drive_refused" }, { status: upstream.status === 404 ? 404 : upstream.status === 416 ? 416 : 502 });
   }
 
-  const headers = new Headers({ "accept-ranges": "bytes", "cache-control": "private, max-age=600" });
+  // Visivel na aba Rede do navegador: separa a demora da checagem de acesso (auth) da espera pelo primeiro byte do Drive.
+  const headers = new Headers({
+    "accept-ranges": "bytes",
+    "cache-control": "private, max-age=600",
+    "server-timing": `auth;dur=${checkedAt - startedAt}, drive;dur=${Date.now() - checkedAt}`,
+  });
 
   for (const name of PASS_THROUGH) {
     const value = upstream.headers.get(name);

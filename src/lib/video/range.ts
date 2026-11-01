@@ -1,6 +1,6 @@
 // Cada pedido ao Drive traz no maximo este tanto: o navegador pede "bytes=N-" e vai buscando o resto conforme toca,
 // o que mantem cada resposta curta (cabe no tempo da funcao) e evita baixar o arquivo inteiro se o aluno sair.
-export const CHUNK_BYTES = 8 * 1024 * 1024;
+export const CHUNK_BYTES = 16 * 1024 * 1024;
 
 export type ByteRange = { start: number; end: number };
 

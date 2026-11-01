@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { useBackgroundAudio } from "@/components/student/use-background-audio";
 import { registerPlayer } from "@/lib/study/player-bridge";
 
 type OwnVideoPlayerProps = {
@@ -31,6 +32,8 @@ export function OwnVideoPlayer({ src, fallbackUrl, title, startSeconds, onEnded 
   const [failed, setFailed] = useState(false);
 
   onEndedRef.current = onEnded;
+
+  useBackgroundAudio({ videoRef, src, title, onEnded: () => onEndedRef.current() });
 
   const handleError = (video: HTMLVideoElement) => {
     if (retriesRef.current >= MAX_RETRIES) {
@@ -83,6 +86,11 @@ export function OwnVideoPlayer({ src, fallbackUrl, title, startSeconds, onEnded 
         <p className="bg-surface px-3 py-2 text-xs text-copy-muted">
           O player da plataforma nao conseguiu abrir este video; usando o player do Google.
         </p>
+        {/* O player do Google nao deixa continuar com a tela bloqueada; este so de audio continua. */}
+        <div className="bg-surface px-3 pb-3">
+          <p className="mb-1 text-xs text-copy-muted">Para ouvir com a tela bloqueada, pause o video acima e use o audio abaixo.</p>
+          <audio className="w-full" controls preload="none" src={src} />
+        </div>
       </div>
     );
   }
@@ -99,6 +107,10 @@ export function OwnVideoPlayer({ src, fallbackUrl, title, startSeconds, onEnded 
         onEndedRef.current();
       }}
       onError={(event) => handleError(event.currentTarget)}
+      // Tocando: deixa o navegador baixar bastante a frente, para o proximo trecho ja estar pronto ao cruzar o limite de cada pedido.
+      onPlay={(event) => {
+        event.currentTarget.preload = "auto";
+      }}
       onLoadedMetadata={(event) => {
         const video = event.currentTarget;
         // Depois de uma falha, retoma de onde o video parou, nao do ponto salvo da aula.
