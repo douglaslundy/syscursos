@@ -122,6 +122,20 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         initialRate={playbackRate}
         progress={data.progress}
         startSeconds={data.positionSeconds}
+        studyTools={
+          data.lesson.transcript && data.isCompleted ? (
+            <LessonStudyTools
+              aiEnabled={ai.enabled}
+              compact
+              courseId={courseId}
+              initialItems={aiItems}
+              lessonId={lessonId}
+              quizAttempts={quizAttempts}
+              sourceLabel={`${data.lesson.module.course.title} - ${data.lesson.title}`}
+              techniques={ai.techniques}
+            />
+          ) : null
+        }
         title={data.lesson.title}
         videoEmbed={videoEmbed}
       >
@@ -180,17 +194,6 @@ export default async function StudentLessonPage(props: { params: Promise<Student
         </p>
       ) : null}
 
-      {data.lesson.transcript && data.isCompleted ? (
-        <LessonStudyTools
-          aiEnabled={ai.enabled}
-          courseId={courseId}
-          initialItems={aiItems}
-          lessonId={lessonId}
-          quizAttempts={quizAttempts}
-          sourceLabel={`${data.lesson.module.course.title} - ${data.lesson.title}`}
-          techniques={ai.techniques}
-        />
-      ) : null}
     </section>
   );
 }

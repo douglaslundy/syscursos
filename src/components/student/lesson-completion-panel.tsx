@@ -7,7 +7,11 @@ import { useRouter } from "next/navigation";
 import { LessonStudyBar } from "@/components/student/lesson-study-bar";
 import { LessonTrailSidebar } from "@/components/student/lesson-trail-sidebar";
 import { LessonVideoPlayer } from "@/components/student/lesson-video-player";
-import { announceVideoEnded, isTranscribing, onTranscribingChange } from "@/lib/transcription/guard";
+import {
+  announceVideoEnded,
+  isTranscribing,
+  onTranscribingChange,
+} from "@/lib/transcription/guard";
 import { completeLessonAction } from "@/server/actions/student-actions";
 
 type TrailModule = {
@@ -42,6 +46,8 @@ type LessonCompletionPanelProps = {
   previousLessonId?: string | null;
   initialRate?: number;
   startSeconds?: number;
+  // Botoes de estudo com IA, exibidos a esquerda dos botoes de aula anterior/proxima.
+  studyTools?: ReactNode;
   children?: ReactNode;
 };
 
@@ -73,6 +79,7 @@ export function LessonCompletionPanel({
   previousLessonId,
   initialRate = 1,
   startSeconds = 0,
+  studyTools,
   children,
 }: LessonCompletionPanelProps) {
   const router = useRouter();
@@ -86,9 +93,7 @@ export function LessonCompletionPanel({
   const [isPending, startTransition] = useTransition();
   const [focus, setFocus] = useState(false);
 
-  const nextLessonHref = nextLessonId
-    ? `/app/courses/${courseId}/lessons/${nextLessonId}`
-    : null;
+  const nextLessonHref = nextLessonId ? `/app/courses/${courseId}/lessons/${nextLessonId}` : null;
 
   // Transcricao em andamento (ou ainda nao salva) nunca pode ser interrompida pela troca automatica de aula.
   useEffect(() => onTranscribingChange((busy) => busy && setIsCountingDown(false)), []);
@@ -131,7 +136,9 @@ export function LessonCompletionPanel({
 
       setIsCompleted(result.isCompleted);
       setProgress((current) => adjustProgress(current, result.isCompleted ? 1 : -1));
-      setFeedback(result.isCompleted ? "Aula marcada como concluida." : "Marcacao de conclusao removida.");
+      setFeedback(
+        result.isCompleted ? "Aula marcada como concluida." : "Marcacao de conclusao removida.",
+      );
 
       if (result.isCompleted && nextLessonHref && !isTranscribing()) {
         setSecondsLeft(AUTO_ADVANCE_SECONDS);
@@ -148,7 +155,13 @@ export function LessonCompletionPanel({
 
   return (
     <>
-      <div className={focus ? "mt-6 grid gap-4" : "mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"}>
+      <div
+        className={
+          focus
+            ? "mt-6 grid gap-4"
+            : "mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start"
+        }
+      >
         <div>
           <div className="overflow-hidden rounded-md border border-stroke-subtle bg-black shadow-sm shadow-black/20">
             <LessonVideoPlayer
@@ -161,25 +174,34 @@ export function LessonCompletionPanel({
               videoEmbed={videoEmbed}
             />
           </div>
-          <div className="mt-2 flex flex-wrap justify-end gap-2">
-            {previousLessonId ? (
-              <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary" href={`/app/courses/${courseId}/lessons/${previousLessonId}`}>
-                Aula anterior
-              </Link>
-            ) : (
-              <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
-                Aula anterior
-              </span>
-            )}
-            {nextLessonHref ? (
-              <Link className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary" href={nextLessonHref}>
-                Proxima aula
-              </Link>
-            ) : (
-              <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
-                Proxima aula
-              </span>
-            )}
+          <div className="mt-2 flex flex-wrap items-start justify-between gap-2">
+            <div>{studyTools}</div>
+            <div className="flex flex-wrap gap-2">
+              {previousLessonId ? (
+                <Link
+                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+                  href={`/app/courses/${courseId}/lessons/${previousLessonId}`}
+                >
+                  Aula anterior
+                </Link>
+              ) : (
+                <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
+                  Aula anterior
+                </span>
+              )}
+              {nextLessonHref ? (
+                <Link
+                  className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-transparent px-4 text-sm font-medium text-copy-secondary transition hover:bg-surface-hover hover:text-copy-primary"
+                  href={nextLessonHref}
+                >
+                  Proxima aula
+                </Link>
+              ) : (
+                <span className="inline-flex min-h-11 items-center justify-center rounded-md border border-stroke-subtle bg-surface-elevated px-4 text-sm font-medium text-copy-muted">
+                  Proxima aula
+                </span>
+              )}
+            </div>
           </div>
         </div>
         {focus ? null : (

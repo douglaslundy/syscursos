@@ -26,6 +26,8 @@ type LessonStudyToolsProps = {
   quizAttempts: Array<{ score: number; total: number; createdAt: string }>;
   // "Curso - Aula" mostrado na frente de cada pergunta do quiz.
   sourceLabel?: string;
+  // Modo compacto: so a fileira de botoes, sem o cartao e o titulo (usado ao lado de aula anterior/proxima).
+  compact?: boolean;
 };
 
 type Panel = "summary" | "flashcards" | "mindmap" | "quiz" | null;
@@ -197,7 +199,7 @@ function MindMap({ content }: { content: string }) {
   );
 }
 
-export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, techniques, initialItems, quizAttempts, sourceLabel }: LessonStudyToolsProps) {
+export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, techniques, initialItems, quizAttempts, sourceLabel, compact }: LessonStudyToolsProps) {
   const [items, setItems] = useState(initialItems);
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -251,12 +253,12 @@ export function LessonStudyTools({ external, courseId, lessonId, aiEnabled, tech
   const toolTitle = (kind: AiItem["kind"]) => (hasContent(kind) ? "Conteudo ja gerado: clique para abrir" : undefined);
 
   return (
-    <section className="mt-6 rounded-md border border-stroke-subtle bg-surface p-4" id="estudo-ia">
-      <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">Estudar com inteligencia artificial</h2>
+    <section className={compact ? "" : "mt-6 rounded-md border border-stroke-subtle bg-surface p-4"} id="estudo-ia">
+      {compact ? null : <h2 className="text-sm font-semibold uppercase tracking-[0.12em] text-copy-muted">Estudar com inteligencia artificial</h2>}
       {aiEnabled || items.length > 0 ? null : (
         <p className="mt-2 text-sm text-copy-secondary">A IA ainda nao foi configurada pelo administrador.</p>
       )}
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className={compact ? "flex flex-wrap gap-2" : "mt-3 flex flex-wrap gap-2"}>
         <button className={toolClass("SUMMARY")} disabled={!available("SUMMARY") || techniques.length === 0} onClick={() => open("summary")} title={toolTitle("SUMMARY")} type="button">
           {hasContent("SUMMARY") ? "✓ " : ""}Resumo da aula
         </button>

@@ -124,7 +124,7 @@ export function LessonTrailSidebar({
                         key={lesson.id}
                       >
                         {completed ? (
-                          <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0" />
+                          <CheckCircle2 aria-hidden="true" className="h-4 w-4 shrink-0 text-green-400" />
                         ) : isCurrent ? (
                           <PlayCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
                         ) : (

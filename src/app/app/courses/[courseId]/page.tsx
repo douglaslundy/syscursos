@@ -162,7 +162,7 @@ export default async function StudentCoursePage(props: { params: Promise<Student
                             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/15 to-black/75" />
                             <div className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-sm bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-normal text-white">
                               {completed ? (
-                                <CheckCircle2 aria-hidden="true" className="h-3 w-3 text-brand-primary" />
+                                <CheckCircle2 aria-hidden="true" className="h-3 w-3 text-green-400" />
                               ) : (
                                 <PlayCircle aria-hidden="true" className="h-3 w-3" />
                               )}
