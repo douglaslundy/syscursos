@@ -45,4 +45,27 @@ describe("OwnVideoPlayer", () => {
     expect(screen.getByText(/usando o player do Google/)).toBeTruthy();
     expect(getPlayer()).toBeNull();
   });
+
+  it("reloads on its own when playback stalls without an error event", () => {
+    vi.useFakeTimers();
+    const { container } = render(<OwnVideoPlayer fallbackUrl="https://drive.google.com/file/d/x/preview" onEnded={() => undefined} src="/app/video/l1?courseId=c1" startSeconds={0} title="Aula" />);
+
+    const video = container.querySelector("video") as HTMLVideoElement;
+    const load = vi.spyOn(video, "load").mockImplementation(() => undefined);
+
+    Object.defineProperty(video, "paused", { value: false, configurable: true });
+
+    // Recupera sozinho antes do limite: nao recarrega.
+    fireEvent.waiting(video);
+    fireEvent.playing(video);
+    act(() => vi.advanceTimersByTime(20_000));
+    expect(load).not.toHaveBeenCalled();
+
+    // Sem dados por mais de 8 s tocando: recarrega.
+    fireEvent.stalled(video);
+    act(() => vi.advanceTimersByTime(8_000 + 2_000));
+    vi.useRealTimers();
+
+    expect(load).toHaveBeenCalledTimes(1);
+  });
 });

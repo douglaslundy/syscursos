@@ -22,12 +22,16 @@ const RESUME_END_MARGIN = 5;
 // O Google limita rajadas de pedidos (403 "Sorry..."): uma falha isolada nao deve derrubar o player; tenta de novo antes de cair na janela do Google.
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 2000;
+const STALL_MS = 8000;
+// HTMLMediaElement.HAVE_FUTURE_DATA: abaixo disso o video nao tem dados para continuar tocando.
+const HAVE_FUTURE_DATA = 3;
 
 export function OwnVideoPlayer({ src, fallbackUrl, title, startSeconds, onEnded }: OwnVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const endedRef = useRef(false);
   const onEndedRef = useRef(onEnded);
   const retriesRef = useRef(0);
+  const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const resumeRef = useRef<number | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -47,6 +51,25 @@ export function OwnVideoPlayer({ src, fallbackUrl, title, startSeconds, onEnded 
       if (videoRef.current === video) video.load();
     }, RETRY_DELAY_MS * retriesRef.current);
   };
+
+  // Travamento sem evento "error" (resposta truncada, conexao morta): sem dados por STALL_MS tocando, recarrega de onde parou.
+  const clearStallTimer = () => {
+    if (stallTimerRef.current) clearTimeout(stallTimerRef.current);
+
+    stallTimerRef.current = null;
+  };
+
+  const watchStall = (video: HTMLVideoElement) => {
+    if (stallTimerRef.current) return;
+
+    stallTimerRef.current = setTimeout(() => {
+      stallTimerRef.current = null;
+
+      if (!video.paused && !video.ended && video.readyState < HAVE_FUTURE_DATA) handleError(video);
+    }, STALL_MS);
+  };
+
+  useEffect(() => clearStallTimer, []);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -106,7 +129,11 @@ export function OwnVideoPlayer({ src, fallbackUrl, title, startSeconds, onEnded 
         endedRef.current = true;
         onEndedRef.current();
       }}
+      onCanPlay={clearStallTimer}
       onError={(event) => handleError(event.currentTarget)}
+      onPlaying={clearStallTimer}
+      onStalled={(event) => watchStall(event.currentTarget)}
+      onWaiting={(event) => watchStall(event.currentTarget)}
       // Tocando: deixa o navegador baixar bastante a frente, para o proximo trecho ja estar pronto ao cruzar o limite de cada pedido.
       onPlay={(event) => {
         event.currentTarget.preload = "auto";
